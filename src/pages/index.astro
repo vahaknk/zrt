@@ -1,0 +1,45 @@
+---
+import { directus, readItems } from '../lib/directus';
+import { getLanguage } from '../lib/language';
+import HorizontalScroller from '../components/HorizontalScroller';
+
+const lang = getLanguage(Astro.request);
+if (!lang) return Astro.redirect('/select-language');
+
+let sections: any[] = [];
+try {
+  sections = await directus.request(
+    readItems('landing_sections' as any, {
+      sort: ['order'],
+      fields: ['id', 'order', 'main_image', 'hoover_image', { translations: ['languages_id', 'Header', 'Content'] }] as any,
+      deep: {
+        translations: { _filter: { languages_id: { _eq: lang } } },
+      },
+    } as any)
+  );
+} catch (e) {
+  console.error('Failed to fetch sections:', e);
+}
+
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <HorizontalScroller
+      sections={sections}
+      directusUrl={DIRECTUS_URL}
+      client:load
+    />
+  </body>
+</html>

@@ -1,0 +1,95 @@
+---
+import { loginUser } from '../lib/auth';
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const email = form.get('email') as string;
+  const password = form.get('password') as string;
+
+  try {
+    const result = await loginUser(email, password);
+    Astro.cookies.set('directus_token', result.access_token, {
+      path: '/',
+      maxAge: result.expires / 1000,
+      httpOnly: true,
+      sameSite: 'lax',
+    });
+    return Astro.redirect('/select-language');
+  } catch {
+    error = 'Invalid email or password.';
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0a0a0a;
+        font-family: system-ui, sans-serif;
+        color: #fff;
+      }
+      .card {
+        width: 100%;
+        max-width: 380px;
+        padding: 2.5rem;
+        background: #141414;
+        border: 1px solid #222;
+        border-radius: 12px;
+      }
+      h1 { font-size: 1.5rem; margin-bottom: 2rem; font-weight: 500; }
+      label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 0.4rem; }
+      input {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: #1e1e1e;
+        border: 1px solid #333;
+        border-radius: 8px;
+        color: #fff;
+        font-size: 1rem;
+        margin-bottom: 1.2rem;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      input:focus { border-color: #555; }
+      button {
+        width: 100%;
+        padding: 0.8rem;
+        background: #fff;
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: opacity 0.2s;
+      }
+      button:hover { opacity: 0.85; }
+      .error { color: #f66; font-size: 0.875rem; margin-bottom: 1rem; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Sign In</h1>
+      {error && <p class="error">{error}</p>}
+      <form method="POST">
+        <label for="email">Email</label>
+        <input id="email" name="email" type="email" required autocomplete="email" />
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password" />
+        <button type="submit">Continue</button>
+      </form>
+    </div>
+  </body>
+</html>
