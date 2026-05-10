@@ -1,13 +1,6 @@
 ---
 import { directus, readItems } from '../lib/directus';
 
-if (Astro.request.method === 'POST') {
-  const form = await Astro.request.formData();
-  const lang = form.get('lang') as string;
-  Astro.cookies.set('zrt_lang', lang, { path: '/', maxAge: 31536000, sameSite: 'lax' });
-  return Astro.redirect('/');
-}
-
 interface Language {
   id: string;
   name: string;
@@ -19,7 +12,7 @@ let languages: Language[] = [];
 try {
   languages = (await directus.request(readItems('languages' as any))) as Language[];
 } catch {
-  languages = [{ id: 'en', name: 'English', landing_image: '', landing_tagline: '' }];
+  languages = [{ id: 'hyw', name: 'Արեւմտհայերէն', landing_image: '', landing_tagline: '' }];
 }
 ---
 
@@ -50,7 +43,8 @@ try {
       }
       h1 { font-size: 1.5rem; margin-bottom: 2rem; font-weight: 500; }
       .langs { display: flex; flex-direction: column; gap: 0.75rem; }
-      button {
+      a {
+        display: block;
         width: 100%;
         padding: 1rem;
         background: #1e1e1e;
@@ -58,11 +52,10 @@ try {
         border: 1px solid #333;
         border-radius: 8px;
         font-size: 1rem;
-        cursor: pointer;
-        text-align: left;
+        text-decoration: none;
         transition: background 0.2s, border-color 0.2s;
       }
-      button:hover { background: #2a2a2a; border-color: #555; }
+      a:hover { background: #2a2a2a; border-color: #555; }
     </style>
   </head>
   <body>
@@ -70,10 +63,7 @@ try {
       <h1>Choose your language</h1>
       <div class="langs">
         {languages.map((lang) => (
-          <form method="POST">
-            <input type="hidden" name="lang" value={lang.id} />
-            <button type="submit">{lang.name}</button>
-          </form>
+          <a href={`/api/set-language?lang=${lang.id}`}>{lang.name}</a>
         ))}
       </div>
     </div>
