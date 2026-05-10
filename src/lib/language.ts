@@ -1,9 +1,9 @@
 export const LANG_COOKIE = 'zrt_lang';
 
-export function getLanguage(request: Request): string {
+export function getLanguage(request: Request): string | null {
   const cookie = request.headers.get('cookie') ?? '';
   const match = cookie.match(new RegExp(`${LANG_COOKIE}=([^;]+)`));
-  return match ? match[1] : 'hyw';
+  return match ? match[1] : null;
 }
 
 export function setLanguageCookie(lang: string): string {
