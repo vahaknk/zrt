@@ -8,9 +8,12 @@ interface Language {
   landing_tagline: string;
 }
 
+const ORDER = ['hyw', 'fr', 'en'];
+
 let languages: Language[] = [];
 try {
-  languages = (await directus.request(readItems('languages' as any))) as Language[];
+  const result = (await directus.request(readItems('languages' as any))) as Language[];
+  languages = result.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
 } catch {
   languages = [{ id: 'hyw', name: 'Արեւمտهایерён', landing_image: '', landing_tagline: '' }];
 }
