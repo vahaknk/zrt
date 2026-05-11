@@ -108,6 +108,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
               key={section.id}
               labels={labels}
               sectionHeader={section.translations?.[0]?.Header ?? ''}
+              sectionContent={section.translations?.[0]?.Content ?? ''}
             />
           );
         }

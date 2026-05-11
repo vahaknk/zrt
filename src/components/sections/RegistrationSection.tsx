@@ -3,6 +3,7 @@ import { useState } from 'react';
 interface Props {
   labels: Record<string, string>;
   sectionHeader: string;
+  sectionContent: string;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -25,7 +26,7 @@ const labelStyle: React.CSSProperties = {
   color: '#000',
 };
 
-export default function RegistrationSection({ labels, sectionHeader }: Props) {
+export default function RegistrationSection({ labels, sectionHeader, sectionContent }: Props) {
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -69,9 +70,15 @@ export default function RegistrationSection({ labels, sectionHeader }: Props) {
       }}
     >
       <div style={{ width: '100%', maxWidth: 480 }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+        <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>
           {sectionHeader}
         </h2>
+        {sectionContent && (
+          <div
+            style={{ fontSize: '1rem', lineHeight: 1.7, marginBottom: '1.5rem' }}
+            dangerouslySetInnerHTML={{ __html: sectionContent }}
+          />
+        )}
 
         {status === 'success' ? (
           <p style={{ fontSize: '1.1rem' }}>✓ {labels['submit_button'] ?? 'Submitted'}</p>
