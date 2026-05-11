@@ -1,4 +1,7 @@
 import { useRef } from 'react';
+import RegistrationSection from './sections/RegistrationSection';
+
+const REGISTRATION_HEADER = 'հետաքրքրուած եմ։';
 
 interface Translation {
   languages_id: string;
@@ -17,6 +20,7 @@ interface Section {
 interface Props {
   sections: Section[];
   directusUrl: string;
+  labels: Record<string, string>;
 }
 
 function fileUrl(directusUrl: string, id: string) {
@@ -67,7 +71,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
   );
 }
 
-export default function HorizontalScroller({ sections, directusUrl }: Props) {
+export default function HorizontalScroller({ sections, directusUrl, labels }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   const handleWheel = (e: React.WheelEvent) => {
@@ -97,9 +101,19 @@ export default function HorizontalScroller({ sections, directusUrl }: Props) {
         scrollBehavior: 'smooth',
       }}
     >
-      {sections.map((section) => (
-        <SectionPanel key={section.id} section={section} directusUrl={directusUrl} />
-      ))}
+      {sections.map((section) => {
+        const header = section.translations?.[0]?.Header ?? '';
+        if (header === REGISTRATION_HEADER) {
+          return (
+            <RegistrationSection
+              key={section.id}
+              labels={labels}
+              sectionHeader={header}
+            />
+          );
+        }
+        return <SectionPanel key={section.id} section={section} directusUrl={directusUrl} />;
+      })}
     </div>
   );
 }

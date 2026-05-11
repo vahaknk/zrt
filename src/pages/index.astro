@@ -1,6 +1,7 @@
 ---
 import { directus, readItems } from '../lib/directus';
 import { getLanguage } from '../lib/language';
+import { getLabels } from '../lib/labels';
 import HorizontalScroller from '../components/HorizontalScroller';
 
 const lang = getLanguage(Astro.request);
@@ -21,6 +22,13 @@ try {
   console.error('Failed to fetch sections:', e);
 }
 
+let labels: Record<string, string> = {};
+try {
+  labels = await getLabels(lang);
+} catch (e) {
+  console.error('Failed to fetch labels:', e);
+}
+
 const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
 ---
 
@@ -39,6 +47,7 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
     <HorizontalScroller
       sections={sections}
       directusUrl={DIRECTUS_URL}
+      labels={labels}
       client:load
     />
   </body>
