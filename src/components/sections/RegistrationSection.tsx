@@ -41,7 +41,7 @@ export default function RegistrationSection({ labels, sectionHeader }: Props) {
   const set = (field: string, value: string | boolean) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {
@@ -133,13 +133,20 @@ export default function RegistrationSection({ labels, sectionHeader }: Props) {
             </div>
 
             <div>
-              <label style={labelStyle}>{labels['armenian_level']}</label>
+              <label style={labelStyle}>
+                {labels['armenian_level']} — {form.armenian_level || '—'}
+              </label>
               <input
-                style={inputStyle}
-                type="text"
-                value={form.armenian_level}
+                type="range"
+                min={1}
+                max={5}
+                value={form.armenian_level || 1}
                 onChange={(e) => set('armenian_level', e.target.value)}
+                style={{ width: '100%', accentColor: '#9683fe' }}
               />
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#555', marginTop: '0.2rem' }}>
+                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+              </div>
             </div>
 
             <div>
