@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import RegistrationSection from './sections/RegistrationSection';
 
-const REGISTRATION_HEADER = 'հետաքրքրուած եմ։';
+const REGISTRATION_SECTION_ID = 7;
 
 interface Translation {
   languages_id: string;
@@ -102,13 +102,12 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
       }}
     >
       {sections.map((section) => {
-        const header = section.translations?.[0]?.Header ?? '';
-        if (header === REGISTRATION_HEADER) {
+        if (Number(section.id) === REGISTRATION_SECTION_ID) {
           return (
             <RegistrationSection
               key={section.id}
               labels={labels}
-              sectionHeader={header}
+              sectionHeader={section.translations?.[0]?.Header ?? ''}
             />
           );
         }
