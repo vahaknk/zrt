@@ -8,8 +8,8 @@ interface Props {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   padding: '0.65rem 0.9rem',
-  background: 'rgba(0,0,0,0.08)',
-  border: '1px solid rgba(0,0,0,0.2)',
+  background: '#fff',
+  border: '1px solid rgba(0,0,0,0.15)',
   borderRadius: 8,
   fontSize: '0.95rem',
   color: '#000',
