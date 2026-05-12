@@ -22,6 +22,8 @@ try {
   console.error('Failed to fetch sections:', e);
 }
 
+sections = sections.filter((s) => s.id !== 8);
+
 let labels: Record<string, string> = {};
 try {
   labels = await getLabels(lang);
