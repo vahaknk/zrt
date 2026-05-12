@@ -1,0 +1,86 @@
+---
+import { adminGet } from '../../lib/directusAdmin';
+import { getLanguage } from '../../lib/language';
+import { getLabels } from '../../lib/labels';
+import SlotPicker from '../../components/SlotPicker';
+
+const { token } = Astro.params;
+const lang = getLanguage(Astro.request) ?? 'hyw';
+
+// Fetch registration by token
+let registration: any = null;
+let expired = false;
+let labels: Record<string, string> = {};
+
+try {
+  labels = await getLabels(lang);
+} catch {}
+
+try {
+  const res = await adminGet(
+    `/items/registration_requests?filter[token][_eq]=${token}&fields=id,full_name,email,token_expires_at,slot_chosen&limit=1`
+  );
+  registration = res.data?.[0] ?? null;
+} catch (e) {
+  console.error('Failed to fetch registration:', e);
+}
+
+if (!registration) {
+  expired = true;
+} else {
+  const expiresAt = new Date(registration.token_expires_at);
+  if (isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
+    expired = true;
+  }
+}
+
+// Fetch available slots (only if token is valid)
+let slots: any[] = [];
+if (!expired) {
+  try {
+    const res = await adminGet(
+      `/items/intervew_slots?filter[status][_eq]=available&sort[]=start_time&fields=id,start_time,end_time,capacity,notes`
+    );
+    slots = res.data ?? [];
+  } catch (e) {
+    console.error('Failed to fetch slots:', e);
+  }
+}
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants — {expired ? 'Expired' : 'Book a slot'}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        min-height: 100vh;
+        background: #9683fe;
+        color: #000;
+        font-family: system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    {expired ? (
+      <div style='min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem;'>
+        <div style='max-width:480px;text-align:center;'>
+          <h1 style='font-size:1.8rem;font-weight:700;margin-bottom:1rem;'>
+            {labels['link_expired'] ?? 'Այս կապը ժամկէտանց է կամ անվաւեր։'}
+          </h1>
+        </div>
+      </div>
+    ) : (
+      <SlotPicker
+        registration={registration}
+        slots={slots}
+        token={token!}
+        labels={labels}
+        client:load
+      />
+    )}
+  </body>
+</html>

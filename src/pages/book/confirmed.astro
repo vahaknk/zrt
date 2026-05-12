@@ -1,0 +1,39 @@
+---
+import { getLanguage } from '../../lib/language';
+import { getLabels } from '../../lib/labels';
+
+const lang = getLanguage(Astro.request) ?? 'hyw';
+let labels: Record<string, string> = {};
+try { labels = await getLabels(lang); } catch {}
+---
+
+<!doctype html>
+<html lang={lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants — Confirmed</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        min-height: 100vh;
+        background: #9683fe;
+        color: #000;
+        font-family: system-ui, sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div style='max-width:480px;padding:2rem;text-align:center;'>
+      <h1 style='font-size:2rem;font-weight:700;margin-bottom:1rem;'>
+        {labels['booking_confirmed'] ?? 'Կ՚ûzelam shnorakalem։'}
+      </h1>
+      <p style='font-size:1rem;line-height:1.7;'>
+        {labels['booking_confirmed_body'] ?? 'Ձեր ժամադրութիւնը հаставателуаd є։ Կ՚ûselam հաstatime ձеzи наmakoum։'}
+      </p>
+    </div>
+  </body>
+</html>
