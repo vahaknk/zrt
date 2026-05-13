@@ -1,7 +1,9 @@
-import { useRef } from 'react';
+import { useRef, useEffect } from 'react';
 import RegistrationSection from './sections/RegistrationSection';
+import WhatIsZartsantsSection from './sections/WhatIsZartsantsSection';
 
 const REGISTRATION_SECTION_ID = 7;
+const WHAT_IS_SECTION_ID = 2;
 
 interface Translation {
   languages_id: string;
@@ -14,6 +16,7 @@ interface Section {
   order: number;
   main_image: string | null;
   hoover_image: string | null;
+  bubble: string | null;
   translations: Translation[];
 }
 
@@ -74,12 +77,26 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
 export default function HorizontalScroller({ sections, directusUrl, labels }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    if (trackRef.current) {
-      trackRef.current.scrollLeft += e.deltaY + e.deltaX;
-    }
-  };
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      el.scrollLeft += e.deltaY + e.deltaX;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') el.scrollLeft += window.innerWidth;
+      if (e.key === 'ArrowLeft') el.scrollLeft -= window.innerWidth;
+    };
+    window.addEventListener('keydown', onKey);
+
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+      window.removeEventListener('keydown', onKey);
+    };
+  }, []);
 
   if (sections.length === 0) {
     return (
@@ -92,7 +109,6 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
   return (
     <div
       ref={trackRef}
-      onWheel={handleWheel}
       style={{
         display: 'flex',
         width: '100vw',
@@ -102,6 +118,15 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
       }}
     >
       {sections.map((section) => {
+        if (Number(section.id) === WHAT_IS_SECTION_ID) {
+          return (
+            <WhatIsZartsantsSection
+              key={section.id}
+              section={section}
+              directusUrl={directusUrl}
+            />
+          );
+        }
         if (Number(section.id) === REGISTRATION_SECTION_ID) {
           return (
             <RegistrationSection

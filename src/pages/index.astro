@@ -12,7 +12,7 @@ try {
   sections = await directus.request(
     readItems('landing_sections' as any, {
       sort: ['order'],
-      fields: ['id', 'order', 'main_image', 'hoover_image', { translations: ['languages_id', 'Header', 'Content'] }] as any,
+      fields: ['id', 'order', 'main_image', 'hoover_image', 'bubble', { translations: ['languages_id', 'Header', 'Content'] }] as any,
       deep: {
         translations: { _filter: { languages_id: { _eq: lang } } },
       },
