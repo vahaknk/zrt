@@ -44,6 +44,22 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: system-ui, sans-serif; }
     </style>
+    <style is:global>
+      @keyframes bubble-hang {
+        0%   { transform: translate(-50%, -50%) rotate(0deg); }
+        20%  { transform: translate(-50%, -50%) rotate(-8deg); }
+        40%  { transform: translate(-50%, -50%) rotate(6deg); }
+        60%  { transform: translate(-50%, -50%) rotate(-4deg); }
+        80%  { transform: translate(-50%, -50%) rotate(2deg); }
+        100% { transform: translate(-50%, -50%) rotate(0deg); }
+      }
+      .bubble-hang {
+        transform-origin: 50% 0%;
+      }
+      .bubble-hang:hover {
+        animation: bubble-hang 0.8s ease;
+      }
+    </style>
   </head>
   <body>
     <HorizontalScroller

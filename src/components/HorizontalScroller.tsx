@@ -1,9 +1,11 @@
 import { useRef, useEffect } from 'react';
 import RegistrationSection from './sections/RegistrationSection';
 import WhatIsZartsantsSection from './sections/WhatIsZartsantsSection';
+import Section3 from './sections/Section3';
 
 const REGISTRATION_SECTION_ID = 7;
 const WHAT_IS_SECTION_ID = 2;
+const SECTION3_ID = 3;
 
 interface Translation {
   languages_id: string;
@@ -76,6 +78,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
 
 export default function HorizontalScroller({ sections, directusUrl, labels }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -92,8 +95,16 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
     };
     window.addEventListener('keydown', onKey);
 
+    const onScroll = () => {
+      if (lineRef.current) {
+        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft}px`;
+      }
+    };
+    el.addEventListener('scroll', onScroll);
+
     return () => {
       el.removeEventListener('wheel', onWheel);
+      el.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKey);
     };
   }, []);
@@ -115,12 +126,40 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
         height: '100vh',
         overflowX: 'hidden',
         scrollBehavior: 'smooth',
+        position: 'relative',
       }}
     >
+      <div
+        ref={lineRef}
+        style={{
+          position: 'fixed',
+          top: '77%',
+          left: 0,
+          width: '100vw',
+          height: 80,
+          transform: 'translateY(-50%)',
+          backgroundImage: 'url(/line.png)',
+          backgroundRepeat: 'repeat-x',
+          backgroundPositionX: '0px',
+          backgroundPositionY: 'center',
+          backgroundSize: 'auto 100%',
+          pointerEvents: 'none',
+          zIndex: 0,
+        }}
+      />
       {sections.map((section) => {
         if (Number(section.id) === WHAT_IS_SECTION_ID) {
           return (
             <WhatIsZartsantsSection
+              key={section.id}
+              section={section}
+              directusUrl={directusUrl}
+            />
+          );
+        }
+        if (Number(section.id) === SECTION3_ID) {
+          return (
+            <Section3
               key={section.id}
               section={section}
               directusUrl={directusUrl}

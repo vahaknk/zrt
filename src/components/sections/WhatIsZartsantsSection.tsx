@@ -26,7 +26,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
   return (
     <div style={{
       width: '100vw', height: '100vh', flexShrink: 0,
-      position: 'relative', overflow: 'visible', background: '#9683fe',
+      position: 'relative', overflow: 'visible',
     }}>
 
       {/* Logo */}
@@ -87,6 +87,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
       {section.bubble && (
         <div
           onClick={() => setOpen(o => !o)}
+          className="bubble-hang"
           style={{
             position: 'absolute', top: '36%', left: '50%',
             transform: 'translate(-50%, -50%)',
@@ -117,8 +118,8 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
           src={`${directusUrl}/assets/${section.main_image}`}
           alt=""
           style={{
-            position: 'absolute', bottom: 20, left: 1,
-            width: '130%', height: 'auto', display: 'block',
+            position: 'absolute', bottom: 7, left: 666,
+            width: '100vmax', height: 'auto', display: 'block',
           }}
         />
       )}
