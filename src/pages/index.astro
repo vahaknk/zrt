@@ -97,4 +97,17 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       client:load
     />
   </body>
+  <script>
+    let visitorId = localStorage.getItem('zrt_vid');
+    if (!visitorId) {
+      visitorId = crypto.randomUUID();
+      localStorage.setItem('zrt_vid', visitorId);
+    }
+    const lang = new URLSearchParams(location.search).get('lang') ?? '';
+    fetch('/api/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitor_id: visitorId, language: lang }),
+    }).catch(() => {});
+  </script>
 </html>
