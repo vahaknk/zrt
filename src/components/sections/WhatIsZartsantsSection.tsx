@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { asset } from '../../lib/asset';
 
 interface Props {
   section: {
@@ -10,8 +11,8 @@ interface Props {
   directusUrl: string;
 }
 
-const LEFT_BALLOONS  = ['/top-left.png',  '/bottom-left.png'];
-const RIGHT_BALLOONS = ['/top-right.png', '/bottom-right.png'];
+const LEFT_BALLOONS  = ['/top-left.webp',  '/bottom-left.webp'];
+const RIGHT_BALLOONS = ['/top-right.webp', '/bottom-right.webp'];
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
@@ -28,14 +29,6 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
       width: '100vw', height: '100vh', flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
-
-      {/* Logo */}
-      <div style={{
-        position: 'absolute', top: '5%', left: '50%',
-        transform: 'translateX(-50%)', zIndex: 3, textAlign: 'center',
-      }}>
-        <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
-      </div>
 
       {/* Left column */}
       {open && (
@@ -87,7 +80,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
       {section.bubble && (
         <div
           onClick={() => setOpen(o => !o)}
-          className="bubble-hang"
+          className={open ? '' : 'bubble-hang'}
           style={{
             position: 'absolute', top: '36%', left: '50%',
             transform: 'translate(-50%, -50%)',
@@ -96,7 +89,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
           }}
         >
           <img
-            src={`${directusUrl}/assets/${section.bubble}`}
+            src={asset(directusUrl, section.bubble)!}
             alt=""
             style={{ height: 'clamp(100px, 28vh, 260px)', width: 'auto', display: 'block' }}
           />
@@ -115,7 +108,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
       {/* Characters illustration */}
       {section.main_image && (
         <img
-          src={`${directusUrl}/assets/${section.main_image}`}
+          src={asset(directusUrl, section.main_image)!}
           alt=""
           style={{
             position: 'absolute', bottom: 7, left: 666,

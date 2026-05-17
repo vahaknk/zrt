@@ -1,11 +1,26 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import RegistrationSection from './sections/RegistrationSection';
 import WhatIsZartsantsSection from './sections/WhatIsZartsantsSection';
-import Section3 from './sections/Section3';
+import OurApproachSection from './sections/OurApproachSection';
+import ForWhomSection from './sections/ForWhomSection';
+import WhatHappensSection from './sections/WhatHappensSection';
+import WhatsThereSection from './sections/WhatsThereSection';
+import AboutUsSection from './sections/AboutUsSection';
+import ConditionsSection from './sections/ConditionsSection';
+import ContactUsSection from './sections/ContactUsSection';
+import GoToPlatformSection from './sections/GoToPlatformSection';
 
 const REGISTRATION_SECTION_ID = 7;
 const WHAT_IS_SECTION_ID = 2;
 const SECTION3_ID = 3;
+const SECTION4_ID = 4;
+const SECTION5_ID = 5;
+const SECTION6_ID = 6;
+const SECTION12_ID = 12;
+const SECTION13_ID = 13;
+const SECTION14_ID = 14;
+const SECTION15_ID = 15;
+const TAB_SECTION_IDS = [9, 10, 11];
 
 interface Translation {
   languages_id: string;
@@ -79,6 +94,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
 export default function HorizontalScroller({ sections, directusUrl, labels }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -109,6 +125,60 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
     };
   }, []);
 
+  const scrollToSection = (sectionId: string) => {
+    const el = document.getElementById(`section-${sectionId}`);
+    if (el && trackRef.current) {
+      trackRef.current.scrollLeft = (el.firstElementChild as HTMLElement)?.offsetLeft ?? el.offsetLeft;
+    }
+    setMenuOpen(false);
+  };
+
+  const navSections = sections.filter(s => !TAB_SECTION_IDS.includes(Number(s.id)));
+
+  function getSectionContent(section: Section) {
+    if (Number(section.id) === WHAT_IS_SECTION_ID) {
+      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION3_ID) {
+      return <OurApproachSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION4_ID) {
+      return <ForWhomSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION5_ID) {
+      return <WhatHappensSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION6_ID) {
+      return <WhatsThereSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION12_ID) {
+      return <AboutUsSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION13_ID) {
+      return <ContactUsSection section={section} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === SECTION14_ID) {
+      return <GoToPlatformSection section={section} directusUrl={directusUrl} onNavigateToRegistration={() => scrollToSection('7')} />;
+    }
+    if (TAB_SECTION_IDS.includes(Number(section.id))) return null;
+    if (Number(section.id) === SECTION15_ID) {
+      const tabSections = sections.filter(s => TAB_SECTION_IDS.includes(Number(s.id)));
+      return <ConditionsSection section={section} tabSections={tabSections} directusUrl={directusUrl} />;
+    }
+    if (Number(section.id) === REGISTRATION_SECTION_ID) {
+      return (
+        <RegistrationSection
+          labels={labels}
+          sectionHeader={section.translations?.[0]?.Header ?? ''}
+          sectionContent={section.translations?.[0]?.Content ?? ''}
+          mainImage={section.main_image}
+          directusUrl={directusUrl}
+        />
+      );
+    }
+    return <SectionPanel section={section} directusUrl={directusUrl} />;
+  }
+
   if (sections.length === 0) {
     return (
       <div style={{ width: '100vw', height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555' }}>
@@ -129,6 +199,55 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
         position: 'relative',
       }}
     >
+      {/* Sticky logo with nav menu */}
+      <div style={{
+        position: 'fixed', top: '2%', left: '2%',
+        zIndex: 10, textAlign: 'left',
+      }}>
+        <div
+          onClick={() => setMenuOpen(o => !o)}
+          className={menuOpen ? '' : 'logo-hang'}
+          style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-block' }}
+        >
+          <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
+        </div>
+
+        {menuOpen && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+            background: 'rgba(255,255,255,0.95)',
+            borderRadius: 12, padding: '0.5rem',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+            minWidth: 220,
+          }}>
+            {navSections.map((s) => {
+              const label = s.translations?.[0]?.Header ?? `Section ${s.id}`;
+              return (
+                <div
+                  key={s.id}
+                  onClick={() => scrollToSection(s.id)}
+                  style={{
+                    padding: '0.5rem 0.9rem',
+                    cursor: 'pointer',
+                    borderRadius: 8,
+                    fontWeight: 600,
+                    fontSize: '0.95rem',
+                    color: '#000',
+                    whiteSpace: 'nowrap',
+                    textAlign: 'left',
+                    transition: 'background 0.15s',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#f0ecff')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {label}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       <div
         ref={lineRef}
         style={{
@@ -147,36 +266,15 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
           zIndex: 0,
         }}
       />
+
       {sections.map((section) => {
-        if (Number(section.id) === WHAT_IS_SECTION_ID) {
-          return (
-            <WhatIsZartsantsSection
-              key={section.id}
-              section={section}
-              directusUrl={directusUrl}
-            />
-          );
-        }
-        if (Number(section.id) === SECTION3_ID) {
-          return (
-            <Section3
-              key={section.id}
-              section={section}
-              directusUrl={directusUrl}
-            />
-          );
-        }
-        if (Number(section.id) === REGISTRATION_SECTION_ID) {
-          return (
-            <RegistrationSection
-              key={section.id}
-              labels={labels}
-              sectionHeader={section.translations?.[0]?.Header ?? ''}
-              sectionContent={section.translations?.[0]?.Content ?? ''}
-            />
-          );
-        }
-        return <SectionPanel key={section.id} section={section} directusUrl={directusUrl} />;
+        const content = getSectionContent(section);
+        if (content === null) return null;
+        return (
+          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
+            {content}
+          </div>
+        );
       })}
     </div>
   );

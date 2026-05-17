@@ -4,10 +4,14 @@ interface Props {
   labels: Record<string, string>;
   sectionHeader: string;
   sectionContent: string;
+  mainImage: string | null;
+  directusUrl: string;
 }
 
 const inputStyle: React.CSSProperties = {
   width: '100%',
+  boxSizing: 'border-box',
+  height: '2.6rem',
   padding: '0.65rem 0.9rem',
   background: '#fff',
   border: '1px solid rgba(0,0,0,0.15)',
@@ -26,15 +30,12 @@ const labelStyle: React.CSSProperties = {
   color: '#000',
 };
 
-export default function RegistrationSection({ labels, sectionHeader, sectionContent }: Props) {
+export default function RegistrationSection({ labels, sectionHeader, sectionContent, mainImage, directusUrl }: Props) {
   const [form, setForm] = useState({
     full_name: '',
     email: '',
-    phone: '',
     birthday: '',
     city: '',
-    armenian_level: '',
-    notes: '',
     consent: false,
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -42,7 +43,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   const set = (field: string, value: string | boolean) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatus('sending');
     try {
@@ -60,22 +61,35 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   return (
     <div
       style={{
-        width: '100vw',
+        width: '40vw',
         height: '100vh',
         flexShrink: 0,
+        position: 'relative',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: '2rem',
       }}
     >
-      <div style={{ width: '100%', maxWidth: 480 }}>
-        <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>
+      {mainImage ? (
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img
+            src={`${directusUrl}/assets/${mainImage}`}
+            alt=""
+            style={{ height: 'clamp(400px, 80vh, 700px)', width: 'auto', display: 'block' }}
+          />
+          <div style={{
+            position: 'absolute', top: '20%', left: '28%',
+            width: '35%', height: '63%',
+            overflowY: 'auto', overflowX: 'hidden',
+            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+          }}>
+        <div style={{ width: '100%' }}>
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>
           {sectionHeader}
         </h2>
         {sectionContent && (
           <div
-            style={{ fontSize: '1rem', lineHeight: 1.7, marginBottom: '1.5rem' }}
+            style={{ fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '1.5rem' }}
             dangerouslySetInnerHTML={{ __html: sectionContent }}
           />
         )}
@@ -83,7 +97,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
         {status === 'success' ? (
           <p style={{ fontSize: '1.1rem' }}>✓ {labels['submit_button'] ?? 'Submitted'}</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
 
             <div>
               <label style={labelStyle}>{labels['name_label']}</label>
@@ -109,61 +123,25 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               />
             </div>
 
-            <div>
-              <label style={labelStyle}>{labels['phone_label']}</label>
-              <input
-                style={inputStyle}
-                type="tel"
-                value={form.phone}
-                onChange={(e) => set('phone', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>{labels['birthday']}</label>
-              <input
-                style={inputStyle}
-                type="date"
-                value={form.birthday}
-                onChange={(e) => set('birthday', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>{labels['city']}</label>
-              <input
-                style={inputStyle}
-                type="text"
-                value={form.city}
-                onChange={(e) => set('city', e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>
-                {labels['armenian_level']} — {form.armenian_level || '—'}
-              </label>
-              <input
-                type="range"
-                min={1}
-                max={5}
-                value={form.armenian_level || 1}
-                onChange={(e) => set('armenian_level', e.target.value)}
-                style={{ width: '100%', accentColor: '#9683fe' }}
-              />
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#555', marginTop: '0.2rem' }}>
-                <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span>
+            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-end' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{labels['birthday']}</label>
+                <input
+                  style={inputStyle}
+                  type="date"
+                  value={form.birthday}
+                  onChange={(e) => set('birthday', e.target.value)}
+                />
               </div>
-            </div>
-
-            <div>
-              <label style={labelStyle}>{labels['notes_label']}</label>
-              <textarea
-                style={{ ...inputStyle, resize: 'vertical', minHeight: 80 }}
-                placeholder={labels['notes_placeholder']}
-                value={form.notes}
-                onChange={(e) => set('notes', e.target.value)}
-              />
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{labels['city']}</label>
+                <input
+                  style={inputStyle}
+                  type="text"
+                  value={form.city}
+                  onChange={(e) => set('city', e.target.value)}
+                />
+              </div>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
@@ -188,23 +166,34 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               type="submit"
               disabled={status === 'sending'}
               style={{
-                padding: '0.8rem',
+                alignSelf: 'center',
+                padding: '0.45rem 1.2rem',
                 background: '#000',
-                color: '#9683fe',
+                color: '#fff',
                 border: 'none',
-                borderRadius: 8,
-                fontSize: '1rem',
+                borderRadius: 999,
+                fontSize: '0.95rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
+                whiteSpace: 'nowrap',
               }}
+              onMouseEnter={e => (e.currentTarget.style.background = '#333')}
+              onMouseLeave={e => (e.currentTarget.style.background = '#000')}
             >
               {status === 'sending' ? '...' : labels['submit_button']}
             </button>
 
           </form>
         )}
-      </div>
+        </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{ width: '100%', maxWidth: 480, padding: '2rem' }}>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>{sectionHeader}</h2>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { asset } from '../../lib/asset';
 
 interface Props {
   section: {
@@ -11,11 +12,8 @@ interface Props {
   directusUrl: string;
 }
 
-function asset(directusUrl: string, id: string | null) {
-  return id ? `${directusUrl}/assets/${id}` : null;
-}
 
-export default function Section3({ section, directusUrl }: Props) {
+export default function OurApproachSection({ section, directusUrl }: Props) {
   const [open, setOpen] = useState(false);
   const t = section.translations?.[0];
 
@@ -25,19 +23,11 @@ export default function Section3({ section, directusUrl }: Props) {
       position: 'relative', overflow: 'visible',
     }}>
 
-      {/* Logo */}
-      {/* <div style={{
-        position: 'absolute', top: '5%', left: '50%',
-        transform: 'translateX(-50%)', zIndex: 3, textAlign: 'center',
-      }}>
-        <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
-      </div> */}
-
       {/* Yellow speech bubble (left of center) */}
       {section.bubble && (
         <div
           onClick={() => setOpen(o => !o)}
-          className="bubble-hang"
+          className={open ? '' : 'bubble-hang'}
           style={{
             position: 'absolute', top: '36%', left: '48%',
             transform: 'translate(-50%, -50%)',

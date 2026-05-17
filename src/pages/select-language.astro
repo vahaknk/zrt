@@ -64,7 +64,7 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
   <body>
     <div class="grid">
       {languages.map((lang) => (
-        <a href={`/api/set-language?lang=${lang.id}`}>
+        <a href={`/?lang=${lang.id}`}>
           {lang.landing_image
             ? <img src={`${DIRECTUS_URL}/assets/${lang.landing_image}`} alt={lang.name} />
             : <div style="width:200px;height:330px;background:#7060cc;border-radius:12px;" />
