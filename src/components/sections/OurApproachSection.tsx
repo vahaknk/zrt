@@ -54,8 +54,8 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
 
       {/* Right column: bird + text */}
       {open && <div style={{
-        position: 'absolute', top: '8%', right: '-20%',
-        width: '50%', zIndex: 2,
+        position: 'absolute', top: `${layout.contentTop}%`, right: `${layout.contentRight}%`,
+        width: `${layout.contentWidth}%`, zIndex: 2,
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
       }}>
         {section.hoover_image && (
@@ -71,17 +71,7 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
         />
       </div>}
 
-      {/* Characters illustration */}
-      {section.main_image && (
-        <img
-          src={asset(directusUrl, section.main_image)!}
-          alt=""
-          style={{
-            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: '130%', height: 'auto', display: 'block',
-          }}
-        />
-      )}
+      
     </div>
   );
 }

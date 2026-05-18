@@ -29,9 +29,12 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 3, name: 'OurApproach',
     fields: [
-      { key: 'sectionWidth', label: 'Section Width', unit: 'vw' },
-      { key: 'charBottom',   label: 'Char Bottom',   unit: 'px' },
-      { key: 'charLeft',     label: 'Char Left',     unit: 'px' },
+      { key: 'sectionWidth',  label: 'Section Width',       unit: 'vw' },
+      { key: 'charBottom',    label: 'Char Bottom',         unit: 'px' },
+      { key: 'charLeft',      label: 'Char Left',           unit: 'px' },
+      { key: 'contentTop',    label: 'Content Column Top',  unit: '%'  },
+      { key: 'contentRight',  label: 'Content Column Right', unit: '%' },
+      { key: 'contentWidth',  label: 'Content Column Width', unit: '%' },
     ],
   },
   {

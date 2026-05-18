@@ -98,7 +98,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const lineRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>(() =>
-    typeof window !== 'undefined' && window.innerWidth >= 1440 ? 'large' : 'normal'
+    typeof window !== 'undefined' && window.innerWidth >= 1600 ? 'large' : 'normal'
   );
 
   useEffect(() => {
@@ -125,7 +125,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     el.addEventListener('scroll', onScroll);
 
     const onResize = () => {
-      setBreakpoint(window.innerWidth >= 1440 ? 'large' : 'normal');
+      setBreakpoint(window.innerWidth >= 1600 ? 'large' : 'normal');
     };
     window.addEventListener('resize', onResize);
 

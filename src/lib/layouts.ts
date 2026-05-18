@@ -16,24 +16,24 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { charBottom: 7, charLeft: 666 },
   },
   3: {
-    normal: { sectionWidth: 75, charBottom: 91, charLeft: 320 },
-    large:  { sectionWidth: 75, charBottom: 91, charLeft: 320 },
+    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30 },
+    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30 },
   },
   4: {
     normal: { charBottom: 90, charLeft: 0 },
     large:  { charBottom: 90, charLeft: 0 },
   },
   5: {
-    normal: { sectionWidth: 90, charBottom: 90, charLeft: 0 },
-    large:  { sectionWidth: 90, charBottom: 90, charLeft: 0 },
+    normal: { sectionWidth: 100, charBottom: 90, charLeft: 0 },
+    large:  { sectionWidth: 100, charBottom: 90, charLeft: 0 },
   },
   6: {
-    normal: { sectionWidth: 80, charBottom: 90, charLeft: 650, charWidth: 240 },
-    large:  { sectionWidth: 80, charBottom: 90, charLeft: 650, charWidth: 240 },
+    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240 },
+    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240 },
   },
   7: {
-    normal: { sectionWidth: 40, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
-    large:  { sectionWidth: 40, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
+    normal: { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
+    large:  { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
   },
   12: {
     normal: {
