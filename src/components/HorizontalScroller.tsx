@@ -105,12 +105,18 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     const el = trackRef.current;
     if (!el) return;
 
-    // Redirect vertical trackpad swipes to horizontal scroll.
-    // Only intercept when the vertical component dominates — otherwise
-    // let the browser handle natural horizontal momentum scrolling.
     const onWheel = (e: WheelEvent) => {
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        e.preventDefault();
+      // Horizontal swipe — let the browser handle it natively.
+      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+
+      e.preventDefault();
+
+      if (Math.abs(e.deltaY) > 40) {
+        // Mouse wheel click: jump exactly one section width so snap has
+        // enough distance to advance rather than snapping back.
+        el.scrollBy({ left: e.deltaY > 0 ? window.innerWidth : -window.innerWidth, behavior: 'smooth' });
+      } else {
+        // Trackpad vertical swipe: redirect delta to horizontal directly.
         el.scrollLeft += e.deltaY;
       }
     };
@@ -220,7 +226,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         height: '100vh',
         overflowX: 'scroll',
         overflowY: 'hidden',
-        scrollSnapType: 'x mandatory',
+        scrollSnapType: 'x proximity',
         position: 'relative',
         // Hide scrollbar across browsers
         scrollbarWidth: 'none',
