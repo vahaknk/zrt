@@ -72,12 +72,13 @@ export default function WhatsThereSection({ section, directusUrl, layout }: Prop
       {/* Content bubble stack */}
       {open && bullets.map((bullet, i) => {
             const cfg = BUBBLE_CONFIG[i] ?? BUBBLE_CONFIG[0];
+            const bubbleTop = layout.bubbleStartTop + i * layout.bubbleGap;
             return (
               <div key={i} style={{
                 position: 'absolute',
-                top: cfg.top, left: cfg.left,
-                width: cfg.width,
-                height: 'clamp(80px, 16vh, 120px)',
+                top: `${bubbleTop}%`, left: cfg.left,
+                width: `${layout.bubbleWidth}px`,
+                height: `${layout.bubbleHeight}px`,
                 zIndex: 3,
               }}>
                 <img

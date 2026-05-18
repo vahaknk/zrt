@@ -31,7 +31,7 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: '36%', left: '50%',
+            position: 'absolute', top: `${layout.bubbleTop}%`, left: `${layout.bubbleLeft}%`,
             transform: 'translate(-50%, -50%)',
             zIndex: 4, cursor: 'pointer', userSelect: 'none',
             display: 'inline-block',
@@ -56,7 +56,7 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
           {/* Content bubble */}
           {open && (
             <div style={{
-              position: 'absolute', top: '-88%', left: '70%',
+              position: 'absolute', top: `${layout.contentBubbleTop}%`, left: `${layout.contentBubbleLeft}%`,
               zIndex: 3, display: 'inline-block', pointerEvents: 'none',
             }}>
               <img
@@ -69,7 +69,7 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
                   position: 'absolute', top: '45%', left: '50%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: 'clamp(0.8rem, 1.6vh, 1.2rem)', lineHeight: 1.6,
+                  fontSize: 'clamp(0.8rem, 1.6vh, 1.2rem)', lineHeight: 1.3,
                   color: '#000', fontWeight: 500, pointerEvents: 'none',
                 }}
                 dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}

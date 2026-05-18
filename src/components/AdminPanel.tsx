@@ -40,8 +40,12 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 4, name: 'ForWhom',
     fields: [
-      { key: 'charBottom', label: 'Char Bottom', unit: 'px' },
-      { key: 'charLeft',   label: 'Char Left',   unit: 'px' },
+      { key: 'bubbleTop',         label: 'Bubble Top',          unit: '%'  },
+      { key: 'bubbleLeft',        label: 'Bubble Left',         unit: '%'  },
+      { key: 'charBottom',        label: 'Char Bottom',         unit: 'px' },
+      { key: 'charLeft',          label: 'Char Left',           unit: 'px' },
+      { key: 'contentBubbleTop',  label: 'Content Bubble Top',  unit: '%'  },
+      { key: 'contentBubbleLeft', label: 'Content Bubble Left', unit: '%'  },
     ],
   },
   {
@@ -55,10 +59,14 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 6, name: 'WhatsThere',
     fields: [
-      { key: 'sectionWidth', label: 'Section Width', unit: 'vw' },
-      { key: 'charBottom',   label: 'Char Bottom',   unit: 'px' },
-      { key: 'charLeft',     label: 'Char Left',     unit: 'px' },
-      { key: 'charWidth',    label: 'Char Width',    unit: 'px' },
+      { key: 'sectionWidth',   label: 'Section Width',         unit: 'vw' },
+      { key: 'charBottom',     label: 'Char Bottom',           unit: 'px' },
+      { key: 'charLeft',       label: 'Char Left',             unit: 'px' },
+      { key: 'charWidth',      label: 'Char Width',            unit: 'px' },
+      { key: 'bubbleStartTop', label: 'Bubbles Start Top',     unit: '%'  },
+      { key: 'bubbleGap',      label: 'Gap Between Bubbles',   unit: '%'  },
+      { key: 'bubbleHeight',   label: 'Bubble Height',         unit: 'px' },
+      { key: 'bubbleWidth',    label: 'Bubble Width',          unit: 'px' },
     ],
   },
   {

@@ -20,16 +20,16 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30 },
   },
   4: {
-    normal: { charBottom: 90, charLeft: 0 },
-    large:  { charBottom: 90, charLeft: 0 },
+    normal: { charBottom: 90, charLeft: 0, bubbleTop: 36, bubbleLeft: 50, contentBubbleTop: -88, contentBubbleLeft: 70 },
+    large:  { charBottom: 90, charLeft: 0, bubbleTop: 36, bubbleLeft: 50, contentBubbleTop: -88, contentBubbleLeft: 70 },
   },
   5: {
     normal: { sectionWidth: 100, charBottom: 90, charLeft: 0 },
     large:  { sectionWidth: 100, charBottom: 90, charLeft: 0 },
   },
   6: {
-    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240 },
-    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240 },
+    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleStartTop: 11, bubbleGap: 12, bubbleHeight: 120, bubbleWidth: 420 },
+    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleStartTop: 11, bubbleGap: 12, bubbleHeight: 120, bubbleWidth: 420 },
   },
   7: {
     normal: { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
