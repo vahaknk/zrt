@@ -6,6 +6,7 @@ interface Props {
   sectionContent: string;
   mainImage: string | null;
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 const inputStyle: React.CSSProperties = {
@@ -30,7 +31,7 @@ const labelStyle: React.CSSProperties = {
   color: '#000',
 };
 
-export default function RegistrationSection({ labels, sectionHeader, sectionContent, mainImage, directusUrl }: Props) {
+export default function RegistrationSection({ labels, sectionHeader, sectionContent, mainImage, directusUrl, layout }: Props) {
   const [form, setForm] = useState({
     full_name: '',
     email: '',
@@ -61,7 +62,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   return (
     <div
       style={{
-        width: '40vw',
+        width: `${layout.sectionWidth}vw`,
         height: '100vh',
         flexShrink: 0,
         position: 'relative',
@@ -78,8 +79,9 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
             style={{ height: 'clamp(400px, 80vh, 700px)', width: 'auto', display: 'block' }}
           />
           <div style={{
-            position: 'absolute', top: '20%', left: '28%',
-            width: '35%', height: '63%',
+            position: 'absolute',
+            top: `${layout.formTop}%`, left: `${layout.formLeft}%`,
+            width: `${layout.formWidth}%`, height: `${layout.formHeight}%`,
             overflowY: 'auto', overflowX: 'hidden',
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>

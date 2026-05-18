@@ -13,10 +13,11 @@ interface Props {
   section: SectionData;
   tabSections: SectionData[];
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
-export default function ConditionsSection({ section, tabSections, directusUrl }: Props) {
+export default function ConditionsSection({ section, tabSections, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const t = section.translations?.[0];
@@ -33,7 +34,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl }:
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: 390, left: 960,
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
             zIndex: 4, cursor: 'pointer', userSelect: 'none',
             display: 'inline-block',
@@ -60,8 +61,8 @@ export default function ConditionsSection({ section, tabSections, directusUrl }:
       {/* Tabbed panel */}
       {open && (
         <div style={{
-          position: 'absolute', top: 220, left: 1400,
-          width: 700,
+          position: 'absolute', top: layout.panelTop, left: layout.panelLeft,
+          width: layout.panelWidth,
           zIndex: 5,
         }}>
           <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
@@ -123,8 +124,8 @@ export default function ConditionsSection({ section, tabSections, directusUrl }:
           src={asset(directusUrl, section.main_image)!}
           alt=""
           style={{
-            position: 'absolute', bottom: 150, left: 1150,
-            width: '240px', height: 'auto', display: 'block',
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
+            width: `${layout.charWidth}px`, height: 'auto', display: 'block',
             zIndex: 2,
           }}
         />

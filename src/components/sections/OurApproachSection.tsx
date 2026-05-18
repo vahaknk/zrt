@@ -10,16 +10,17 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
-export default function OurApproachSection({ section, directusUrl }: Props) {
+export default function OurApproachSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: '75vw', height: '100vh', flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, height: '100vh', flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -76,7 +77,7 @@ export default function OurApproachSection({ section, directusUrl }: Props) {
           src={asset(directusUrl, section.main_image)!}
           alt=""
           style={{
-            position: 'absolute', bottom: 91, left: 320,
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
             width: '130%', height: 'auto', display: 'block',
           }}
         />

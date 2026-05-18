@@ -1,0 +1,57 @@
+---
+import AdminPanel from '../components/AdminPanel';
+
+const pw = Astro.url.searchParams.get('pw') ?? '';
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD ?? '';
+const authed = ADMIN_PASSWORD !== '' && pw === ADMIN_PASSWORD;
+
+let savedLayouts: any[] = [];
+if (authed) {
+  try {
+    const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
+    const DIRECTUS_TOKEN = import.meta.env.DIRECTUS_TOKEN;
+    const res = await fetch(`${DIRECTUS_URL}/items/section_layouts?limit=-1`, {
+      headers: { 'Authorization': `Bearer ${DIRECTUS_TOKEN}` },
+    });
+    const data = await res.json();
+    savedLayouts = data.data ?? [];
+  } catch {}
+}
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zartsants Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f2f2f2; font-family: system-ui, sans-serif; padding: 2rem; min-height: 100vh; }
+  </style>
+</head>
+<body>
+  {!authed ? (
+    <div style="max-width:340px;margin:12vh auto;background:#fff;padding:2rem;border-radius:14px;box-shadow:0 2px 20px rgba(0,0,0,0.12)">
+      <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:1.25rem">Admin Login</h1>
+      <form method="get">
+        <input
+          name="pw"
+          type="password"
+          placeholder="Password"
+          autofocus
+          style="width:100%;padding:0.6rem 0.9rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;margin-bottom:0.75rem;font-family:inherit"
+        />
+        <button
+          type="submit"
+          style="width:100%;padding:0.65rem;background:#000;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  ) : (
+    <AdminPanel pw={pw} savedLayouts={savedLayouts} client:load />
+  )}
+</body>
+</html>

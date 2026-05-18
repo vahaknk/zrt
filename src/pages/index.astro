@@ -31,6 +31,16 @@ try {
 }
 
 const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
+const DIRECTUS_TOKEN = import.meta.env.DIRECTUS_TOKEN;
+
+let savedLayouts: any[] = [];
+try {
+  const layoutRes = await fetch(`${DIRECTUS_URL}/items/section_layouts?limit=-1`, {
+    headers: { 'Authorization': `Bearer ${DIRECTUS_TOKEN}` },
+  });
+  const layoutData = await layoutRes.json();
+  savedLayouts = layoutData.data ?? [];
+} catch {}
 ---
 
 <!doctype html>
@@ -44,6 +54,9 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: system-ui, sans-serif; }
     </style>
     <style is:global>
+      /* Hide horizontal scrollbar added for native trackpad scroll */
+      div::-webkit-scrollbar { display: none; }
+
       @keyframes bubble-hang {
         0%   { transform: translate(-50%, -50%) rotate(0deg); }
         20%  { transform: translate(-50%, -50%) rotate(-8deg); }
@@ -94,6 +107,7 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       sections={sections}
       directusUrl={DIRECTUS_URL}
       labels={labels}
+      savedLayouts={savedLayouts}
       client:load
     />
   </body>

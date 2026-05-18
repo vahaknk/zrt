@@ -9,6 +9,7 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 const LEFT_BALLOONS  = ['/top-left.webp',  '/bottom-left.webp'];
@@ -19,7 +20,7 @@ function parseBullets(html: string): string[] {
   return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
 }
 
-export default function WhatIsZartsantsSection({ section, directusUrl }: Props) {
+export default function WhatIsZartsantsSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
@@ -68,14 +69,6 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
         </div>
       )}
 
-      {/* Golden divider line */}
-      {/* {open && (
-        <div style={{
-          position: 'absolute', top: '50%', left: 0, right: 0,
-          height: 2, background: '#C8942A', zIndex: 1,
-        }} />
-      )} */}
-
       {/* Yellow speech bubble */}
       {section.bubble && (
         <div
@@ -111,7 +104,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl }: Props) 
           src={asset(directusUrl, section.main_image)!}
           alt=""
           style={{
-            position: 'absolute', bottom: 7, left: 666,
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
             width: '100vmax', height: 'auto', display: 'block',
           }}
         />

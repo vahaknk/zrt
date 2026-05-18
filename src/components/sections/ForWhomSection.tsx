@@ -10,10 +10,11 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
-export default function ForWhomSection({ section, directusUrl }: Props) {
+export default function ForWhomSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const t = section.translations?.[0];
@@ -52,7 +53,7 @@ export default function ForWhomSection({ section, directusUrl }: Props) {
             {t?.Header ?? ''}
           </div>
 
-          {/* Content bubble — positioned relative to main bubble */}
+          {/* Content bubble */}
           {open && (
             <div style={{
               position: 'absolute', top: '-88%', left: '70%',
@@ -86,7 +87,7 @@ export default function ForWhomSection({ section, directusUrl }: Props) {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
-            position: 'absolute', bottom: 90, left: 0,
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
             width: '100vmax', height: 'auto', display: 'block',
             zIndex: 5,
           }}

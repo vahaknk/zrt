@@ -9,6 +9,7 @@ import AboutUsSection from './sections/AboutUsSection';
 import ConditionsSection from './sections/ConditionsSection';
 import ContactUsSection from './sections/ContactUsSection';
 import GoToPlatformSection from './sections/GoToPlatformSection';
+import { getLayout, type Breakpoint, type SavedLayout } from '../lib/layouts';
 
 const REGISTRATION_SECTION_ID = 7;
 const WHAT_IS_SECTION_ID = 2;
@@ -41,6 +42,7 @@ interface Props {
   sections: Section[];
   directusUrl: string;
   labels: Record<string, string>;
+  savedLayouts: SavedLayout[];
 }
 
 function fileUrl(directusUrl: string, id: string) {
@@ -91,23 +93,32 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
   );
 }
 
-export default function HorizontalScroller({ sections, directusUrl, labels }: Props) {
+export default function HorizontalScroller({ sections, directusUrl, labels, savedLayouts }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>(() =>
+    typeof window !== 'undefined' && window.innerWidth >= 1440 ? 'large' : 'normal'
+  );
 
   useEffect(() => {
     const el = trackRef.current;
     if (!el) return;
+
+    // Redirect vertical trackpad swipes to horizontal scroll.
+    // Only intercept when the vertical component dominates — otherwise
+    // let the browser handle natural horizontal momentum scrolling.
     const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      el.scrollLeft += e.deltaY + e.deltaX;
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY;
+      }
     };
     el.addEventListener('wheel', onWheel, { passive: false });
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') el.scrollLeft += window.innerWidth;
-      if (e.key === 'ArrowLeft') el.scrollLeft -= window.innerWidth;
+      if (e.key === 'ArrowRight') el.scrollBy({ left: window.innerWidth, behavior: 'smooth' });
+      if (e.key === 'ArrowLeft') el.scrollBy({ left: -window.innerWidth, behavior: 'smooth' });
     };
     window.addEventListener('keydown', onKey);
 
@@ -118,54 +129,66 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
     };
     el.addEventListener('scroll', onScroll);
 
+    const onResize = () => {
+      setBreakpoint(window.innerWidth >= 1440 ? 'large' : 'normal');
+    };
+    window.addEventListener('resize', onResize);
+
     return () => {
       el.removeEventListener('wheel', onWheel);
       el.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKey);
+      window.removeEventListener('resize', onResize);
     };
   }, []);
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(`section-${sectionId}`);
     if (el && trackRef.current) {
-      trackRef.current.scrollLeft = (el.firstElementChild as HTMLElement)?.offsetLeft ?? el.offsetLeft;
+      const target = (el.firstElementChild as HTMLElement)?.offsetLeft ?? el.offsetLeft;
+      trackRef.current.scrollTo({ left: target, behavior: 'smooth' });
     }
     setMenuOpen(false);
   };
 
   const navSections = sections.filter(s => !TAB_SECTION_IDS.includes(Number(s.id)));
 
+  function layout(sectionId: number) {
+    return getLayout(sectionId, breakpoint, savedLayouts);
+  }
+
   function getSectionContent(section: Section) {
-    if (Number(section.id) === WHAT_IS_SECTION_ID) {
-      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} />;
+    const id = Number(section.id);
+    if (id === WHAT_IS_SECTION_ID) {
+      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION3_ID) {
-      return <OurApproachSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION3_ID) {
+      return <OurApproachSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION4_ID) {
-      return <ForWhomSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION4_ID) {
+      return <ForWhomSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION5_ID) {
-      return <WhatHappensSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION5_ID) {
+      return <WhatHappensSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION6_ID) {
-      return <WhatsThereSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION6_ID) {
+      return <WhatsThereSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION12_ID) {
-      return <AboutUsSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION12_ID) {
+      return <AboutUsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION13_ID) {
-      return <ContactUsSection section={section} directusUrl={directusUrl} />;
+    if (id === SECTION13_ID) {
+      return <ContactUsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === SECTION14_ID) {
-      return <GoToPlatformSection section={section} directusUrl={directusUrl} onNavigateToRegistration={() => scrollToSection('7')} />;
+    if (id === SECTION14_ID) {
+      return <GoToPlatformSection section={section} directusUrl={directusUrl} layout={layout(id)} onNavigateToRegistration={() => scrollToSection('7')} />;
     }
-    if (TAB_SECTION_IDS.includes(Number(section.id))) return null;
-    if (Number(section.id) === SECTION15_ID) {
+    if (TAB_SECTION_IDS.includes(id)) return null;
+    if (id === SECTION15_ID) {
       const tabSections = sections.filter(s => TAB_SECTION_IDS.includes(Number(s.id)));
-      return <ConditionsSection section={section} tabSections={tabSections} directusUrl={directusUrl} />;
+      return <ConditionsSection section={section} tabSections={tabSections} directusUrl={directusUrl} layout={layout(id)} />;
     }
-    if (Number(section.id) === REGISTRATION_SECTION_ID) {
+    if (id === REGISTRATION_SECTION_ID) {
       return (
         <RegistrationSection
           labels={labels}
@@ -173,6 +196,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
           sectionContent={section.translations?.[0]?.Content ?? ''}
           mainImage={section.main_image}
           directusUrl={directusUrl}
+          layout={layout(id)}
         />
       );
     }
@@ -194,10 +218,14 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
         display: 'flex',
         width: '100vw',
         height: '100vh',
-        overflowX: 'hidden',
-        scrollBehavior: 'smooth',
+        overflowX: 'scroll',
+        overflowY: 'hidden',
+        scrollSnapType: 'x mandatory',
         position: 'relative',
-      }}
+        // Hide scrollbar across browsers
+        scrollbarWidth: 'none',
+        msOverflowStyle: 'none',
+      } as React.CSSProperties}
     >
       {/* Sticky logo with nav menu */}
       <div style={{
@@ -271,7 +299,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels }: Pr
         const content = getSectionContent(section);
         if (content === null) return null;
         return (
-          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
+          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0, scrollSnapAlign: 'start' }}>
             {content}
           </div>
         );

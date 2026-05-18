@@ -8,6 +8,7 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 function parseBullets(html: string): string[] {
@@ -15,17 +16,17 @@ function parseBullets(html: string): string[] {
   return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
 }
 
-export default function AboutUsSection({ section, directusUrl }: Props) {
+export default function AboutUsSection({ section, directusUrl, layout }: Props) {
   const [index, setIndex] = useState(0);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
   const scatteredImages = [
-    { src: '/aboug_us_1.webp', top: 60,  left: 80,   width: 180, rotate: 0  },
-    { src: '/aboug_us_2.webp', top: 120, left: 700,  width: 160, rotate: 0   },
-    { src: '/aboug_us_3.webp', top: 550, left: 200,  width: 190, rotate: 0  },
-    { src: '/aboug_us_4.webp', top: 650, left: 900,  width: 170, rotate: 0   },
-    { src: '/aboug_us_5.webp', top: 80,  left: 1300, width: 175, rotate: 0  },
+    { src: '/aboug_us_1.webp', top: layout.p1t, left: layout.p1l, width: layout.p1w },
+    { src: '/aboug_us_2.webp', top: layout.p2t, left: layout.p2l, width: layout.p2w },
+    { src: '/aboug_us_3.webp', top: layout.p3t, left: layout.p3l, width: layout.p3w },
+    { src: '/aboug_us_4.webp', top: layout.p4t, left: layout.p4l, width: layout.p4w },
+    { src: '/aboug_us_5.webp', top: layout.p5t, left: layout.p5l, width: layout.p5w },
   ];
 
   return (
@@ -43,7 +44,6 @@ export default function AboutUsSection({ section, directusUrl }: Props) {
             position: 'absolute',
             top: img.top, left: img.left,
             width: img.width, height: 'auto',
-            transform: `rotate(${img.rotate}deg)`,
             zIndex: 1,
             pointerEvents: 'none',
           }}

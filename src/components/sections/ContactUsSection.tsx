@@ -10,10 +10,11 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
-export default function ContactUsSection({ section, directusUrl }: Props) {
+export default function ContactUsSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const t = section.translations?.[0];
@@ -30,7 +31,7 @@ export default function ContactUsSection({ section, directusUrl }: Props) {
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: 360, left: 480,
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
             zIndex: 4, cursor: 'pointer', userSelect: 'none',
             display: 'inline-block',
@@ -55,7 +56,7 @@ export default function ContactUsSection({ section, directusUrl }: Props) {
           {/* Content bubble */}
           {open && (
             <div style={{
-              position: 'absolute', top: -160, left: 750,
+              position: 'absolute', top: layout.contentTop, left: layout.contentLeft,
               zIndex: 3, display: 'inline-block', pointerEvents: 'none',
             }}>
               <img
@@ -88,8 +89,8 @@ export default function ContactUsSection({ section, directusUrl }: Props) {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
-            position: 'absolute', bottom: 180, left: 700,
-            width: '500px', height: 'auto', display: 'block',
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
+            width: `${layout.charWidth}px`, height: 'auto', display: 'block',
             zIndex: 5,
           }}
         />

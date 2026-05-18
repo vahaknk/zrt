@@ -10,6 +10,7 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
@@ -18,7 +19,7 @@ function parseBullets(html: string): string[] {
   return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
 }
 
-export default function WhatHappensSection({ section, directusUrl }: Props) {
+export default function WhatHappensSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [index, setIndex] = useState(0);
@@ -27,7 +28,7 @@ export default function WhatHappensSection({ section, directusUrl }: Props) {
 
   return (
     <div style={{
-      width: '90vw', height: '100vh', flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, height: '100vh', flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -59,7 +60,7 @@ export default function WhatHappensSection({ section, directusUrl }: Props) {
             {t?.Header ?? ''}
           </div>
 
-          {/* Content bubble — positioned relative to main bubble */}
+          {/* Content bubble */}
           {open && (
             <div style={{
               position: 'absolute', top: '-45%', left: '110%',
@@ -113,7 +114,7 @@ export default function WhatHappensSection({ section, directusUrl }: Props) {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
-            position: 'absolute', bottom: 90, left: 0,
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
             width: '100vmax', height: 'auto', display: 'block',
             zIndex: 5,
           }}

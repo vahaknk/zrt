@@ -10,6 +10,7 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  layout: Record<string, number>;
 }
 
 
@@ -26,7 +27,7 @@ const BUBBLE_CONFIG = [
   { top: '57%', left: '18%', width: '420px', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%' },
 ];
 
-export default function WhatsThereSection({ section, directusUrl }: Props) {
+export default function WhatsThereSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const t = section.translations?.[0];
@@ -34,7 +35,7 @@ export default function WhatsThereSection({ section, directusUrl }: Props) {
 
   return (
     <div style={{
-      width: '80vw', height: '100vh', flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, height: '100vh', flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -124,8 +125,8 @@ export default function WhatsThereSection({ section, directusUrl }: Props) {
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           style={{
-            position: 'absolute', bottom: 90, left: 650,
-            width: '240px', height: 'auto', display: 'block',
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
+            width: `${layout.charWidth}px`, height: 'auto', display: 'block',
             zIndex: 5,
           }}
         />
