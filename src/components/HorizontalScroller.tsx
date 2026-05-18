@@ -105,20 +105,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     const el = trackRef.current;
     if (!el) return;
 
-    const DAMPING = 0.4; // lower = slower scroll feel
-
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-
-      if (Math.abs(e.deltaY) > 40 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        // Mouse wheel click — jump one section so mandatory snap can advance.
-        el.scrollBy({ left: e.deltaY > 0 ? window.innerWidth : -window.innerWidth, behavior: 'smooth' });
-      } else {
-        // Trackpad (horizontal swipe or vertical redirect) — apply damping
-        // so speed is controllable instead of using full OS momentum.
-        const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-        el.scrollLeft += delta * DAMPING;
-      }
+      el.scrollLeft += e.deltaX + e.deltaY;
     };
     el.addEventListener('wheel', onWheel, { passive: false });
 
@@ -224,14 +213,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         display: 'flex',
         width: '100vw',
         height: '100vh',
-        overflowX: 'scroll',
-        overflowY: 'hidden',
-        scrollSnapType: 'x mandatory',
+        overflowX: 'hidden',
         position: 'relative',
-        // Hide scrollbar across browsers
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-      } as React.CSSProperties}
+      }}
     >
       {/* Sticky logo with nav menu */}
       <div style={{
@@ -305,7 +289,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         const content = getSectionContent(section);
         if (content === null) return null;
         return (
-          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0, scrollSnapAlign: 'start' }}>
+          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
             {content}
           </div>
         );
