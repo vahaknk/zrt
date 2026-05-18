@@ -66,7 +66,7 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
           />
         )}
         <div
-          style={{ fontSize: '1.2rem', lineHeight: 1.75, color: '#fff' }}
+          style={{ fontSize: '1.2rem', lineHeight: 1.75, color: '#ffea00' }}
           dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
         />
       </div>}
