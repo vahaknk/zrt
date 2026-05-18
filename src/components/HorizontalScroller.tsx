@@ -105,19 +105,19 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     const el = trackRef.current;
     if (!el) return;
 
-    const onWheel = (e: WheelEvent) => {
-      // Horizontal swipe — let the browser handle it natively.
-      if (Math.abs(e.deltaX) >= Math.abs(e.deltaY)) return;
+    const DAMPING = 0.4; // lower = slower scroll feel
 
+    const onWheel = (e: WheelEvent) => {
       e.preventDefault();
 
-      if (Math.abs(e.deltaY) > 40) {
-        // Mouse wheel click: jump exactly one section width so snap has
-        // enough distance to advance rather than snapping back.
+      if (Math.abs(e.deltaY) > 40 && Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        // Mouse wheel click — jump one section so mandatory snap can advance.
         el.scrollBy({ left: e.deltaY > 0 ? window.innerWidth : -window.innerWidth, behavior: 'smooth' });
       } else {
-        // Trackpad vertical swipe: redirect delta to horizontal directly.
-        el.scrollLeft += e.deltaY;
+        // Trackpad (horizontal swipe or vertical redirect) — apply damping
+        // so speed is controllable instead of using full OS momentum.
+        const delta = Math.abs(e.deltaX) >= Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+        el.scrollLeft += delta * DAMPING;
       }
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -226,7 +226,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         height: '100vh',
         overflowX: 'scroll',
         overflowY: 'hidden',
-        scrollSnapType: 'x proximity',
+        scrollSnapType: 'x mandatory',
         position: 'relative',
         // Hide scrollbar across browsers
         scrollbarWidth: 'none',
