@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
 interface Props {
@@ -22,6 +22,9 @@ function parseBullets(html: string): string[] {
 
 export default function WhatIsZartsantsSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
+  const [bubbleLoaded, setBubbleLoaded] = useState(false);
+  const bubbleRef = useRef<HTMLImageElement>(null);
+  useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
@@ -82,8 +85,10 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
           }}
         >
           <img
+            ref={bubbleRef}
             src={asset(directusUrl, section.bubble)!}
             alt=""
+            onLoad={() => setBubbleLoaded(true)}
             style={{ height: 'clamp(100px, 28vh, 260px)', width: 'auto', display: 'block' }}
           />
           <div style={{
@@ -92,6 +97,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
             textAlign: 'center', fontWeight: 700,
             fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal', pointerEvents: 'none', paddingRight: '1rem',
+            opacity: bubbleLoaded ? 1 : 0,
           }}>
             {t?.Header ?? ''}
           </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
 interface Props {
@@ -16,6 +16,9 @@ interface Props {
 
 export default function OurApproachSection({ section, directusUrl, layout }: Props) {
   const [open, setOpen] = useState(false);
+  const [bubbleLoaded, setBubbleLoaded] = useState(false);
+  const bubbleRef = useRef<HTMLImageElement>(null);
+  useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
   const t = section.translations?.[0];
 
   return (
@@ -35,8 +38,10 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
             zIndex: 2, display: 'inline-block', cursor: 'pointer', userSelect: 'none',
           }}>
           <img
+            ref={bubbleRef}
             src={asset(directusUrl, section.bubble)!}
             alt=""
+            onLoad={() => setBubbleLoaded(true)}
             style={{ height: 'clamp(100px, 28vh, 260px)', width: 'auto', display: 'block', transform: 'scaleX(-1) rotate(-20deg)' }}
           />
           <div style={{
@@ -46,6 +51,7 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
             fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
+            opacity: bubbleLoaded ? 1 : 0,
           }}>
             {t?.Header ?? ''}
           </div>
