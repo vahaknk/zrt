@@ -32,7 +32,7 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleStartTop: 11, bubbleGap: 12, bubbleHeight: 120, bubbleWidth: 420 },
   },
   7: {
-    normal: { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
+    normal: { sectionWidth: 100, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
     large:  { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
   },
   12: {

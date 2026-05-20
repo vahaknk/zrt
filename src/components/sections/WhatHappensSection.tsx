@@ -72,7 +72,7 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
                 style={{ height: 'clamp(180px, 42vh, 220px)', width: 'auto', display: 'block' }}
               />
               <div style={{
-                position: 'absolute', top: '45%', left: '50%',
+                position: 'absolute', top: '40%', left: '50%',
                 transform: 'translate(-50%, -50%)',
                 width: '75%', textAlign: 'center',
                 display: 'flex', alignItems: 'center', gap: '0.5rem',

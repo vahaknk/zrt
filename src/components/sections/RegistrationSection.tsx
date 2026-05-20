@@ -12,12 +12,12 @@ interface Props {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
-  height: '2.6rem',
-  padding: '0.65rem 0.9rem',
+  height: '2.1rem',
+  padding: '0.4rem 0.7rem',
   background: '#fff',
   border: '1px solid rgba(0,0,0,0.15)',
   borderRadius: 8,
-  fontSize: '0.95rem',
+  fontSize: '0.85rem',
   color: '#000',
   outline: 'none',
   fontFamily: 'inherit',
@@ -25,9 +25,9 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '0.8rem',
+  fontSize: '0.75rem',
   fontWeight: 600,
-  marginBottom: '0.3rem',
+  marginBottom: '0.15rem',
   color: '#000',
 };
 
@@ -86,12 +86,12 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
         <div style={{ width: '100%' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>
+        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
           {sectionHeader}
         </h2>
         {sectionContent && (
           <div
-            style={{ fontSize: '0.85rem', lineHeight: 1.4, marginBottom: '1.5rem' }}
+            style={{ fontSize: '0.78rem', lineHeight: 1.3, marginBottom: '0.6rem' }}
             dangerouslySetInnerHTML={{ __html: sectionContent }}
           />
         )}
@@ -99,7 +99,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
         {status === 'success' ? (
           <p style={{ fontSize: '1.1rem' }}>✓ {labels['submit_button'] ?? 'Submitted'}</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
 
             <div>
               <label style={labelStyle}>{labels['name_label']}</label>
@@ -125,7 +125,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-end' }}>
               <div style={{ flex: 1 }}>
                 <label style={labelStyle}>{labels['birthday']}</label>
                 <input

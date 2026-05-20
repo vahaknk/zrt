@@ -105,9 +105,16 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     const el = trackRef.current;
     if (!el) return;
 
+    const syncLine = () => {
+      if (lineRef.current) {
+        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft}px`;
+      }
+    };
+
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       el.scrollLeft += e.deltaX + e.deltaY;
+      syncLine();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
 
@@ -117,12 +124,18 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     };
     window.addEventListener('keydown', onKey);
 
-    const onScroll = () => {
-      if (lineRef.current) {
-        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft}px`;
+    // rAF loop keeps the line in sync during smooth scrolls (keyboard, nav menu)
+    // where overflow:hidden suppresses the scroll event in Chrome.
+    let rafId: number;
+    let lastScroll = el.scrollLeft;
+    const rafLoop = () => {
+      if (el.scrollLeft !== lastScroll) {
+        lastScroll = el.scrollLeft;
+        syncLine();
       }
+      rafId = requestAnimationFrame(rafLoop);
     };
-    el.addEventListener('scroll', onScroll);
+    rafId = requestAnimationFrame(rafLoop);
 
     const onResize = () => {
       setBreakpoint(window.innerWidth >= 1600 ? 'large' : 'normal');
@@ -131,9 +144,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
     return () => {
       el.removeEventListener('wheel', onWheel);
-      el.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
@@ -282,6 +295,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           backgroundSize: 'auto 100%',
           pointerEvents: 'none',
           zIndex: 0,
+          willChange: 'background-position',
         }}
       />
 
@@ -294,6 +308,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           </div>
         );
       })}
+      <div style={{ flexShrink: 0, width: 640, height: '100vh' }} />
     </div>
   );
 }
