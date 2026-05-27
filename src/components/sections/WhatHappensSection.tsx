@@ -1,3 +1,4 @@
+import { decodeHtml } from '../../lib/text';
 import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
@@ -16,7 +17,7 @@ interface Props {
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
-  return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
 export default function WhatHappensSection({ section, directusUrl, layout }: Props) {
@@ -63,7 +64,7 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
-            {t?.Header ?? ''}
+            {decodeHtml(t?.Header ?? '')}
           </div>
 
           {/* Content bubble */}

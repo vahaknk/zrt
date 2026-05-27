@@ -1,3 +1,4 @@
+import { decodeHtml } from '../../lib/text';
 import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
@@ -16,7 +17,7 @@ interface Props {
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
-  return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
 const BUBBLE_CONFIG = [
@@ -42,102 +43,108 @@ export default function WhatsThereSection({ section, directusUrl, layout }: Prop
       position: 'relative', overflow: 'visible',
     }}>
 
-      {/* Main bubble (clickable) */}
-      {section.bubble && (
-        <div
-          onClick={() => setOpen(o => !o)}
-          className={open ? '' : 'bubble-hang'}
-          style={{
-            position: 'absolute', top: '46%', left: '68%',
-            transform: 'translate(-50%, -50%)',
-            zIndex: open ? 2 : 4, cursor: 'pointer', userSelect: 'none',
-            display: 'inline-block',
-          }}
-        >
-          <img
-            ref={bubbleRef}
-            src={asset(directusUrl, section.bubble)!}
-            alt=""
-            onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 200px)', width: 'auto', display: 'block', transform: 'scaleX(-1)' }}
-          />
-          <div style={{
-            position: 'absolute', top: '42%', left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center', fontWeight: 700,
-            fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
-            width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
-            pointerEvents: 'none', paddingRight: '1rem',
-            opacity: bubbleLoaded ? 1 : 0,
-          }}>
-            {t?.Header ?? ''}
+      {/* Group: character + bubbles float together */}
+      <div
+        className={open ? undefined : 'whats-there-group'}
+        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+      >
+        {/* Main bubble (clickable) */}
+        {section.bubble && (
+          <div
+            onClick={() => setOpen(o => !o)}
+            className={open ? '' : 'bubble-hang'}
+            style={{
+              position: 'absolute', top: '46%', left: '68%',
+              transform: 'translate(-50%, -50%)',
+              zIndex: open ? 2 : 4, cursor: 'pointer', userSelect: 'none',
+              display: 'inline-block',
+            }}
+          >
+            <img
+              ref={bubbleRef}
+              src={asset(directusUrl, section.bubble)!}
+              alt=""
+              onLoad={() => setBubbleLoaded(true)}
+              style={{ height: 'clamp(100px, 28vh, 200px)', width: 'auto', display: 'block', transform: 'scaleX(-1)' }}
+            />
+            <div style={{
+              position: 'absolute', top: '42%', left: '50%',
+              transform: 'translate(-50%, -50%)',
+              textAlign: 'center', fontWeight: 700,
+              fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
+              width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
+              pointerEvents: 'none', paddingRight: '1rem',
+              opacity: bubbleLoaded ? 1 : 0,
+            }}>
+              {decodeHtml(t?.Header ?? '')}
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Content bubble stack */}
-      {open && bullets.map((bullet, i) => {
-            const cfg = BUBBLE_CONFIG[i] ?? BUBBLE_CONFIG[0];
-            const bubbleTop = layout.bubbleStartTop + i * layout.bubbleGap;
-            return (
-              <div key={i} style={{
-                position: 'absolute',
-                top: `${bubbleTop}%`, left: cfg.left,
-                width: `${layout.bubbleWidth}px`,
-                height: `${layout.bubbleHeight}px`,
-                zIndex: 3,
-              }}>
-                <img
-                  src={`/whats_there_${i + 1}.webp`}
-                  alt=""
-                  style={{
-                    width: '100%', height: '100%',
-                    objectFit: 'fill', display: 'block',
-                  }}
-                />
-                {/* Illustration */}
-                <img
-                  src={`/whats_there_pic_${i + 1}.webp`}
-                  alt=""
-                  style={{
-                    position: 'absolute',
-                    top: cfg.picTop, transform: 'translateY(-50%)',
-                    [cfg.picOnLeft ? 'left' : 'right']: cfg.picOffset,
-                    height: '85%', width: 'auto',
-                  }}
-                />
-                {/* Text */}
-                <div style={{
+        {/* Content bubble stack */}
+        {open && bullets.map((bullet, i) => {
+              const cfg = BUBBLE_CONFIG[i] ?? BUBBLE_CONFIG[0];
+              const bubbleTop = layout.bubbleStartTop + i * layout.bubbleGap;
+              return (
+                <div key={i} style={{
                   position: 'absolute',
-                  top: cfg.textTop, transform: 'translateY(-50%)',
-                  [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
-                  width: '50%',
-                  textAlign: 'left',
-                  fontSize: 'clamp(0.75rem, 1.6vh, 1.15rem)',
-                  fontWeight: 700, color: '#000',
-                  wordBreak: 'break-word', whiteSpace: 'normal',
-                  lineHeight: 1.3,
+                  top: `${bubbleTop}%`, left: cfg.left,
+                  width: `${layout.bubbleWidth}px`,
+                  height: `${layout.bubbleHeight}px`,
+                  zIndex: 3,
                 }}>
-                  {bullet}
+                  <img
+                    src={`/whats_there_${i + 1}.webp`}
+                    alt=""
+                    style={{
+                      width: '100%', height: '100%',
+                      objectFit: 'fill', display: 'block',
+                    }}
+                  />
+                  {/* Illustration */}
+                  <img
+                    src={`/whats_there_pic_${i + 1}.webp`}
+                    alt=""
+                    style={{
+                      position: 'absolute',
+                      top: cfg.picTop, transform: 'translateY(-50%)',
+                      [cfg.picOnLeft ? 'left' : 'right']: cfg.picOffset,
+                      height: '85%', width: 'auto',
+                    }}
+                  />
+                  {/* Text */}
+                  <div style={{
+                    position: 'absolute',
+                    top: cfg.textTop, transform: 'translateY(-50%)',
+                    [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
+                    width: '50%',
+                    textAlign: 'left',
+                    fontSize: 'clamp(0.75rem, 1.6vh, 1.15rem)',
+                    fontWeight: 700, color: '#000',
+                    wordBreak: 'break-word', whiteSpace: 'normal',
+                    lineHeight: 1.3,
+                  }}>
+                    {bullet}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
 
-      {/* Characters illustration */}
-      {section.main_image && (
-        <img
-          src={hovered && section.hoover_image ? asset(directusUrl, section.hoover_image)! : asset(directusUrl, section.main_image)!}
-          alt=""
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          style={{
-            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: `${layout.charWidth}px`, height: 'auto', display: 'block',
-            zIndex: 5,
-          }}
-        />
-      )}
+        {/* Characters illustration */}
+        {section.main_image && (
+          <img
+            src={hovered && section.hoover_image ? asset(directusUrl, section.hoover_image)! : asset(directusUrl, section.main_image)!}
+            alt=""
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            style={{
+              position: 'absolute', bottom: `${layout.charBottom}%`, left: `${layout.charLeft}%`,
+              width: `${layout.charWidth}%`, height: 'auto', display: 'block',
+              zIndex: 5,
+            }}
+          />
+        )}
+      </div>
     </div>
   );
 }

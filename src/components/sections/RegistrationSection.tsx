@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { decodeHtml } from '../../lib/text';
 
 interface Props {
   labels: Record<string, string>;
@@ -87,7 +88,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
           }}>
         <div style={{ width: '100%' }}>
         <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-          {sectionHeader}
+          {decodeHtml(sectionHeader)}
         </h2>
         {sectionContent && (
           <div
@@ -193,7 +194,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
         </div>
       ) : (
         <div style={{ width: '99%', maxWidth: 480, padding: '2rem' }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>{sectionHeader}</h2>
+          <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>{decodeHtml(sectionHeader)}</h2>
         </div>
       )}
     </div>

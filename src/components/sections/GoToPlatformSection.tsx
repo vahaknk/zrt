@@ -1,3 +1,4 @@
+import { decodeHtml } from '../../lib/text';
 import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
@@ -57,7 +58,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
-            {t?.Header ?? ''}
+            {decodeHtml(t?.Header ?? '')}
           </div>
 
           {/* Content bubble */}

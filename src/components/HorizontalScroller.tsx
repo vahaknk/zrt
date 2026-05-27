@@ -93,6 +93,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
   );
 }
 
+
 export default function HorizontalScroller({ sections, directusUrl, labels, savedLayouts }: Props) {
   const trackRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
@@ -107,7 +108,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
     const syncLine = () => {
       if (lineRef.current) {
-        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft}px`;
+        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft * 0.6}px`;
       }
     };
 
@@ -129,8 +130,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     let rafId: number;
     let lastScroll = el.scrollLeft;
     const rafLoop = () => {
-      if (el.scrollLeft !== lastScroll) {
-        lastScroll = el.scrollLeft;
+      const s = el.scrollLeft;
+      if (s !== lastScroll) {
+        lastScroll = s;
         syncLine();
       }
       rafId = requestAnimationFrame(rafLoop);
@@ -298,6 +300,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           willChange: 'background-position',
         }}
       />
+
 
       {sections.map((section) => {
         const content = getSectionContent(section);

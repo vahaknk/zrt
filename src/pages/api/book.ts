@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 import { adminGet, adminPatch } from '../../lib/directusAdmin';
 
 export const POST: APIRoute = async ({ request }) => {
-  const { token, slot_id } = await request.json();
+  const { token, slot_id, interview_language } = await request.json();
 
   if (!token || !slot_id) {
     return new Response(JSON.stringify({ error: 'Missing token or slot_id' }), { status: 400 });
@@ -34,6 +34,7 @@ export const POST: APIRoute = async ({ request }) => {
       interview_slot: slot_id,
       email_verified: true,
       slot_chosen: true,
+      ...(interview_language ? { interview_language } : {}),
     });
   } catch (e: any) {
     console.error('Booking patch error:', e?.message);

@@ -49,6 +49,9 @@ try {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zartsants</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Armenian:wght@400;700&display=swap" rel="stylesheet" />
     <!-- Content images that appear on bubble click — preloaded to prevent flash -->
     <link rel="preload" as="image" href="/for_whom_click_bubble.webp" />
     <link rel="preload" as="image" href="/what_happens_click_bubble.webp" />
@@ -75,10 +78,17 @@ try {
     <link rel="preload" as="image" href="/aboug_us_5.webp" />
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: system-ui, sans-serif; }
+      html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: 'Noto Sans', 'Noto Sans Armenian', system-ui, sans-serif; }
     </style>
     <style is:global>
 
+      @keyframes whats-there-float {
+        0%, 100% { transform: translateX(0px); }
+        50%      { transform: translateX(-18px); }
+      }
+      .whats-there-group {
+        animation: whats-there-float 4s ease-in-out infinite;
+      }
       @keyframes bubble-hang {
         0%   { transform: translate(-50%, -50%) rotate(0deg); }
         20%  { transform: translate(-50%, -50%) rotate(-8deg); }

@@ -45,20 +45,30 @@ function formatSlot(start: string, end: string) {
   return `${year} ${month} ${day}, ${weekday} · ${timeS}–${timeE}`;
 }
 
+const INTERVIEW_LANGUAGES = [
+  { id: 'hyw', label: 'Հայերէն' },
+  { id: 'fr',  label: 'Français' },
+  { id: 'en',  label: 'English' },
+  { id: 'de',  label: 'Deutsch' },
+  { id: 'it',  label: 'Italiano' },
+  { id: 'tr',  label: 'Türkçe' },
+];
+
 export default function SlotPicker({ registration, slots, token, labels }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [interviewLang, setInterviewLang] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selected) return;
+    if (!selected || !interviewLang) return;
     setStatus('sending');
     try {
       const res = await fetch('/api/book', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, slot_id: selected }),
+        body: JSON.stringify({ token, slot_id: selected, interview_language: interviewLang }),
       });
       if (res.ok) {
         window.location.href = '/book/confirmed';
@@ -79,8 +89,40 @@ export default function SlotPicker({ registration, slots, token, labels }: Props
         <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
           {labels['booking_welcome'] ?? 'Բարեւ'}{', '}{registration.full_name}
         </h1>
-        <p style={{ marginBottom: '2rem', fontSize: '1rem', lineHeight: 1.6 }}>
-          {labels['booking_intro'] ?? 'Ընտرէ՛ ձези յармар ժamы։'}
+
+
+        {/* Interview language selector */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '1rem', lineHeight: 1.6 }}>
+            {labels['booking.language_selector'] ?? 'Զատեցէք ձեր հարցազրոյցի լեզուն։'}
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}>
+            {INTERVIEW_LANGUAGES.map((lang) => (
+              <button
+                key={lang.id}
+                type="button"
+                onClick={() => setInterviewLang(lang.id)}
+                style={{
+                  padding: '0.4rem 1rem',
+                  borderRadius: 999,
+                  border: '1px solid rgba(0,0,0,0.2)',
+                  background: interviewLang === lang.id ? '#000' : '#fff',
+                  color: interviewLang === lang.id ? '#9683fe' : '#000',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
+              >
+                {lang.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '1rem', lineHeight: 1.6 }}>
+          {labels['booking_intro'] ?? 'Հաճեցէք ընտրել ձեզի յարմար ժամը։'}
         </p>
 
         {slots.length === 0 ? (
@@ -126,7 +168,7 @@ export default function SlotPicker({ registration, slots, token, labels }: Props
 
             <button
               type="submit"
-              disabled={!selected || status === 'sending'}
+              disabled={!selected || !interviewLang || status === 'sending'}
               style={{
                 marginTop: '0.5rem',
                 padding: '0.8rem',
@@ -136,9 +178,9 @@ export default function SlotPicker({ registration, slots, token, labels }: Props
                 borderRadius: 8,
                 fontSize: '1rem',
                 fontWeight: 700,
-                cursor: selected ? 'pointer' : 'not-allowed',
+                cursor: selected && interviewLang ? 'pointer' : 'not-allowed',
                 fontFamily: 'inherit',
-                opacity: selected ? 1 : 0.5,
+                opacity: selected && interviewLang ? 1 : 0.5,
               }}
             >
               {status === 'sending' ? '...' : (labels['booking_confirm'] ?? 'Հաstaвател')}

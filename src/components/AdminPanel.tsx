@@ -60,9 +60,9 @@ const SECTION_DEFS: SectionDef[] = [
     id: 6, name: 'WhatsThere',
     fields: [
       { key: 'sectionWidth',   label: 'Section Width',         unit: 'vw' },
-      { key: 'charBottom',     label: 'Char Bottom',           unit: 'px' },
-      { key: 'charLeft',       label: 'Char Left',             unit: 'px' },
-      { key: 'charWidth',      label: 'Char Width',            unit: 'px' },
+      { key: 'charBottom',     label: 'Char Bottom',           unit: '%'  },
+      { key: 'charLeft',       label: 'Char Left',             unit: '%'  },
+      { key: 'charWidth',      label: 'Char Width',            unit: '%'  },
       { key: 'bubbleStartTop', label: 'Bubbles Start Top',     unit: '%'  },
       { key: 'bubbleGap',      label: 'Gap Between Bubbles',   unit: '%'  },
       { key: 'bubbleHeight',   label: 'Bubble Height',         unit: 'px' },

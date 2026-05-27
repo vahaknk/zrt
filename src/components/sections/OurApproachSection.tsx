@@ -1,3 +1,4 @@
+import { decodeHtml } from '../../lib/text';
 import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
@@ -53,7 +54,7 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
-            {t?.Header ?? ''}
+            {decodeHtml(t?.Header ?? '')}
           </div>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { decodeHtml } from '../../lib/text';
 import { useState, useRef, useEffect } from 'react';
 import { asset } from '../../lib/asset';
 
@@ -17,7 +18,7 @@ const RIGHT_BALLOONS = ['/top-right.webp', '/bottom-right.webp'];
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
-  return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
 export default function WhatIsZartsantsSection({ section, directusUrl, layout }: Props) {
@@ -99,7 +100,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal', pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
-            {t?.Header ?? ''}
+            {decodeHtml(t?.Header ?? '')}
           </div>
         </div>
       )}

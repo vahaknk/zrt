@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { decodeHtml } from '../../lib/text';
 import { asset } from '../../lib/asset';
 
 interface SectionData {
@@ -59,7 +60,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
-            {t?.Header ?? ''}
+            {decodeHtml(t?.Header ?? '')}
           </div>
         </div>
       )}
@@ -105,7 +106,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
                         lineHeight: 1.2,
                       }}
                     >
-                      {tabT?.Header ?? `Tab ${i + 1}`}
+                      {decodeHtml(tabT?.Header ?? `Tab ${i + 1}`)}
                     </button>
                   );
                 })}

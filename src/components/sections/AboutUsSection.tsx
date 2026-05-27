@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { decodeHtml } from '../../lib/text';
 import { fileUrl } from '../../lib/asset';
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
-  return matches.map(m => m.replace(/<[^>]+>/g, '').trim()).filter(Boolean);
+  return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
 export default function AboutUsSection({ section, directusUrl, layout }: Props) {
@@ -68,7 +69,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
                 color: '#000', flexShrink: 0, width: '30%',
                 lineHeight: 1.3, wordBreak: 'break-word',
               }}>
-                {t.Header}
+                {decodeHtml(t.Header)}
               </h2>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.2rem', flex: 1 }}>
