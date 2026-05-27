@@ -192,7 +192,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
           </div>
         </div>
       ) : (
-        <div style={{ width: '100%', maxWidth: 480, padding: '2rem' }}>
+        <div style={{ width: '99%', maxWidth: 480, padding: '2rem' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '1rem' }}>{sectionHeader}</h2>
         </div>
       )}

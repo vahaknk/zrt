@@ -13,9 +13,16 @@ const ORDER = ['hyw', 'fr', 'en'];
 let languages: Language[] = [];
 try {
   const result = (await directus.request(readItems('languages' as any))) as Language[];
-  languages = result.sort((a, b) => ORDER.indexOf(a.id) - ORDER.indexOf(b.id));
+  languages = result.sort((a, b) => {
+    const ai = ORDER.indexOf(a.id);
+    const bi = ORDER.indexOf(b.id);
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
 } catch {
-  languages = [{ id: 'hyw', name: 'Արեւمտهایерён', landing_image: '', landing_tagline: '' }];
+  languages = [{ id: 'hyw', name: 'Արեւمتهایерён', landing_image: '', landing_tagline: '' }];
 }
 
 const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
@@ -35,42 +42,173 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
         background: #9683fe;
         font-family: system-ui, sans-serif;
       }
-      .grid {
+      .page {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        align-items: center;
+        justify-items: center;
+        flex: 1;
+        min-height: 0;
+        padding: 24px 32px 12px;
+        gap: 16px;
+      }
+
+      /* Column 1: Logo */
+      .col-logo {
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 60px;
-        width: 100%;
-        height: 100%;
       }
-      a {
-        display: block;
-        text-decoration: none;
+      .col-logo img {
+        width: min(160px, 18vw);
+        height: auto;
+      }
+
+      /* Column 2: Door */
+      .col-door {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .door-wrap {
+        position: relative;
         cursor: pointer;
       }
-      a img {
-        width: 128px;
-        height: 330px;
-        object-fit: cover;
+      .door-wrap img {
         display: block;
-        border-radius: 12px;
-        transition: transform 0.3s ease;
+        height: min(60vh, 420px);
+        width: auto;
+        transition: opacity 0.3s ease;
       }
-      a:hover img {
+      .door-open {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        object-fit: contain;
+      }
+      .door-wrap:hover .door-closed {
+        opacity: 0;
+      }
+      .door-wrap:hover .door-open {
+        opacity: 1;
+      }
+
+      /* Column 3: Language grid */
+      .col-langs {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .lang-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        column-gap: 20px;
+        row-gap: 10px;
+      }
+      .lang-card {
+        display: block;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: transform 0.3s ease, outline 0.15s ease;
+        outline: 3px solid transparent;
+        outline-offset: 3px;
+      }
+      .lang-card:hover {
         transform: scale(1.08);
+      }
+      .lang-card.selected {
+        outline-color: #fff;
+      }
+      .lang-card img {
+        width: min(90px, 9vw);
+        height: min(20vh, 140px);
+        object-fit: contain;
+        display: block;
+        border-radius: 8px;
+      }
+      .lang-placeholder {
+        width: min(90px, 9vw);
+        height: min(20vh, 140px);
+        background: #7060cc;
+        border-radius: 8px;
+      }
+
+      /* Footer */
+      .footer {
+        display: flex;
+        justify-content: center;
+        padding: 8px 32px 20px;
+        flex-shrink: 0;
+      }
+      .footer img {
+        height: min(48px, 6vh);
+        width: auto;
       }
     </style>
   </head>
   <body>
-    <div class="grid">
-      {languages.map((lang) => (
-        <a href={`/?lang=${lang.id}`}>
-          {lang.landing_image
-            ? <img src={`${DIRECTUS_URL}/assets/${lang.landing_image}`} alt={lang.name} />
-            : <div style="width:200px;height:330px;background:#7060cc;border-radius:12px;" />
-          }
-        </a>
-      ))}
+    <div class="page">
+      <div class="columns">
+        <!-- Column 1: Logo -->
+        <div class="col-logo">
+          <img src="/zartsants-logo.svg" alt="Zartsants" />
+        </div>
+
+        <!-- Column 2: Door -->
+        <div class="col-door">
+          <div class="door-wrap" id="door" title="Enter">
+            <img class="door-closed" src="/door_closed.png" alt="Enter" />
+            <img class="door-open" src="/door_open.png" alt="Enter open" />
+          </div>
+        </div>
+
+        <!-- Column 3: 3x3 language grid -->
+        <div class="col-langs">
+          <div class="lang-grid">
+            {languages.map((lang) => (
+              <div
+                class={`lang-card${lang.id === 'hyw' ? ' selected' : ''}`}
+                data-lang={lang.id}
+              >
+                {lang.landing_image
+                  ? <img src={`${DIRECTUS_URL}/assets/${lang.landing_image}`} alt={lang.name} />
+                  : <div class="lang-placeholder" />
+                }
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer: Gulbenkian logo -->
+      <div class="footer">
+        <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+      </div>
     </div>
+
+    <script>
+      let selected = 'hyw';
+
+      document.querySelectorAll<HTMLElement>('.lang-card').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('.lang-card').forEach((c) => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selected = card.dataset.lang!;
+        });
+      });
+
+      document.getElementById('door')!.addEventListener('click', () => {
+        window.location.href = `/?lang=${selected}`;
+      });
+    </script>
   </body>
 </html>
