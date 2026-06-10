@@ -209,6 +209,7 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pw, section_id: sectionId, breakpoint: bp, config }),
       });
+      if (res.ok) new BroadcastChannel('layout-update').postMessage('reload');
       setMsg(m => ({ ...m, [key]: res.ok ? '✓ Saved' : '✗ Error' }));
     } catch {
       setMsg(m => ({ ...m, [key]: '✗ Error' }));

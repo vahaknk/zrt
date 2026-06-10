@@ -162,11 +162,15 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     };
     window.addEventListener('resize', onResize);
 
+    const layoutChannel = new BroadcastChannel('layout-update');
+    layoutChannel.onmessage = () => window.location.reload();
+
     return () => {
       el.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
       cancelAnimationFrame(rafId);
+      layoutChannel.close();
     };
   }, []);
 
