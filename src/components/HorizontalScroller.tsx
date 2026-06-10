@@ -128,8 +128,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     };
 
     const onWheel = (e: WheelEvent) => {
+      if (e.deltaX !== 0) return; // trackpad horizontal swipe — let browser handle natively
       e.preventDefault();
-      el.scrollLeft += (e.deltaX + e.deltaY) * 2;
+      el.scrollLeft += e.deltaY * 2; // mouse wheel: convert vertical to horizontal
       syncLine();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -252,7 +253,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         height: '100vh',
         minWidth: 1280,
         minHeight: 800,
-        overflowX: 'hidden',
+        overflowX: 'scroll',
         position: 'relative',
       }}
     >
