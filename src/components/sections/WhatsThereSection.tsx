@@ -47,7 +47,6 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
 
       {/* Group: character + bubbles float together */}
       <div
-        className={open ? undefined : 'whats-there-group'}
         style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
       >
         {/* Main bubble (clickable) */}
