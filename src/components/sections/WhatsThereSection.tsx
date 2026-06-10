@@ -41,7 +41,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
 
   return (
     <div style={{
-      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 

@@ -32,7 +32,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
 
   return (
     <div style={{
-      width: '100vw', minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
+      width: '100vw', minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
       display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
     }}>

@@ -27,7 +27,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
 
   return (
     <div style={{
-      width: '100vw', minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
+      width: '100vw', minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 

@@ -56,7 +56,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
     <div
       style={{
         width: '100vw',
-        height: '100vh', minHeight: 800,
+        height: 800,
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
@@ -341,7 +341,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           </div>
         );
       })}
-      <div style={{ flexShrink: 0, width: 640, height: '100vh', minHeight: 800 }} />
+      <div style={{ flexShrink: 0, width: 640, height: 800 }} />
     </div>
   );
 }
