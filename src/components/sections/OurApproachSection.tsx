@@ -22,12 +22,12 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
-  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
+  useEffect(() => { if (progress < 0.5) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: 800, flexShrink: 0,
+      width: layout.sectionWidth, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -48,15 +48,15 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block', transform: 'scaleX(-1) rotate(-20deg)' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
-            position: 'absolute', top: '50%', left: '60%',
+            position: 'absolute', top: '50%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
             fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
-            pointerEvents: 'none', paddingRight: '1rem',
+            pointerEvents: 'none',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
             {decodeHtml(t?.Header ?? '')}
@@ -66,8 +66,8 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
 
       {/* Right column: bird + text */}
       <div style={{
-        position: 'absolute', top: `${layout.contentTop}%`, right: `${layout.contentRight}%`,
-        width: `${layout.contentWidth}%`, zIndex: 2,
+        position: 'absolute', top: layout.contentTop, right: layout.contentRight,
+        width: layout.contentWidth, zIndex: 2,
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
         transform: open ? 'translateY(0)' : 'translateY(-40px)',
         opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',

@@ -16,24 +16,24 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { charBottom: 7, charLeft: 666, charWidth: 1600, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 260 },
   },
   3: {
-    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, charWidth: 1280, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
-    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, charWidth: 1600, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
+    normal: { sectionWidth: 1920, charBottom: 91, charLeft: 320, charWidth: 1280, contentTop: 64, contentRight: 0, contentWidth: 576, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
+    large:  { sectionWidth: 1920, charBottom: 91, charLeft: 320, charWidth: 1600, contentTop: 64, contentRight: 0, contentWidth: 576, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
   },
   4: {
     normal: { charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 200, contentBubbleTop: -88, contentBubbleLeft: 70 },
     large:  { charBottom: 90, charLeft: 0, charWidth: 1600, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 200, contentBubbleTop: -88, contentBubbleLeft: 70 },
   },
   5: {
-    normal: { sectionWidth: 100, charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
-    large:  { sectionWidth: 100, charBottom: 90, charLeft: 0, charWidth: 1600, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
+    normal: { sectionWidth: 1920, charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
+    large:  { sectionWidth: 1920, charBottom: 90, charLeft: 0, charWidth: 1600, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
   },
   6: {
-    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
-    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
+    normal: { sectionWidth: 1920, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
+    large:  { sectionWidth: 1920, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
   },
   7: {
-    normal: { sectionWidth: 100, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
-    large:  { sectionWidth: 100, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
+    normal: { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 650, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
+    large:  { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 650, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
   },
   12: {
     normal: {
@@ -52,8 +52,8 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     },
   },
   13: {
-    normal: { bubbleTop: 360, bubbleLeft: 480, contentTop: -160, contentLeft: 750, charBottom: 180, charLeft: 700, charWidth: 500 },
-    large:  { bubbleTop: 360, bubbleLeft: 480, contentTop: -160, contentLeft: 750, charBottom: 180, charLeft: 700, charWidth: 500 },
+    normal: { bubbleTop: 360, bubbleLeft: 480, bubbleHeight: 200, contentTop: -160, contentLeft: 750, contentHeight: 420, charBottom: 180, charLeft: 700, charWidth: 500 },
+    large:  { bubbleTop: 360, bubbleLeft: 480, bubbleHeight: 200, contentTop: -160, contentLeft: 750, contentHeight: 420, charBottom: 180, charLeft: 700, charWidth: 500 },
   },
   14: {
     normal: { bubbleTop: 360, bubbleLeft: 480, contentTop: -160, contentLeft: 750, charBottom: 130, charLeft: 700, charWidth: 500 },

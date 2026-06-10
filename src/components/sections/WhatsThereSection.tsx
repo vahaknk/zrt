@@ -35,13 +35,13 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
-  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
+  useEffect(() => { if (progress < 0.5) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
   return (
     <div style={{
-      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: 800, flexShrink: 0,
+      width: layout.sectionWidth, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 

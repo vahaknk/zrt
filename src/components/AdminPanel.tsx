@@ -39,16 +39,16 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 3, name: 'OurApproach',
     fields: [
-      { key: 'sectionWidth',  label: 'Section Width',        unit: 'vw' },
+      { key: 'sectionWidth',  label: 'Section Width',        unit: 'px' },
       { key: 'bubbleTop',     label: 'Bubble Top',           unit: 'px' },
       { key: 'bubbleLeft',    label: 'Bubble Left',          unit: 'px' },
       { key: 'bubbleHeight',  label: 'Bubble Height',        unit: 'px' },
       { key: 'charBottom',    label: 'Char Bottom',          unit: 'px' },
       { key: 'charLeft',      label: 'Char Left',            unit: 'px' },
       { key: 'charWidth',     label: 'Char Width',           unit: 'px' },
-      { key: 'contentTop',    label: 'Content Column Top',   unit: '%'  },
-      { key: 'contentRight',  label: 'Content Column Right', unit: '%'  },
-      { key: 'contentWidth',  label: 'Content Column Width', unit: '%'  },
+      { key: 'contentTop',    label: 'Content Column Top',   unit: 'px' },
+      { key: 'contentRight',  label: 'Content Column Right', unit: 'px' },
+      { key: 'contentWidth',  label: 'Content Column Width', unit: 'px' },
     ],
   },
   {
@@ -67,7 +67,7 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 5, name: 'WhatHappens',
     fields: [
-      { key: 'sectionWidth', label: 'Section Width', unit: 'vw' },
+      { key: 'sectionWidth', label: 'Section Width', unit: 'px' },
       { key: 'bubbleTop',    label: 'Bubble Top',    unit: 'px' },
       { key: 'bubbleLeft',   label: 'Bubble Left',   unit: 'px' },
       { key: 'bubbleHeight', label: 'Bubble Height', unit: 'px' },
@@ -79,7 +79,7 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 6, name: 'WhatsThere',
     fields: [
-      { key: 'sectionWidth',        label: 'Section Width',              unit: 'vw' },
+      { key: 'sectionWidth',        label: 'Section Width',              unit: 'px' },
       { key: 'bubbleTop',           label: 'Bubble Top',                 unit: 'px' },
       { key: 'bubbleLeft',          label: 'Bubble Left',                unit: 'px' },
       { key: 'bubbleHeight',        label: 'Bubble Height',              unit: 'px' },
@@ -95,7 +95,10 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 7, name: 'Registration',
     fields: [
-      { key: 'sectionWidth', label: 'Section Width', unit: 'vw' },
+      { key: 'sectionWidth', label: 'Section Width', unit: 'px' },
+      { key: 'imgTop',       label: 'Image Top',     unit: 'px' },
+      { key: 'imgLeft',      label: 'Image Left',    unit: 'px' },
+      { key: 'imgHeight',    label: 'Image Height',  unit: 'px' },
       { key: 'formTop',      label: 'Form Top',      unit: '%'  },
       { key: 'formLeft',     label: 'Form Left',     unit: '%'  },
       { key: 'formWidth',    label: 'Form Width',    unit: '%'  },
@@ -115,13 +118,15 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 13, name: 'ContactUs',
     fields: [
-      { key: 'bubbleTop',   label: 'Bubble Top',   unit: 'px' },
-      { key: 'bubbleLeft',  label: 'Bubble Left',  unit: 'px' },
-      { key: 'contentTop',  label: 'Content Top',  unit: 'px' },
-      { key: 'contentLeft', label: 'Content Left', unit: 'px' },
-      { key: 'charBottom',  label: 'Char Bottom',  unit: 'px' },
-      { key: 'charLeft',    label: 'Char Left',    unit: 'px' },
-      { key: 'charWidth',   label: 'Char Width',   unit: 'px' },
+      { key: 'bubbleTop',    label: 'Bubble Top',    unit: 'px' },
+      { key: 'bubbleLeft',   label: 'Bubble Left',   unit: 'px' },
+      { key: 'bubbleHeight', label: 'Bubble Height', unit: 'px' },
+      { key: 'contentTop',    label: 'Content Top',    unit: 'px' },
+      { key: 'contentLeft',   label: 'Content Left',   unit: 'px' },
+      { key: 'contentHeight', label: 'Content Height', unit: 'px' },
+      { key: 'charBottom',    label: 'Char Bottom',    unit: 'px' },
+      { key: 'charLeft',      label: 'Char Left',      unit: 'px' },
+      { key: 'charWidth',     label: 'Char Width',     unit: 'px' },
     ],
   },
   {
@@ -226,6 +231,13 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
     }));
   };
 
+  const copyLargeToNormal = (sectionId: number) => {
+    setValues(v => ({
+      ...v,
+      [sectionId]: { ...v[sectionId], normal: { ...v[sectionId].large } },
+    }));
+  };
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Layout Admin</h1>
@@ -257,6 +269,18 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
               }}
             >
               Copy Normal → Large
+            </button>
+            <button
+              onClick={() => copyLargeToNormal(sec.id)}
+              style={{
+                background: 'rgba(255,255,255,0.15)',
+                border: 'none', borderRadius: 6,
+                color: '#fff', cursor: 'pointer',
+                padding: '0.25rem 0.75rem', fontSize: '0.8rem',
+                fontFamily: 'inherit',
+              }}
+            >
+              Copy Large → Normal
             </button>
           </div>
 

@@ -100,9 +100,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollLeft, setScrollLeft] = useState(0);
   const sectionOffsetsRef = useRef<Record<string, number>>({});
-  const [breakpoint, setBreakpoint] = useState<Breakpoint>(() =>
-    typeof window !== 'undefined' && window.innerWidth >= 1600 ? 'large' : 'normal'
-  );
+  const [breakpoint, setBreakpoint] = useState<Breakpoint>('large'); // responsive temporarily disabled
 
   useEffect(() => {
     const computeOffsets = () => {
@@ -157,18 +155,12 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     };
     rafId = requestAnimationFrame(rafLoop);
 
-    const onResize = () => {
-      setBreakpoint(window.innerWidth >= 1600 ? 'large' : 'normal');
-    };
-    window.addEventListener('resize', onResize);
-
     const layoutChannel = new BroadcastChannel('layout-update');
     layoutChannel.onmessage = () => window.location.reload();
 
     return () => {
       el.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('resize', onResize);
       cancelAnimationFrame(rafId);
       layoutChannel.close();
     };
@@ -319,7 +311,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         ref={lineRef}
         style={{
           position: 'fixed',
-          top: '77%',
+          top: 685,
           left: 0,
           width: '100vw',
           height: 80,

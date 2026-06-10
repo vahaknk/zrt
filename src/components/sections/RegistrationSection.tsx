@@ -63,22 +63,25 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   return (
     <div
       style={{
-        width: `${layout.sectionWidth}vw`,
+        width: layout.sectionWidth,
         minWidth: 1280,
         height: 800,
         flexShrink: 0,
         position: 'relative',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
       }}
     >
       {mainImage ? (
-        <div style={{ position: 'relative', display: 'inline-block' }}>
+        <div style={{
+          position: 'absolute',
+          top: layout.imgTop,
+          left: layout.imgLeft,
+          transform: 'translateX(-50%)',
+          display: 'inline-block',
+        }}>
           <img
             src={`${directusUrl}/assets/${mainImage}`}
             alt=""
-            style={{ height: 'clamp(400px, 80vh, 700px)', width: 'auto', display: 'block' }}
+            style={{ height: layout.imgHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute',

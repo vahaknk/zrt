@@ -25,12 +25,12 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
-  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
+  useEffect(() => { if (progress < 0.5) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: '100vw', minWidth: 1280, height: 800, flexShrink: 0,
+      width: 1920, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 

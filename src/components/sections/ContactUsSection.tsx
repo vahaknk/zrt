@@ -22,12 +22,12 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
-  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
+  useEffect(() => { if (progress < 0.5) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: '100vw', minWidth: 1280, height: 800, flexShrink: 0,
+      width: 1920, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -49,7 +49,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 200, width: 'auto', display: 'block' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '45%', left: '48%',
@@ -74,7 +74,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
               <img
                 src="/contactus_content_bubble.webp"
                 alt=""
-                style={{ height: 420, width: 'auto', display: 'block' }}
+                style={{ height: layout.contentHeight, width: 'auto', display: 'block' }}
               />
               <div
                 style={{
