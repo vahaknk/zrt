@@ -139,6 +139,14 @@ try {
     />
   </body>
   <script>
+    function applyZoom() {
+      const scale = Math.min(1, window.innerWidth / 1920);
+      document.documentElement.style.zoom = String(scale);
+    }
+    applyZoom();
+    window.addEventListener('resize', applyZoom);
+  </script>
+  <script>
     let visitorId = localStorage.getItem('zrt_vid');
     if (!visitorId) {
       visitorId = crypto.randomUUID();
