@@ -45,6 +45,7 @@ const SECTION_DEFS: SectionDef[] = [
       { key: 'bubbleHeight',  label: 'Bubble Height',        unit: 'px' },
       { key: 'charBottom',    label: 'Char Bottom',          unit: 'px' },
       { key: 'charLeft',      label: 'Char Left',            unit: 'px' },
+      { key: 'charWidth',     label: 'Char Width',           unit: 'px' },
       { key: 'contentTop',    label: 'Content Column Top',   unit: '%'  },
       { key: 'contentRight',  label: 'Content Column Right', unit: '%'  },
       { key: 'contentWidth',  label: 'Content Column Width', unit: '%'  },

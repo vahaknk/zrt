@@ -16,8 +16,8 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { charBottom: 7, charLeft: 666, charWidth: 1600, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 260 },
   },
   3: {
-    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
-    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
+    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, charWidth: 1280, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
+    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, charWidth: 1600, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
   },
   4: {
     normal: { charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 200, contentBubbleTop: -88, contentBubbleLeft: 70 },

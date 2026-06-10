@@ -18,6 +18,7 @@ interface Props {
 
 export default function OurApproachSection({ section, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
@@ -85,7 +86,20 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
         />
       </div>
 
-      
+      {/* Characters illustration */}
+      {section.main_image && (
+        <img
+          src={hovered && section.hoover_image ? asset(directusUrl, section.hoover_image)! : asset(directusUrl, section.main_image)!}
+          alt=""
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          style={{
+            position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
+            width: layout.charWidth, height: 'auto', display: 'block',
+            zIndex: 1,
+          }}
+        />
+      )}
     </div>
   );
 }
