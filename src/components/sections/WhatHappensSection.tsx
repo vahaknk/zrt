@@ -12,6 +12,7 @@ interface Props {
   };
   directusUrl: string;
   layout: Record<string, number>;
+  progress?: number;
 }
 
 
@@ -20,19 +21,20 @@ function parseBullets(html: string): string[] {
   return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
-export default function WhatHappensSection({ section, directusUrl, layout }: Props) {
+export default function WhatHappensSection({ section, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [index, setIndex] = useState(0);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
+  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
   return (
     <div style={{
-      width: `${layout.sectionWidth}vw`, height: '100vh', flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -42,9 +44,10 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: '35%', left: '25%',
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
-            zIndex: 4, cursor: 'pointer', userSelect: 'none',
+            zIndex: 4, cursor: 'pointer',
+            userSelect: 'none',
             display: 'inline-block',
           }}
         >
@@ -53,7 +56,7 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 200px)', width: 'auto', display: 'block' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '40%', left: '50%',
@@ -68,15 +71,17 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
           </div>
 
           {/* Content bubble */}
-          {open && (
-            <div style={{
-              position: 'absolute', top: '-45%', left: '110%',
-              zIndex: 3, display: 'inline-block', pointerEvents: 'none',
-            }}>
+          <div style={{
+            position: 'absolute', top: '-45%', left: '110%',
+            zIndex: 3, display: 'inline-block',
+            transform: open ? 'translateY(0)' : 'translateY(-40px)',
+            opacity: open ? 1 : 0, pointerEvents: open ? 'all' : 'none',
+            transition: 'transform 0.35s ease, opacity 0.35s ease',
+          }}>
               <img
                 src="/what_happens_click_bubble.webp"
                 alt=""
-                style={{ height: 'clamp(180px, 42vh, 220px)', width: 'auto', display: 'block' }}
+                style={{ height: 220, width: 'auto', display: 'block' }}
               />
               <div style={{
                 position: 'absolute', top: '40%', left: '50%',
@@ -109,8 +114,7 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
                 >›</button>
               </div>
             </div>
-          )}
-        </div>
+          </div>
       )}
 
       {/* Characters illustration */}
@@ -122,7 +126,7 @@ export default function WhatHappensSection({ section, directusUrl, layout }: Pro
           onMouseLeave={() => setHovered(false)}
           style={{
             position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: '100vmax', height: 'auto', display: 'block',
+            width: layout.charWidth, height: 'auto', display: 'block',
             zIndex: 5,
           }}
         />

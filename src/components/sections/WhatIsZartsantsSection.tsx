@@ -11,6 +11,7 @@ interface Props {
   };
   directusUrl: string;
   layout: Record<string, number>;
+  progress?: number;
 }
 
 const LEFT_BALLOONS  = ['/top-left.webp',  '/bottom-left.webp'];
@@ -21,57 +22,58 @@ function parseBullets(html: string): string[] {
   return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
-export default function WhatIsZartsantsSection({ section, directusUrl, layout }: Props) {
+export default function WhatIsZartsantsSection({ section, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
+  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
   return (
     <div style={{
-      width: '100vw', height: '100vh', flexShrink: 0,
+      width: '100vw', minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
       {/* Left column */}
-      {open && (
-        <div style={{
-          position: 'absolute', top: '30%', left: '5%',
-          transform: 'translateY(-50%)',
-          display: 'flex', flexDirection: 'column', gap: '1rem',
-          maxWidth: '22%', zIndex: 2,
-        }}>
-          {[0, 2].map((bi, row) => (
-            <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-              <img src={LEFT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-              <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
-                {bullets[bi]}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div style={{
+        position: 'absolute', top: '30%', left: '5%',
+        display: 'flex', flexDirection: 'column', gap: '1rem',
+        maxWidth: '22%', zIndex: 2,
+        transform: open ? 'translateY(-50%)' : 'translateY(calc(-50% - 40px))',
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+        transition: 'transform 0.35s ease, opacity 0.35s ease',
+      }}>
+        {[0, 2].map((bi, row) => (
+          <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+            <img src={LEFT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
+            <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
+              {bullets[bi]}
+            </p>
+          </div>
+        ))}
+      </div>
 
       {/* Right column */}
-      {open && (
-        <div style={{
-          position: 'absolute', top: '30%', right: '5%',
-          transform: 'translateY(-50%)',
-          display: 'flex', flexDirection: 'column', gap: '1rem',
-          maxWidth: '22%', zIndex: 2,
-        }}>
-          {[1, 3].map((bi, row) => (
-            <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-              <img src={RIGHT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-              <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
-                {bullets[bi]}
-              </p>
-            </div>
-          ))}
-        </div>
-      )}
+      <div style={{
+        position: 'absolute', top: '30%', right: '5%',
+        display: 'flex', flexDirection: 'column', gap: '1rem',
+        maxWidth: '22%', zIndex: 2,
+        transform: open ? 'translateY(-50%)' : 'translateY(calc(-50% - 40px))',
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+        transition: 'transform 0.35s ease, opacity 0.35s ease',
+      }}>
+        {[1, 3].map((bi, row) => (
+          <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+            <img src={RIGHT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
+            <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
+              {bullets[bi]}
+            </p>
+          </div>
+        ))}
+      </div>
 
       {/* Yellow speech bubble */}
       {section.bubble && (
@@ -79,9 +81,10 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: '36%', left: '50%',
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
-            zIndex: 4, cursor: 'pointer', userSelect: 'none',
+            zIndex: 4, cursor: 'pointer',
+            userSelect: 'none',
             display: 'inline-block',
           }}
         >
@@ -90,7 +93,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 260px)', width: 'auto', display: 'block' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '45%', left: '48%',
@@ -112,7 +115,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout }:
           alt=""
           style={{
             position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: '100vmax', height: 'auto', display: 'block',
+            width: layout.charWidth, height: 'auto', display: 'block',
           }}
         />
       )}

@@ -15,20 +15,22 @@ interface Props {
   tabSections: SectionData[];
   directusUrl: string;
   layout: Record<string, number>;
+  progress?: number;
 }
 
 
-export default function ConditionsSection({ section, tabSections, directusUrl, layout }: Props) {
+export default function ConditionsSection({ section, tabSections, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
+  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: '100vw', height: '100vh', flexShrink: 0,
+      width: '100vw', minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -40,7 +42,8 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
           style={{
             position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
-            zIndex: 4, cursor: 'pointer', userSelect: 'none',
+            zIndex: 4, cursor: 'pointer',
+            userSelect: 'none',
             display: 'inline-block',
           }}
         >
@@ -49,7 +52,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 200px)', width: 'auto', display: 'block' }}
+            style={{ height: 200, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '45%', left: '48%',
@@ -66,12 +69,13 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
       )}
 
       {/* Tabbed panel */}
-      {open && (
-        <div style={{
-          position: 'absolute', top: layout.panelTop, left: layout.panelLeft,
-          width: layout.panelWidth,
-          zIndex: 5,
-        }}>
+      <div style={{
+        position: 'absolute', top: layout.panelTop, left: layout.panelLeft,
+        width: layout.panelWidth, zIndex: 5,
+        transform: open ? 'translateY(0)' : 'translateY(-40px)',
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+        transition: 'transform 0.35s ease, opacity 0.35s ease',
+      }}>
           <div style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
             <img
               src="/conditions_background_image.webp"
@@ -123,7 +127,6 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
             </div>
           </div>
         </div>
-      )}
 
       {/* Characters illustration */}
       {section.main_image && (

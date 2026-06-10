@@ -64,7 +64,8 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
     <div
       style={{
         width: `${layout.sectionWidth}vw`,
-        height: '100vh',
+        minWidth: 1280,
+        height: '100vh', minHeight: 800,
         flexShrink: 0,
         position: 'relative',
         display: 'flex',

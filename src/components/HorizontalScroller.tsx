@@ -56,7 +56,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
     <div
       style={{
         width: '100vw',
-        height: '100vh',
+        height: '100vh', minHeight: 800,
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
@@ -98,9 +98,26 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const trackRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const sectionOffsetsRef = useRef<Record<string, number>>({});
   const [breakpoint, setBreakpoint] = useState<Breakpoint>(() =>
     typeof window !== 'undefined' && window.innerWidth >= 1600 ? 'large' : 'normal'
   );
+
+  useEffect(() => {
+    const computeOffsets = () => {
+      const offsets: Record<string, number> = {};
+      sections.forEach(s => {
+        if (TAB_SECTION_IDS.includes(Number(s.id))) return;
+        const el = document.getElementById(`section-${s.id}`);
+        if (el) offsets[s.id] = el.offsetLeft;
+      });
+      sectionOffsetsRef.current = offsets;
+    };
+    computeOffsets();
+    window.addEventListener('resize', computeOffsets);
+    return () => window.removeEventListener('resize', computeOffsets);
+  }, [sections]);
 
   useEffect(() => {
     const el = trackRef.current;
@@ -134,6 +151,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       if (s !== lastScroll) {
         lastScroll = s;
         syncLine();
+        setScrollLeft(s);
       }
       rafId = requestAnimationFrame(rafLoop);
     };
@@ -167,36 +185,44 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     return getLayout(sectionId, breakpoint, savedLayouts);
   }
 
-  function getSectionContent(section: Section) {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const progresses: Record<string, number> = {};
+  sections.forEach(s => {
+    if (TAB_SECTION_IDS.includes(Number(s.id))) return;
+    const offset = sectionOffsetsRef.current[s.id] ?? 0;
+    progresses[s.id] = Math.max(0, Math.min(1, 1 - Math.abs(scrollLeft - offset) / vw));
+  });
+
+  function getSectionContent(section: Section, progress: number) {
     const id = Number(section.id);
     if (id === WHAT_IS_SECTION_ID) {
-      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION3_ID) {
-      return <OurApproachSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <OurApproachSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION4_ID) {
-      return <ForWhomSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <ForWhomSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION5_ID) {
-      return <WhatHappensSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <WhatHappensSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION6_ID) {
-      return <WhatsThereSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <WhatsThereSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION12_ID) {
       return <AboutUsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
     if (id === SECTION13_ID) {
-      return <ContactUsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
+      return <ContactUsSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION14_ID) {
-      return <GoToPlatformSection section={section} directusUrl={directusUrl} layout={layout(id)} onNavigateToRegistration={() => scrollToSection('7')} />;
+      return <GoToPlatformSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} onNavigateToRegistration={() => scrollToSection('7')} />;
     }
     if (TAB_SECTION_IDS.includes(id)) return null;
     if (id === SECTION15_ID) {
       const tabSections = sections.filter(s => TAB_SECTION_IDS.includes(Number(s.id)));
-      return <ConditionsSection section={section} tabSections={tabSections} directusUrl={directusUrl} layout={layout(id)} />;
+      return <ConditionsSection section={section} tabSections={tabSections} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === REGISTRATION_SECTION_ID) {
       return (
@@ -228,14 +254,17 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         display: 'flex',
         width: '100vw',
         height: '100vh',
+        minWidth: 1280,
+        minHeight: 800,
         overflowX: 'hidden',
         position: 'relative',
       }}
     >
       {/* Sticky logo with nav menu */}
       <div style={{
-        position: 'fixed', top: '2%', left: '2%',
-        zIndex: 10, textAlign: 'left',
+        position: 'fixed', top: '2%', left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000, textAlign: 'center',
       }}>
         <div
           onClick={() => setMenuOpen(o => !o)}
@@ -247,7 +276,8 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
         {menuOpen && (
           <div style={{
-            position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+            position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
+            transform: 'translateX(-50%)',
             background: 'rgba(255,255,255,0.95)',
             borderRadius: 12, padding: '0.5rem',
             boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
@@ -303,7 +333,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
 
       {sections.map((section) => {
-        const content = getSectionContent(section);
+        const content = getSectionContent(section, progresses[section.id] ?? 0);
         if (content === null) return null;
         return (
           <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
@@ -311,7 +341,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           </div>
         );
       })}
-      <div style={{ flexShrink: 0, width: 640, height: '100vh' }} />
+      <div style={{ flexShrink: 0, width: 640, height: '100vh', minHeight: 800 }} />
     </div>
   );
 }

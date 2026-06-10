@@ -12,19 +12,21 @@ interface Props {
   };
   directusUrl: string;
   layout: Record<string, number>;
+  progress?: number;
 }
 
 
-export default function OurApproachSection({ section, directusUrl, layout }: Props) {
+export default function OurApproachSection({ section, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
+  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: `${layout.sectionWidth}vw`, height: '100vh', flexShrink: 0,
+      width: `${layout.sectionWidth}vw`, minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -34,16 +36,18 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: '36%', left: '48%',
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
-            zIndex: 2, display: 'inline-block', cursor: 'pointer', userSelect: 'none',
+            zIndex: 2, display: 'inline-block',
+            cursor: 'pointer',
+            userSelect: 'none',
           }}>
           <img
             ref={bubbleRef}
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 260px)', width: 'auto', display: 'block', transform: 'scaleX(-1) rotate(-20deg)' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block', transform: 'scaleX(-1) rotate(-20deg)' }}
           />
           <div style={{
             position: 'absolute', top: '50%', left: '60%',
@@ -60,10 +64,13 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
       )}
 
       {/* Right column: bird + text */}
-      {open && <div style={{
+      <div style={{
         position: 'absolute', top: `${layout.contentTop}%`, right: `${layout.contentRight}%`,
         width: `${layout.contentWidth}%`, zIndex: 2,
         display: 'flex', flexDirection: 'column', gap: '0.75rem',
+        transform: open ? 'translateY(0)' : 'translateY(-40px)',
+        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+        transition: 'transform 0.35s ease, opacity 0.35s ease',
       }}>
         {section.hoover_image && (
           <img
@@ -76,7 +83,7 @@ export default function OurApproachSection({ section, directusUrl, layout }: Pro
           style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#ffffff' }}
           dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
         />
-      </div>}
+      </div>
 
       
     </div>

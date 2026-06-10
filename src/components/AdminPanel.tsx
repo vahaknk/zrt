@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LAYOUT_DEFAULTS, type Breakpoint, type SavedLayout } from '../lib/layouts';
+import { LAYOUT_DEFAULTS, type SavedLayout } from '../lib/layouts';
 
 interface Props {
   pw: string;
@@ -22,28 +22,37 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 2, name: 'WhatIsZartsants',
     fields: [
-      { key: 'charBottom', label: 'Char Bottom', unit: 'px' },
-      { key: 'charLeft',   label: 'Char Left',   unit: 'px' },
+      { key: 'bubbleTop',    label: 'Bubble Top',    unit: 'px' },
+      { key: 'bubbleLeft',   label: 'Bubble Left',   unit: 'px' },
+      { key: 'bubbleHeight', label: 'Bubble Height', unit: 'px' },
+      { key: 'charBottom',   label: 'Char Bottom',   unit: 'px' },
+      { key: 'charLeft',     label: 'Char Left',     unit: 'px' },
+      { key: 'charWidth',    label: 'Char Width',    unit: 'px' },
     ],
   },
   {
     id: 3, name: 'OurApproach',
     fields: [
-      { key: 'sectionWidth',  label: 'Section Width',       unit: 'vw' },
-      { key: 'charBottom',    label: 'Char Bottom',         unit: 'px' },
-      { key: 'charLeft',      label: 'Char Left',           unit: 'px' },
-      { key: 'contentTop',    label: 'Content Column Top',  unit: '%'  },
-      { key: 'contentRight',  label: 'Content Column Right', unit: '%' },
-      { key: 'contentWidth',  label: 'Content Column Width', unit: '%' },
+      { key: 'sectionWidth',  label: 'Section Width',        unit: 'vw' },
+      { key: 'bubbleTop',     label: 'Bubble Top',           unit: 'px' },
+      { key: 'bubbleLeft',    label: 'Bubble Left',          unit: 'px' },
+      { key: 'bubbleHeight',  label: 'Bubble Height',        unit: 'px' },
+      { key: 'charBottom',    label: 'Char Bottom',          unit: 'px' },
+      { key: 'charLeft',      label: 'Char Left',            unit: 'px' },
+      { key: 'contentTop',    label: 'Content Column Top',   unit: '%'  },
+      { key: 'contentRight',  label: 'Content Column Right', unit: '%'  },
+      { key: 'contentWidth',  label: 'Content Column Width', unit: '%'  },
     ],
   },
   {
     id: 4, name: 'ForWhom',
     fields: [
-      { key: 'bubbleTop',         label: 'Bubble Top',          unit: '%'  },
-      { key: 'bubbleLeft',        label: 'Bubble Left',         unit: '%'  },
+      { key: 'bubbleTop',         label: 'Bubble Top',          unit: 'px' },
+      { key: 'bubbleLeft',        label: 'Bubble Left',         unit: 'px' },
+      { key: 'bubbleHeight',      label: 'Bubble Height',       unit: 'px' },
       { key: 'charBottom',        label: 'Char Bottom',         unit: 'px' },
       { key: 'charLeft',          label: 'Char Left',           unit: 'px' },
+      { key: 'charWidth',         label: 'Char Width',          unit: 'px' },
       { key: 'contentBubbleTop',  label: 'Content Bubble Top',  unit: '%'  },
       { key: 'contentBubbleLeft', label: 'Content Bubble Left', unit: '%'  },
     ],
@@ -52,21 +61,28 @@ const SECTION_DEFS: SectionDef[] = [
     id: 5, name: 'WhatHappens',
     fields: [
       { key: 'sectionWidth', label: 'Section Width', unit: 'vw' },
+      { key: 'bubbleTop',    label: 'Bubble Top',    unit: 'px' },
+      { key: 'bubbleLeft',   label: 'Bubble Left',   unit: 'px' },
+      { key: 'bubbleHeight', label: 'Bubble Height', unit: 'px' },
       { key: 'charBottom',   label: 'Char Bottom',   unit: 'px' },
       { key: 'charLeft',     label: 'Char Left',     unit: 'px' },
+      { key: 'charWidth',    label: 'Char Width',    unit: 'px' },
     ],
   },
   {
     id: 6, name: 'WhatsThere',
     fields: [
-      { key: 'sectionWidth',   label: 'Section Width',         unit: 'vw' },
-      { key: 'charBottom',     label: 'Char Bottom',           unit: '%'  },
-      { key: 'charLeft',       label: 'Char Left',             unit: '%'  },
-      { key: 'charWidth',      label: 'Char Width',            unit: '%'  },
-      { key: 'bubbleStartTop', label: 'Bubbles Start Top',     unit: '%'  },
-      { key: 'bubbleGap',      label: 'Gap Between Bubbles',   unit: '%'  },
-      { key: 'bubbleHeight',   label: 'Bubble Height',         unit: 'px' },
-      { key: 'bubbleWidth',    label: 'Bubble Width',          unit: 'px' },
+      { key: 'sectionWidth',        label: 'Section Width',              unit: 'vw' },
+      { key: 'bubbleTop',           label: 'Bubble Top',                 unit: 'px' },
+      { key: 'bubbleLeft',          label: 'Bubble Left',                unit: 'px' },
+      { key: 'bubbleHeight',        label: 'Bubble Height',              unit: 'px' },
+      { key: 'charBottom',          label: 'Char Bottom',                unit: 'px' },
+      { key: 'charLeft',            label: 'Char Left',                  unit: 'px' },
+      { key: 'charWidth',           label: 'Char Width',                 unit: 'px' },
+      { key: 'bubbleStartTop',      label: 'Content Bubbles Start Top',  unit: '%'  },
+      { key: 'bubbleGap',           label: 'Content Bubbles Gap',        unit: '%'  },
+      { key: 'contentBubbleHeight', label: 'Content Bubble Height',      unit: 'px' },
+      { key: 'contentBubbleWidth',  label: 'Content Bubble Width',       unit: 'px' },
     ],
   },
   {
@@ -92,59 +108,51 @@ const SECTION_DEFS: SectionDef[] = [
   {
     id: 13, name: 'ContactUs',
     fields: [
-      { key: 'bubbleTop',    label: 'Bubble Top',     unit: 'px' },
-      { key: 'bubbleLeft',   label: 'Bubble Left',    unit: 'px' },
-      { key: 'contentTop',   label: 'Content Top',    unit: 'px' },
-      { key: 'contentLeft',  label: 'Content Left',   unit: 'px' },
-      { key: 'charBottom',   label: 'Char Bottom',    unit: 'px' },
-      { key: 'charLeft',     label: 'Char Left',      unit: 'px' },
-      { key: 'charWidth',    label: 'Char Width',     unit: 'px' },
+      { key: 'bubbleTop',   label: 'Bubble Top',   unit: 'px' },
+      { key: 'bubbleLeft',  label: 'Bubble Left',  unit: 'px' },
+      { key: 'contentTop',  label: 'Content Top',  unit: 'px' },
+      { key: 'contentLeft', label: 'Content Left', unit: 'px' },
+      { key: 'charBottom',  label: 'Char Bottom',  unit: 'px' },
+      { key: 'charLeft',    label: 'Char Left',    unit: 'px' },
+      { key: 'charWidth',   label: 'Char Width',   unit: 'px' },
     ],
   },
   {
     id: 14, name: 'GoToPlatform',
     fields: [
-      { key: 'bubbleTop',    label: 'Bubble Top',     unit: 'px' },
-      { key: 'bubbleLeft',   label: 'Bubble Left',    unit: 'px' },
-      { key: 'contentTop',   label: 'Content Top',    unit: 'px' },
-      { key: 'contentLeft',  label: 'Content Left',   unit: 'px' },
-      { key: 'charBottom',   label: 'Char Bottom',    unit: 'px' },
-      { key: 'charLeft',     label: 'Char Left',      unit: 'px' },
-      { key: 'charWidth',    label: 'Char Width',     unit: 'px' },
+      { key: 'bubbleTop',   label: 'Bubble Top',   unit: 'px' },
+      { key: 'bubbleLeft',  label: 'Bubble Left',  unit: 'px' },
+      { key: 'contentTop',  label: 'Content Top',  unit: 'px' },
+      { key: 'contentLeft', label: 'Content Left', unit: 'px' },
+      { key: 'charBottom',  label: 'Char Bottom',  unit: 'px' },
+      { key: 'charLeft',    label: 'Char Left',    unit: 'px' },
+      { key: 'charWidth',   label: 'Char Width',   unit: 'px' },
     ],
   },
   {
     id: 15, name: 'Conditions',
     fields: [
-      { key: 'bubbleTop',   label: 'Bubble Top',    unit: 'px' },
-      { key: 'bubbleLeft',  label: 'Bubble Left',   unit: 'px' },
-      { key: 'panelTop',    label: 'Panel Top',     unit: 'px' },
-      { key: 'panelLeft',   label: 'Panel Left',    unit: 'px' },
-      { key: 'panelWidth',  label: 'Panel Width',   unit: 'px' },
-      { key: 'charBottom',  label: 'Char Bottom',   unit: 'px' },
-      { key: 'charLeft',    label: 'Char Left',     unit: 'px' },
-      { key: 'charWidth',   label: 'Char Width',    unit: 'px' },
+      { key: 'bubbleTop',  label: 'Bubble Top',  unit: 'px' },
+      { key: 'bubbleLeft', label: 'Bubble Left', unit: 'px' },
+      { key: 'panelTop',   label: 'Panel Top',   unit: 'px' },
+      { key: 'panelLeft',  label: 'Panel Left',  unit: 'px' },
+      { key: 'panelWidth', label: 'Panel Width', unit: 'px' },
+      { key: 'charBottom', label: 'Char Bottom', unit: 'px' },
+      { key: 'charLeft',   label: 'Char Left',   unit: 'px' },
+      { key: 'charWidth',  label: 'Char Width',  unit: 'px' },
     ],
   },
 ];
 
-const BREAKPOINTS: Breakpoint[] = ['normal', 'large'];
-const BP_LABEL: Record<Breakpoint, string> = {
-  normal: 'Normal (13")',
-  large:  'Large (24"+)',
-};
-
-function initValues(savedLayouts: SavedLayout[]): Record<string, Record<Breakpoint, Record<string, string>>> {
-  const out: Record<string, Record<Breakpoint, Record<string, string>>> = {};
+function initValues(savedLayouts: SavedLayout[]): Record<string, Record<string, string>> {
+  const out: Record<string, Record<string, string>> = {};
   for (const sec of SECTION_DEFS) {
-    out[sec.id] = { normal: {}, large: {} };
-    for (const bp of BREAKPOINTS) {
-      const defaults = LAYOUT_DEFAULTS[sec.id]?.[bp] ?? {};
-      const saved = savedLayouts.find(l => l.section_id === sec.id && l.breakpoint === bp);
-      const merged = saved ? { ...defaults, ...saved.config } : { ...defaults };
-      for (const f of sec.fields) {
-        out[sec.id][bp][f.key] = String(merged[f.key] ?? 0);
-      }
+    const defaults = LAYOUT_DEFAULTS[sec.id]?.['normal'] ?? {};
+    const saved = savedLayouts.find(l => l.section_id === sec.id && l.breakpoint === 'normal');
+    const merged = saved ? { ...defaults, ...saved.config } : { ...defaults };
+    out[sec.id] = {};
+    for (const f of sec.fields) {
+      out[sec.id][f.key] = String(merged[f.key] ?? 0);
     }
   }
   return out;
@@ -170,30 +178,30 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
   const [saving, setSaving] = useState<string>('');
   const [msg, setMsg] = useState<Record<string, string>>({});
 
-  const update = (sectionId: number, bp: Breakpoint, key: string, val: string) => {
+  const update = (sectionId: number, key: string, val: string) => {
     setValues(v => ({
       ...v,
-      [sectionId]: {
-        ...v[sectionId],
-        [bp]: { ...v[sectionId][bp], [key]: val },
-      },
+      [sectionId]: { ...v[sectionId], [key]: val },
     }));
   };
 
-  const save = async (sectionId: number, bp: Breakpoint) => {
-    const key = `${sectionId}-${bp}`;
+  const save = async (sectionId: number) => {
+    const key = String(sectionId);
     setSaving(key);
-    const raw = values[sectionId][bp];
+    const raw = values[sectionId];
     const config: Record<string, number> = {};
     for (const [k, v] of Object.entries(raw)) config[k] = Number(v);
 
     try {
-      const res = await fetch('/api/save-layout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pw, section_id: sectionId, breakpoint: bp, config }),
-      });
-      setMsg(m => ({ ...m, [key]: res.ok ? '✓ Saved' : '✗ Error' }));
+      // Save to both breakpoints so layout stays in sync
+      const results = await Promise.all(['normal', 'large'].map(bp =>
+        fetch('/api/save-layout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pw, section_id: sectionId, breakpoint: bp, config }),
+        })
+      ));
+      setMsg(m => ({ ...m, [key]: results.every(r => r.ok) ? '✓ Saved' : '✗ Error' }));
     } catch {
       setMsg(m => ({ ...m, [key]: '✗ Error' }));
     }
@@ -201,21 +209,11 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
     setTimeout(() => setMsg(m => { const n = { ...m }; delete n[key]; return n; }), 2500);
   };
 
-  const copyNormalToLarge = (sectionId: number) => {
-    setValues(v => ({
-      ...v,
-      [sectionId]: {
-        ...v[sectionId],
-        large: { ...v[sectionId].normal },
-      },
-    }));
-  };
-
   return (
-    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ maxWidth: 700, margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '0.5rem' }}>Layout Admin</h1>
       <p style={{ color: '#666', marginBottom: '2rem', fontSize: '0.9rem' }}>
-        Edit element positions per breakpoint. Changes apply after page reload.
+        Edit element positions. Changes apply after page reload.
       </p>
 
       {SECTION_DEFS.map(sec => (
@@ -227,90 +225,60 @@ export default function AdminPanel({ pw, savedLayouts }: Props) {
           <div style={{
             background: '#1a1a1a', color: '#fff',
             padding: '0.75rem 1.2rem',
-            display: 'flex', alignItems: 'center', gap: '1rem',
           }}>
             <span style={{ fontWeight: 700 }}>Section {sec.id} — {sec.name}</span>
-            <button
-              onClick={() => copyNormalToLarge(sec.id)}
-              style={{
-                marginLeft: 'auto',
-                background: 'rgba(255,255,255,0.15)',
-                border: 'none', borderRadius: 6,
-                color: '#fff', cursor: 'pointer',
-                padding: '0.25rem 0.75rem', fontSize: '0.8rem',
-                fontFamily: 'inherit',
-              }}
-            >
-              Copy Normal → Large
-            </button>
           </div>
 
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
-              <thead>
-                <tr style={{ background: '#f8f8f8' }}>
-                  <th style={{ ...cellStyle, textAlign: 'left', fontWeight: 600, width: '40%' }}>Field</th>
-                  {BREAKPOINTS.map(bp => (
-                    <th key={bp} style={{ ...cellStyle, textAlign: 'center', fontWeight: 600 }}>
-                      {BP_LABEL[bp]}
-                    </th>
-                  ))}
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.88rem' }}>
+            <thead>
+              <tr style={{ background: '#f8f8f8' }}>
+                <th style={{ ...cellStyle, textAlign: 'left', fontWeight: 600, width: '60%' }}>Field</th>
+                <th style={{ ...cellStyle, textAlign: 'center', fontWeight: 600 }}>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sec.fields.map(f => (
+                <tr key={f.key}>
+                  <td style={{ ...cellStyle, color: '#555' }}>
+                    {f.label} <span style={{ color: '#aaa', fontSize: '0.8rem' }}>({f.unit})</span>
+                  </td>
+                  <td style={{ ...cellStyle, textAlign: 'center' }}>
+                    <input
+                      type="number"
+                      style={inputStyle}
+                      value={values[sec.id]?.[f.key] ?? ''}
+                      onChange={e => update(sec.id, f.key, e.target.value)}
+                    />
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {sec.fields.map(f => (
-                  <tr key={f.key}>
-                    <td style={{ ...cellStyle, color: '#555' }}>
-                      {f.label} <span style={{ color: '#aaa', fontSize: '0.8rem' }}>({f.unit})</span>
-                    </td>
-                    {BREAKPOINTS.map(bp => (
-                      <td key={bp} style={{ ...cellStyle, textAlign: 'center' }}>
-                        <input
-                          type="number"
-                          style={inputStyle}
-                          value={values[sec.id]?.[bp]?.[f.key] ?? ''}
-                          onChange={e => update(sec.id, bp, f.key, e.target.value)}
-                        />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
 
           <div style={{
             padding: '0.75rem 1.2rem',
             display: 'flex', gap: '0.75rem', alignItems: 'center',
             borderTop: '1px solid #eee',
           }}>
-            {BREAKPOINTS.map(bp => {
-              const key = `${sec.id}-${bp}`;
-              return (
-                <button
-                  key={bp}
-                  onClick={() => save(sec.id, bp)}
-                  disabled={saving === key}
-                  style={{
-                    padding: '0.4rem 1.1rem',
-                    background: saving === key ? '#888' : '#000',
-                    color: '#fff', border: 'none', borderRadius: 999,
-                    fontWeight: 700, fontSize: '0.85rem',
-                    cursor: saving === key ? 'not-allowed' : 'pointer',
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {saving === key ? 'Saving…' : `Save ${BP_LABEL[bp]}`}
-                </button>
-              );
-            })}
-            {Object.entries(msg)
-              .filter(([k]) => k.startsWith(String(sec.id)))
-              .map(([k, v]) => (
-                <span key={k} style={{ fontSize: '0.85rem', color: v.startsWith('✓') ? '#00691e' : '#c00' }}>
-                  {v} ({k.split('-')[1]})
-                </span>
-              ))}
+            <button
+              onClick={() => save(sec.id)}
+              disabled={saving === String(sec.id)}
+              style={{
+                padding: '0.4rem 1.1rem',
+                background: saving === String(sec.id) ? '#888' : '#000',
+                color: '#fff', border: 'none', borderRadius: 999,
+                fontWeight: 700, fontSize: '0.85rem',
+                cursor: saving === String(sec.id) ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              {saving === String(sec.id) ? 'Saving…' : 'Save'}
+            </button>
+            {msg[String(sec.id)] && (
+              <span style={{ fontSize: '0.85rem', color: msg[String(sec.id)].startsWith('✓') ? '#00691e' : '#c00' }}>
+                {msg[String(sec.id)]}
+              </span>
+            )}
           </div>
         </div>
       ))}

@@ -12,20 +12,22 @@ interface Props {
   };
   directusUrl: string;
   layout: Record<string, number>;
+  progress?: number;
 }
 
 
-export default function ForWhomSection({ section, directusUrl, layout }: Props) {
+export default function ForWhomSection({ section, directusUrl, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
+  useEffect(() => { if (progress < 0.85) setOpen(false); }, [progress]);
   const t = section.translations?.[0];
 
   return (
     <div style={{
-      width: '100vw', height: '100vh', flexShrink: 0,
+      width: '100vw', minWidth: 1280, height: '100vh', minHeight: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -35,9 +37,10 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
           onClick={() => setOpen(o => !o)}
           className={open ? '' : 'bubble-hang'}
           style={{
-            position: 'absolute', top: `${layout.bubbleTop}%`, left: `${layout.bubbleLeft}%`,
+            position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
             transform: 'translate(-50%, -50%)',
-            zIndex: 4, cursor: 'pointer', userSelect: 'none',
+            zIndex: 4, cursor: 'pointer',
+            userSelect: 'none',
             display: 'inline-block',
           }}
         >
@@ -46,7 +49,7 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
             src={asset(directusUrl, section.bubble)!}
             alt=""
             onLoad={() => setBubbleLoaded(true)}
-            style={{ height: 'clamp(100px, 28vh, 200px)', width: 'auto', display: 'block' }}
+            style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '45%', left: '48%',
@@ -61,15 +64,17 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
           </div>
 
           {/* Content bubble */}
-          {open && (
-            <div style={{
-              position: 'absolute', top: `${layout.contentBubbleTop}%`, left: `${layout.contentBubbleLeft}%`,
-              zIndex: 3, display: 'inline-block', pointerEvents: 'none',
-            }}>
+          <div style={{
+            position: 'absolute', top: `${layout.contentBubbleTop}%`, left: `${layout.contentBubbleLeft}%`,
+            zIndex: 3, display: 'inline-block', pointerEvents: 'none',
+            transform: open ? 'translateY(0)' : 'translateY(-40px)',
+            opacity: open ? 1 : 0,
+            transition: 'transform 0.35s ease, opacity 0.35s ease',
+          }}>
               <img
                 src="/for_whom_click_bubble.webp"
                 alt=""
-                style={{ height: 'clamp(180px, 42vh, 420px)', width: 'auto', display: 'block' }}
+                style={{ height: 420, width: 'auto', display: 'block' }}
               />
               <div
                 style={{
@@ -82,11 +87,12 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
                 dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
               />
             </div>
-          )}
-        </div>
+          </div>
       )}
 
+
       {/* Characters illustration */}
+
       {section.main_image && (
         <img
           src={hovered && section.hoover_image ? asset(directusUrl, section.hoover_image)! : asset(directusUrl, section.main_image)!}
@@ -95,7 +101,7 @@ export default function ForWhomSection({ section, directusUrl, layout }: Props) 
           onMouseLeave={() => setHovered(false)}
           style={{
             position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: '100vmax', height: 'auto', display: 'block',
+            width: layout.charWidth, height: 'auto', display: 'block',
             zIndex: 5,
           }}
         />

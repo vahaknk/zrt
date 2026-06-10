@@ -12,24 +12,24 @@ export interface SavedLayout {
 // "large"  targets 24"+ monitor  (~1920 CSS px).
 export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, number>>> = {
   2: {
-    normal: { charBottom: 7, charLeft: 666 },
-    large:  { charBottom: 7, charLeft: 666 },
+    normal: { charBottom: 7, charLeft: 666, charWidth: 1280, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 260 },
+    large:  { charBottom: 7, charLeft: 666, charWidth: 1600, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 260 },
   },
   3: {
-    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30 },
-    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30 },
+    normal: { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
+    large:  { sectionWidth: 100, charBottom: 91, charLeft: 320, contentTop: 8, contentRight: 0, contentWidth: 30, bubbleTop: 288, bubbleLeft: 614, bubbleHeight: 260 },
   },
   4: {
-    normal: { charBottom: 90, charLeft: 0, bubbleTop: 36, bubbleLeft: 50, contentBubbleTop: -88, contentBubbleLeft: 70 },
-    large:  { charBottom: 90, charLeft: 0, bubbleTop: 36, bubbleLeft: 50, contentBubbleTop: -88, contentBubbleLeft: 70 },
+    normal: { charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 200, contentBubbleTop: -88, contentBubbleLeft: 70 },
+    large:  { charBottom: 90, charLeft: 0, charWidth: 1600, bubbleTop: 288, bubbleLeft: 640, bubbleHeight: 200, contentBubbleTop: -88, contentBubbleLeft: 70 },
   },
   5: {
-    normal: { sectionWidth: 100, charBottom: 90, charLeft: 0 },
-    large:  { sectionWidth: 100, charBottom: 90, charLeft: 0 },
+    normal: { sectionWidth: 100, charBottom: 90, charLeft: 0, charWidth: 1280, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
+    large:  { sectionWidth: 100, charBottom: 90, charLeft: 0, charWidth: 1600, bubbleTop: 280, bubbleLeft: 320, bubbleHeight: 200 },
   },
   6: {
-    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleStartTop: 11, bubbleGap: 12, bubbleHeight: 120, bubbleWidth: 420 },
-    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleStartTop: 11, bubbleGap: 12, bubbleHeight: 120, bubbleWidth: 420 },
+    normal: { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
+    large:  { sectionWidth: 100, charBottom: 90, charLeft: 650, charWidth: 240, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 200, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 120, contentBubbleWidth: 420 },
   },
   7: {
     normal: { sectionWidth: 100, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
