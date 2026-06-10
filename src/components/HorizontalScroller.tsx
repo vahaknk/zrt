@@ -129,7 +129,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      el.scrollLeft += e.deltaX + e.deltaY;
+      el.scrollLeft += (e.deltaX + e.deltaY) * 2;
       syncLine();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
