@@ -128,9 +128,8 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     };
 
     const onWheel = (e: WheelEvent) => {
-      if (e.deltaX !== 0) return; // trackpad horizontal swipe — let browser handle natively
       e.preventDefault();
-      el.scrollLeft += e.deltaY * 2; // mouse wheel: convert vertical to horizontal
+      el.scrollLeft += e.deltaX !== 0 ? e.deltaX : e.deltaY * 2;
       syncLine();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -251,10 +250,10 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         display: 'flex',
         alignItems: 'center',
         width: '100vw',
-        height: '100vh',
+        height: 'var(--vh, 100vh)',
         minWidth: 1280,
         minHeight: 800,
-        overflowX: 'scroll',
+        overflowX: 'hidden',
         overflowY: 'hidden',
         position: 'relative',
       }}
@@ -314,7 +313,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         ref={lineRef}
         style={{
           position: 'fixed',
-          top: 'calc(50vh + 285px)',
+          top: 'calc(var(--vh, 100vh) / 2 + 285px)',
           left: 0,
           width: '100vw',
           height: 80,
