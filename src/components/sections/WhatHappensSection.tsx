@@ -68,7 +68,7 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
             position: 'absolute', top: '40%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
+            fontSize: 22, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -100,13 +100,13 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
                   onClick={e => { e.stopPropagation(); setIndex(i => Math.max(0, i - 1)); }}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '1.4rem', flexShrink: 0, opacity: index > 0 ? 1 : 0.2, color: '#fff',
+                    fontSize: '2.2rem', flexShrink: 0, opacity: index > 0 ? 1 : 0.2, color: '#fff',
                   }}
-                >‹</button>
+                >⬅</button>
                 <span style={{
                   flex: 1,
-                  fontSize: 'clamp(0.9rem, 2vh, 1.4rem)',
-                  lineHeight: 1.5, color: '#ffffff', fontWeight: 500,
+                  fontSize: 18,
+                  lineHeight: 1.5, color: '#ffffff', fontWeight: 400,
                   wordBreak: 'break-word', whiteSpace: 'normal',
                 }}>
                   {bullets[index]}
@@ -115,9 +115,9 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
                   onClick={e => { e.stopPropagation(); setIndex(i => Math.min(bullets.length - 1, i + 1)); }}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
-                    fontSize: '1.4rem', flexShrink: 0, opacity: index < bullets.length - 1 ? 1 : 0.2, color: '#fff',
+                    fontSize: '2.2rem', flexShrink: 0, opacity: index < bullets.length - 1 ? 1 : 0.2, color: '#fff',
                   }}
-                >›</button>
+                >⮕</button>
               </div>
             </div>
           </div>

@@ -55,7 +55,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           <img
             src={fileUrl(directusUrl, section.main_image)}
             alt=""
-            style={{ height: 'clamp(120px, 30vh, 240px)', width: 'auto', display: 'block' }}
+            style={{ height: 240, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '20%', left: '10%',
@@ -65,8 +65,8 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           }}>
             {t?.Header && (
               <h2 style={{
-                fontSize: 'clamp(1.6rem, 1.2vh, 1rem)', fontWeight: 700,
-                color: '#000', flexShrink: 0, width: '30%',
+                fontSize: 24, fontWeight: 700,
+                color: '#000', flexShrink: 0, width: '15%',
                 lineHeight: 1.3, wordBreak: 'break-word',
               }}>
                 {decodeHtml(t.Header)}
@@ -77,14 +77,14 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
                 onClick={() => setIndex(i => Math.max(0, i - 1))}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '1.4rem', flexShrink: 0, color: '#000',
+                  fontSize: '2.2rem', flexShrink: 0, color: '#000',
                   opacity: index > 0 ? 1 : 0.2,
                 }}
-              >‹</button>
+              >⬅</button>
               <span style={{
                 flex: 1, textAlign: 'center',
-                fontSize: 'clamp(1.0rem, 1.2vh, 0.85rem)',
-                lineHeight: 1.4, color: '#000', fontWeight: 500,
+                fontSize: 18,
+                lineHeight: 1.4, color: '#000', fontWeight: 400,
                 wordBreak: 'break-word', whiteSpace: 'normal',
                 overflowWrap: 'break-word',
               }}>
@@ -94,10 +94,10 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
                 onClick={() => setIndex(i => Math.min(bullets.length - 1, i + 1))}
                 style={{
                   background: 'none', border: 'none', cursor: 'pointer',
-                  fontSize: '1.2rem', flexShrink: 0, color: '#000',
+                  fontSize: '2.2rem', flexShrink: 0, color: '#000',
                   opacity: index < bullets.length - 1 ? 1 : 0.2,
                 }}
-              >›</button>
+              >⮕</button>
             </div>
           </div>
         </div>

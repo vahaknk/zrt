@@ -64,7 +64,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
+            fontSize: 22, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -108,7 +108,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 700,
-                        fontSize: 'clamp(0.7rem, 1.4vh, 1rem)',
+                        fontSize: 18,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
                         wordBreak: 'break-word',
@@ -125,7 +125,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
               {/* Tab content */}
               <div style={{
                 flex: 1, overflowY: 'auto',
-                fontSize: 'clamp(0.75rem, 1.5vh, 1rem)',
+                fontSize: 18,
                 lineHeight: 1.6, color: '#000',
               }}
                 dangerouslySetInnerHTML={{ __html: tabSections[activeTab]?.translations?.[0]?.Content ?? '' }}

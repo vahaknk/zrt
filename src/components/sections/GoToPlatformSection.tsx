@@ -85,11 +85,11 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
               />
               <div
                 style={{
-                  position: 'absolute', top: '50%', left: '55%',
+                  position: 'absolute', top: '40%', left: '55%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: '1rem', lineHeight: 1.6,
-                  color: '#000', fontWeight: 500,
+                  fontSize: '1.1rem', lineHeight: 1.6,
+                  color: '#000', fontWeight: 400,
                   pointerEvents: 'all',
                 }}
                 className="contact-content"
@@ -104,7 +104,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
                   background: '#000', color: '#fff',
                   border: 'none', borderRadius: 999,
                   padding: '0.45rem 1.2rem',
-                  fontWeight: 700, fontSize: '0.95rem',
+                  fontWeight: 500, fontSize: '1.1rem',
                   cursor: 'pointer', whiteSpace: 'nowrap',
                   fontFamily: 'inherit',
                 }}

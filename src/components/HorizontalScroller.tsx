@@ -255,6 +255,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         minWidth: 1280,
         minHeight: 800,
         overflowX: 'scroll',
+        overflowY: 'hidden',
         position: 'relative',
       }}
     >

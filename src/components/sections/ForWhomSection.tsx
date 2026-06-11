@@ -61,7 +61,7 @@ export default function ForWhomSection({ section, directusUrl, layout, progress 
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 'clamp(1rem, 2.8vh, 2rem)', lineHeight: 1.3, color: '#000',
+            fontSize: 22, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -84,11 +84,11 @@ export default function ForWhomSection({ section, directusUrl, layout, progress 
               />
               <div
                 style={{
-                  position: 'absolute', top: '45%', left: '50%',
+                  position: 'absolute', top: '43%', left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  width: '70%', textAlign: 'center',
-                  fontSize: 'clamp(0.8rem, 1.6vh, 1.2rem)', lineHeight: 1.3,
-                  color: '#000', fontWeight: 500, pointerEvents: 'none',
+                  width: '75%', textAlign: 'center',
+                  fontSize: 18, lineHeight: 1.3,
+                  color: '#000', fontWeight: 400, pointerEvents: 'none',
                 }}
                 dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
               />
