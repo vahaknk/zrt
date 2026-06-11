@@ -36,6 +36,10 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
   const bubbleRef = useRef<HTMLImageElement>(null);
   useEffect(() => { if (bubbleRef.current?.complete) setBubbleLoaded(true); }, []);
   useEffect(() => { if (progress < 0.5) setOpen(false); }, [progress]);
+  const [bubbleVisible, setBubbleVisible] = useState(false);
+  useEffect(() => {
+    if (progress > 0.3) setBubbleVisible(true);
+  }, [progress]);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
 
@@ -56,7 +60,9 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
             className={open ? '' : 'bubble-hang'}
             style={{
               position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
-              transform: 'translate(-50%, -50%)',
+              transform: bubbleVisible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% - 60px))',
+              opacity: bubbleVisible ? 1 : 0,
+              transition: 'transform 0.6s ease, opacity 0.4s ease',
               zIndex: open ? 2 : 4, cursor: 'pointer',
               userSelect: 'none',
               display: 'inline-block',

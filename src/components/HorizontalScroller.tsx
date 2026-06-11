@@ -100,7 +100,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollLeft, setScrollLeft] = useState(0);
   const sectionOffsetsRef = useRef<Record<string, number>>({});
-  const [breakpoint, setBreakpoint] = useState<Breakpoint>('large'); // responsive temporarily disabled
+  const breakpoint: Breakpoint = 'large'; // responsive temporarily disabled
 
   useEffect(() => {
     const computeOffsets = () => {
@@ -182,7 +182,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     return getLayout(sectionId, breakpoint, savedLayouts);
   }
 
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1280;
+  const vw = 1920; // matches fixed section width
   const progresses: Record<string, number> = {};
   sections.forEach(s => {
     if (TAB_SECTION_IDS.includes(Number(s.id))) return;
@@ -249,6 +249,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       ref={trackRef}
       style={{
         display: 'flex',
+        alignItems: 'center',
         width: '100vw',
         height: '100vh',
         minWidth: 1280,
@@ -312,7 +313,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         ref={lineRef}
         style={{
           position: 'fixed',
-          top: 685,
+          top: 'calc(50vh + 285px)',
           left: 0,
           width: '100vw',
           height: 80,
