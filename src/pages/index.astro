@@ -48,6 +48,19 @@ try {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Runs synchronously before any content renders so zoom is already set when React hydrates -->
+    <script is:inline>
+      (function () {
+        function applyZoom() {
+          var scale = Math.min(1, window.innerWidth / 1920);
+          var html = document.documentElement;
+          html.style.zoom = scale < 1 ? String(scale) : '';
+          html.style.setProperty('--vh', (window.innerHeight / scale) + 'px');
+        }
+        applyZoom();
+        window.addEventListener('resize', applyZoom);
+      })();
+    </script>
     <title>Zartsants</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -138,19 +151,6 @@ try {
       client:load
     />
   </body>
-  <script>
-    function applyZoom() {
-      const scale = Math.min(1, window.innerWidth / 1920);
-      const html = document.documentElement;
-      html.style.zoom = scale < 1 ? String(scale) : '';
-      // --vh: the full viewport height in CSS px at the current zoom level.
-      // Explicitly set so the scroller height doesn't depend on browser-specific
-      // 100vh behaviour under zoom (which varies between Chrome and Firefox).
-      html.style.setProperty('--vh', (window.innerHeight / scale) + 'px');
-    }
-    applyZoom();
-    window.addEventListener('resize', applyZoom);
-  </script>
   <script>
     let visitorId = localStorage.getItem('zrt_vid');
     if (!visitorId) {
