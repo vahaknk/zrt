@@ -51,33 +51,17 @@ function fileUrl(directusUrl: string, id: string) {
 
 function SectionPanel({ section, directusUrl }: { section: Section; directusUrl: string }) {
   const t = section.translations?.[0];
-
   return (
-    <div
-      style={{
-        width: '100vw',
-        height: 800,
-        flexShrink: 0,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '4rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <div style={{
+      width: 1920, height: 800, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '4rem', position: 'relative', overflow: 'hidden',
+    }}>
       {section.main_image && (
         <img
           src={fileUrl(directusUrl, section.main_image)}
           alt=""
-          style={{
-            position: 'absolute',
-            inset: 0,
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            opacity: 0.3,
-          }}
+          style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.3 }}
         />
       )}
       <div style={{ position: 'relative', zIndex: 1, maxWidth: '640px' }}>
@@ -101,6 +85,23 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const [scrollLeft, setScrollLeft] = useState(0);
   const sectionOffsetsRef = useRef<Record<string, number>>({});
   const breakpoint: Breakpoint = 'large'; // responsive temporarily disabled
+
+  // Scale the 1920px design canvas to fit the physical viewport.
+  // Using React state + transform:scale avoids all CSS zoom / vw-unit
+  // cross-browser inconsistencies (Chrome and Firefox don't update vw
+  // when zoom is applied to <html>, but Safari does).
+  const [scale, setScale] = useState(() => Math.min(1, window.innerWidth / 1920));
+  const [screenH, setScreenH] = useState(() => window.innerHeight);
+  useEffect(() => {
+    const update = () => {
+      setScale(Math.min(1, window.innerWidth / 1920));
+      setScreenH(window.innerHeight);
+    };
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
+  // Height of the inner 1920px canvas in CSS px, so it fills the screen after scaling
+  const innerH = screenH / scale;
 
   useEffect(() => {
     const computeOffsets = () => {
@@ -129,19 +130,20 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      el.scrollLeft += e.deltaX !== 0 ? e.deltaX : e.deltaY * 2;
+      // Divide by scale so physical trackpad/wheel delta maps correctly
+      // to the CSS px coordinate space of the scaled inner canvas.
+      const s = Math.min(1, window.innerWidth / 1920);
+      el.scrollLeft += (e.deltaX !== 0 ? e.deltaX : e.deltaY * 2) / s;
       syncLine();
     };
     el.addEventListener('wheel', onWheel, { passive: false });
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') el.scrollBy({ left: window.innerWidth, behavior: 'smooth' });
-      if (e.key === 'ArrowLeft') el.scrollBy({ left: -window.innerWidth, behavior: 'smooth' });
+      if (e.key === 'ArrowRight') el.scrollBy({ left: 1920, behavior: 'smooth' });
+      if (e.key === 'ArrowLeft') el.scrollBy({ left: -1920, behavior: 'smooth' });
     };
     window.addEventListener('keydown', onKey);
 
-    // rAF loop keeps the line in sync during smooth scrolls (keyboard, nav menu)
-    // where overflow:hidden suppresses the scroll event in Chrome.
     let rafId: number;
     let lastScroll = el.scrollLeft;
     const rafLoop = () => {
@@ -181,7 +183,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     return getLayout(sectionId, breakpoint, savedLayouts);
   }
 
-  const vw = 1920; // matches fixed section width
+  const vw = 1920;
   const progresses: Record<string, number> = {};
   sections.forEach(s => {
     if (TAB_SECTION_IDS.includes(Number(s.id))) return;
@@ -244,102 +246,117 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   }
 
   return (
-    <div
-      ref={trackRef}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        width: '100vw',
-        height: 'var(--vh, 100vh)',
-        minWidth: 1280,
-        minHeight: 800,
-        overflowX: 'hidden',
-        overflowY: 'hidden',
-        position: 'relative',
-      }}
-    >
-      {/* Sticky logo with nav menu */}
+    // Outer: clips to the physical viewport — no CSS zoom dependency
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+      {/* Inner: 1920px design canvas scaled to fill the viewport */}
       <div style={{
-        position: 'fixed', top: '2%', left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1000, textAlign: 'center',
+        width: 1920,
+        height: innerH,
+        transform: scale < 1 ? `scale(${scale})` : undefined,
+        transformOrigin: 'top left',
+        position: 'relative',
       }}>
-        <div
-          onClick={() => setMenuOpen(o => !o)}
-          className={menuOpen ? '' : 'logo-hang'}
-          style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-block' }}
-        >
-          <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
+
+        {/* Logo with nav menu — absolute inside scaled canvas */}
+        <div style={{
+          position: 'absolute', top: '2%', left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 1000, textAlign: 'center',
+        }}>
+          <div
+            onClick={() => setMenuOpen(o => !o)}
+            className={menuOpen ? '' : 'logo-hang'}
+            style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-block' }}
+          >
+            <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
+          </div>
+
+          {menuOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
+              transform: 'translateX(-50%)',
+              background: 'rgba(255,255,255,0.95)',
+              borderRadius: 12, padding: '0.5rem',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+              minWidth: 220,
+            }}>
+              {navSections.map((s) => {
+                const label = s.translations?.[0]?.Header ?? `Section ${s.id}`;
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => scrollToSection(s.id)}
+                    style={{
+                      padding: '0.5rem 0.9rem',
+                      cursor: 'pointer',
+                      borderRadius: 8,
+                      fontWeight: 600,
+                      fontSize: '0.95rem',
+                      color: '#000',
+                      whiteSpace: 'nowrap',
+                      textAlign: 'left',
+                      transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#f0ecff')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    {label}
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {menuOpen && (
-          <div style={{
-            position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
-            transform: 'translateX(-50%)',
-            background: 'rgba(255,255,255,0.95)',
-            borderRadius: 12, padding: '0.5rem',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-            minWidth: 220,
-          }}>
-            {navSections.map((s) => {
-              const label = s.translations?.[0]?.Header ?? `Section ${s.id}`;
-              return (
-                <div
-                  key={s.id}
-                  onClick={() => scrollToSection(s.id)}
-                  style={{
-                    padding: '0.5rem 0.9rem',
-                    cursor: 'pointer',
-                    borderRadius: 8,
-                    fontWeight: 600,
-                    fontSize: '0.95rem',
-                    color: '#000',
-                    whiteSpace: 'nowrap',
-                    textAlign: 'left',
-                    transition: 'background 0.15s',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = '#f0ecff')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
-                  {label}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        {/* Ground line — absolute inside scaled canvas */}
+        <div
+          ref={lineRef}
+          style={{
+            position: 'absolute',
+            top: 'calc(50% + 285px)',
+            left: 0,
+            width: 1920,
+            height: 80,
+            transform: 'translateY(-50%)',
+            backgroundImage: 'url(/line.png)',
+            backgroundRepeat: 'repeat-x',
+            backgroundPositionX: '0px',
+            backgroundPositionY: 'center',
+            backgroundSize: 'auto 100%',
+            pointerEvents: 'none',
+            zIndex: 0,
+            willChange: 'background-position',
+          }}
+        />
+
+        {/* Scrollable track — fills the scaled canvas, overflow hidden clips horizontally */}
+        <div
+          ref={trackRef}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            width: 1920,
+            height: '100%',
+            minHeight: 800,
+            overflow: 'hidden',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+        >
+          {sections.map((section) => {
+            const content = getSectionContent(section, progresses[section.id] ?? 0);
+            if (content === null) return null;
+            return (
+              <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
+                {content}
+              </div>
+            );
+          })}
+          <div style={{ flexShrink: 0, width: 640, height: 800 }} />
+        </div>
+
       </div>
-
-      <div
-        ref={lineRef}
-        style={{
-          position: 'fixed',
-          top: 'calc(var(--vh, 100vh) / 2 + 285px)',
-          left: 0,
-          width: '100vw',
-          height: 80,
-          transform: 'translateY(-50%)',
-          backgroundImage: 'url(/line.png)',
-          backgroundRepeat: 'repeat-x',
-          backgroundPositionX: '0px',
-          backgroundPositionY: 'center',
-          backgroundSize: 'auto 100%',
-          pointerEvents: 'none',
-          zIndex: 0,
-          willChange: 'background-position',
-        }}
-      />
-
-
-      {sections.map((section) => {
-        const content = getSectionContent(section, progresses[section.id] ?? 0);
-        if (content === null) return null;
-        return (
-          <div key={section.id} id={`section-${section.id}`} style={{ display: 'flex', flexShrink: 0 }}>
-            {content}
-          </div>
-        );
-      })}
-      <div style={{ flexShrink: 0, width: 640, height: 800 }} />
     </div>
   );
 }
