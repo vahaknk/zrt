@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { decodeHtml } from '../lib/text';
 import RegistrationSection from './sections/RegistrationSection';
 import type { SavedLayout } from '../lib/layouts';
@@ -72,6 +72,28 @@ const COL2_HEADER: Record<string, string> = {
   en: 'The main programs we implement include:',
 };
 
+function Accordion({ header, children }: { header: string; children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+          fontFamily: 'inherit', textAlign: 'left',
+        }}
+      >
+        <span style={{ ...h2Style, marginBottom: 0, flex: 1 }}>{header}</span>
+        <span style={{ fontSize: '1.4rem', fontWeight: 300, marginLeft: '0.75rem', lineHeight: 1 }}>
+          {open ? '−' : '+'}
+        </span>
+      </button>
+      {open && <div style={{ marginTop: '0.75rem' }}>{children}</div>}
+    </div>
+  );
+}
+
 export default function MobileLayout({ sections, directusUrl, labels }: Props) {
   const visible = sections.filter(s => !TAB_IDS.includes(Number(s.id)));
 
@@ -141,14 +163,15 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
           );
         }
 
-        // About Us — no image
+        // About Us — no image, accordion
         if (id === ABOUT_US_ID) {
           return (
             <div key={section.id} style={card}>
-              {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
-              {t?.Content && (
-                <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-              )}
+              <Accordion header={decodeHtml(t?.Header ?? '')}>
+                {t?.Content && (
+                  <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+                )}
+              </Accordion>
             </div>
           );
         }
@@ -177,7 +200,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
           );
         }
 
-        // Default — image (contain) + header + content
+        // Default — image (contain) + accordion
         return (
           <div key={section.id} style={card}>
             {section.main_image && (
@@ -189,10 +212,11 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
                 />
               </div>
             )}
-            {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
-            {t?.Content && (
-              <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-            )}
+            <Accordion header={decodeHtml(t?.Header ?? '')}>
+              {t?.Content && (
+                <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+              )}
+            </Accordion>
           </div>
         );
       })}
