@@ -200,7 +200,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
           );
         }
 
-        // Default — image (contain) + accordion
+        // Default — image (contain) + header + content
         return (
           <div key={section.id} style={card}>
             {section.main_image && (
@@ -212,11 +212,10 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
                 />
               </div>
             )}
-            <Accordion header={decodeHtml(t?.Header ?? '')}>
-              {t?.Content && (
-                <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-              )}
-            </Accordion>
+            {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
+            {t?.Content && (
+              <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+            )}
           </div>
         );
       })}
