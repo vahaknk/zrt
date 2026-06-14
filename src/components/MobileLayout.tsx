@@ -27,12 +27,21 @@ interface Props {
   savedLayouts: SavedLayout[];
 }
 
+const card: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.92)',
+  borderRadius: 20,
+  padding: '1.25rem',
+  margin: '0 1rem 1rem',
+  boxShadow: '0 2px 20px rgba(0,0,0,0.08)',
+};
+
 export default function MobileLayout({ sections, directusUrl, labels }: Props) {
   const visible = sections.filter(s => !TAB_SECTION_IDS.includes(Number(s.id)));
 
   return (
-    <div style={{ minHeight: '100vh', background: '#9683fe', color: '#000', fontFamily: 'inherit' }}>
+    <div style={{ minHeight: '100vh', background: '#9683fe', color: '#000', fontFamily: 'inherit', paddingBottom: '2rem' }}>
 
+      {/* Header */}
       <div style={{ textAlign: 'center', padding: '2rem 1rem 1.5rem' }}>
         <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 72, width: 'auto' }} />
       </div>
@@ -43,7 +52,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
 
         if (id === REGISTRATION_SECTION_ID) {
           return (
-            <div key={section.id} style={{ padding: '1.5rem 1rem' }}>
+            <div key={section.id} style={card}>
               <RegistrationSection
                 labels={labels}
                 sectionHeader={t?.Header ?? ''}
@@ -58,22 +67,29 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
         }
 
         return (
-          <div key={section.id} style={{ padding: '1.5rem 1rem', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>
+          <div key={section.id} style={card}>
             {section.main_image && (
-              <img
-                src={`${directusUrl}/assets/${section.main_image}`}
-                alt=""
-                style={{ width: '100%', maxHeight: 220, objectFit: 'cover', borderRadius: 12, marginBottom: '1rem', display: 'block' }}
-              />
+              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                <img
+                  src={`${directusUrl}/assets/${section.main_image}`}
+                  alt=""
+                  style={{
+                    maxHeight: 180,
+                    maxWidth: '100%',
+                    objectFit: 'contain',
+                    display: 'inline-block',
+                  }}
+                />
+              </div>
             )}
             {t?.Header && (
-              <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.5rem', lineHeight: 1.3 }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.5rem', lineHeight: 1.35 }}>
                 {decodeHtml(t.Header)}
               </h2>
             )}
             {t?.Content && (
               <div
-                style={{ fontSize: '0.95rem', lineHeight: 1.7 }}
+                style={{ fontSize: '0.9rem', lineHeight: 1.75, color: '#111' }}
                 dangerouslySetInnerHTML={{ __html: t.Content }}
               />
             )}
@@ -81,8 +97,9 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
         );
       })}
 
-      <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
-        <img src="/gulbenkian-logo.png" alt="Gulbenkian" style={{ height: 40, width: 'auto' }} />
+      {/* Footer */}
+      <div style={{ textAlign: 'center', padding: '1.5rem 1rem 0' }}>
+        <img src="/gulbenkian-logo.png" alt="Gulbenkian" style={{ height: 36, width: 'auto', opacity: 0.85 }} />
       </div>
     </div>
   );
