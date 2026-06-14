@@ -2,7 +2,7 @@
 import { directus, readItems } from '../lib/directus';
 import { getLanguage } from '../lib/language';
 import { getLabels } from '../lib/labels';
-import HorizontalScroller from '../components/HorizontalScroller';
+import AppShell from '../components/AppShell';
 
 const lang = getLanguage(Astro.request);
 if (!lang) return Astro.redirect('/select-language');
@@ -130,7 +130,7 @@ try {
     </style>
   </head>
   <body>
-    <HorizontalScroller
+    <AppShell
       sections={sections}
       directusUrl={DIRECTUS_URL}
       labels={labels}
