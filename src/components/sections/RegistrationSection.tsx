@@ -85,15 +85,13 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               <label style={labelStyle}>{labels['email_label']}</label>
               <input style={inputStyle} type="email" placeholder={labels['email_placeholder']} value={form.email} onChange={(e) => set('email', e.target.value)} required />
             </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['birthday']}</label>
-                <input style={inputStyle} type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['city']}</label>
-                <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
-              </div>
+            <div>
+              <label style={labelStyle}>{labels['birthday']}</label>
+              <input style={inputStyle} type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
+            </div>
+            <div>
+              <label style={labelStyle}>{labels['city']}</label>
+              <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
             </div>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <div style={{ flex: 1 }}>
