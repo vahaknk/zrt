@@ -18,15 +18,22 @@ interface Props {
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
-  return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
+  return matches.map(m => m.replace(/^<li[^>]*>|<\/li>$/g, '').trim()).filter(Boolean);
 }
 
 const BUBBLE_CONFIG = [
-  { top: '11%', left: '13%', width: '420px', picOnLeft: true,  picOffset: '7%', picTop: '35%', textOffset: '8%', textTop: '45%' },
-  { top: '24%', left: '12%', width: '420px', picOnLeft: false, picOffset: '4%', picTop: '50%', textOffset: '8%', textTop: '40%' },
-  { top: '35%', left: '17%', width: '420px', picOnLeft: true,  picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '47%' },
-  { top: '47%', left: '12%', width: '420px', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '36%' },
-  { top: '57%', left: '18%', width: '420px', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%' },
+  // Row 1 — left of character
+  { topPct: 8.7, left: '13%', picOnLeft: true,  picOffset: '7%', picTop: '35%', textOffset: '8%', textTop: '45%', flip: false, scale: 1 },
+  { topPct: 24, left: '12%', picOnLeft: false, picOffset: '4%', picTop: '50%', textOffset: '8%', textTop: '40%', flip: false, scale: 1 },
+  { topPct: 37, left: '17%', picOnLeft: true,  picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '47%', flip: false, scale: 1 },
+  { topPct: 50.5, left: '12%', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '36%', flip: false, scale: 1 },
+  { topPct: 62, left: '18%', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%', flip: false, scale: 1 },
+  // Row 2 — right of character (mirrored horizontally)
+  { topPct: 20, left: 'calc(60% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '35%', textOffset: '8%', textTop: '58%', flip: false, scale: 1 },
+  { topPct: 35, left: 'calc(56% + 450px)', picOnLeft: false,  picOffset: '7%', picTop: '50%', textOffset: '6%', textTop: '38%', flip: false, scale: 1.2 },
+  { topPct: 49, left: 'calc(64% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.0 },
+  { topPct: 63, left: 'calc(55% + 450px)', picOnLeft: false,  picOffset: '4%', picTop: '30%', textOffset: '6%', textTop: '50%', flip: false, scale: 1.25 },
+  { topPct: 59, left: 'calc(54% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '47%', flip: true, scale: 1.2 },
 ];
 
 export default function WhatsThereSection({ section, directusUrl, layout, progress = 1 }: Props) {
@@ -96,49 +103,73 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
           opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
           transition: 'transform 0.35s ease, opacity 0.35s ease',
         }}>
+          {/* Second column heading */}
+          {bullets.length > 5 && (() => {
+            const COL2_HEADER: Record<string, string> = {
+              hyw: 'Մեր կիրարկած<br>հիմնական ծրագիրներուն<br>մաս կը կազմեն՝',
+              en: 'The main programs<br>we implement include:',
+            };
+            const lang = t?.languages_id ?? 'hyw';
+            const heading = COL2_HEADER[lang] ?? COL2_HEADER['en'];
+            return (
+              <div style={{
+                position: 'absolute',
+                top: '8%', left: 'calc(60% + 500px)',
+                fontWeight: 700, fontSize: 20, color: '#000',
+                whiteSpace: 'nowrap',
+              }}>
+                <span dangerouslySetInnerHTML={{ __html: heading }} />
+              </div>
+            );
+          })()}
           {bullets.map((bullet, i) => {
-            const cfg = BUBBLE_CONFIG[i] ?? BUBBLE_CONFIG[0];
-            const bubbleTop = layout.bubbleStartTop + i * layout.bubbleGap;
+            const cfg = BUBBLE_CONFIG[i] ?? BUBBLE_CONFIG[i % 5];
+            const bgIndex = i + 1;          // 1–5 for row 1, 6–9 for row 2
+            const bgExt = bgIndex <= 5 ? 'webp' : 'png';
+            const picIndex = (i % 5) + 1;   // always cycles 1–5
             return (
               <div key={i} style={{
                 position: 'absolute',
-                top: `${bubbleTop}%`, left: cfg.left,
-                width: `${layout.contentBubbleWidth}px`,
-                height: `${layout.contentBubbleHeight}px`,
+                top: `${cfg.topPct}%`, left: cfg.left,
+                width: `${layout.contentBubbleWidth * cfg.scale}px`,
+                height: `${layout.contentBubbleHeight * cfg.scale}px`,
                 zIndex: 3,
               }}>
                 <img
-                  src={`/whats_there_${i + 1}.webp`}
+                  src={`/whats_there_${bgIndex}.${bgExt}`}
                   alt=""
                   style={{
                     width: '100%', height: '100%',
                     objectFit: 'fill', display: 'block',
+                    transform: cfg.flip ? 'scaleX(-1)' : undefined,
                   }}
                 />
-                {/* Illustration */}
-                <img
-                  src={`/whats_there_pic_${i + 1}.webp`}
-                  alt=""
-                  style={{
-                    position: 'absolute',
-                    top: cfg.picTop, transform: 'translateY(-50%)',
-                    [cfg.picOnLeft ? 'left' : 'right']: cfg.picOffset,
-                    height: '85%', width: 'auto',
-                  }}
-                />
+                {/* Illustration — row 1 only */}
+                {i < 5 && (
+                  <img
+                    src={`/whats_there_pic_${picIndex}.webp`}
+                    alt=""
+                    style={{
+                      position: 'absolute',
+                      top: cfg.picTop, transform: `translateY(-50%)${cfg.flip ? ' scaleX(-1)' : ''}`,
+                      [cfg.picOnLeft ? 'left' : 'right']: cfg.picOffset,
+                      height: '85%', width: 'auto',
+                    }}
+                  />
+                )}
                 {/* Text */}
                 <div style={{
                   position: 'absolute',
                   top: cfg.textTop, transform: 'translateY(-50%)',
                   [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
-                  width: '50%',
+                  width: i < 5 ? '50%' : '80%',
                   textAlign: 'left',
                   fontSize: 18,
                   fontWeight: 400, color: '#000',
-                  wordBreak: 'break-word', whiteSpace: 'normal',
+                  wordBreak: i < 5 ? 'break-word' : 'normal', whiteSpace: i < 5 ? 'normal' : 'nowrap',
                   lineHeight: 1.3,
                 }}>
-                  {bullet}
+                  <span dangerouslySetInnerHTML={{ __html: bullet }} />
                 </div>
               </div>
             );

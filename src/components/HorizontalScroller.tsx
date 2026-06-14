@@ -79,17 +79,15 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
 
 
 export default function HorizontalScroller({ sections, directusUrl, labels, savedLayouts }: Props) {
-  const trackRef = useRef<HTMLDivElement>(null);
   const lineRef = useRef<HTMLDivElement>(null);
+  const rowRef = useRef<HTMLDivElement>(null); // the flex row that slides left/right
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrollLeft, setScrollLeft] = useState(0);
+  const scrollRef = useRef(0); // current scroll offset in CSS px (design coordinates)
   const sectionOffsetsRef = useRef<Record<string, number>>({});
-  const breakpoint: Breakpoint = 'large'; // responsive temporarily disabled
+  const breakpoint: Breakpoint = 'large';
 
   // Scale the 1920px design canvas to fit the physical viewport.
-  // Using React state + transform:scale avoids all CSS zoom / vw-unit
-  // cross-browser inconsistencies (Chrome and Firefox don't update vw
-  // when zoom is applied to <html>, but Safari does).
   const [scale, setScale] = useState(() => Math.min(1, window.innerWidth / 1920));
   const [screenH, setScreenH] = useState(() => window.innerHeight);
   useEffect(() => {
@@ -100,8 +98,17 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
-  // Height of the inner 1920px canvas in CSS px, so it fills the screen after scaling
   const innerH = screenH / scale;
+
+  // Sync the parallax line and state after a scroll offset change.
+  const syncScroll = (offset: number) => {
+    if (rowRef.current) {
+      rowRef.current.style.transform = `translateX(${-offset}px)`;
+    }
+    if (lineRef.current) {
+      lineRef.current.style.backgroundPositionX = `${-offset * 0.6}px`;
+    }
+  };
 
   useEffect(() => {
     const computeOffsets = () => {
@@ -119,39 +126,35 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   }, [sections]);
 
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-
-    const syncLine = () => {
-      if (lineRef.current) {
-        lineRef.current.style.backgroundPositionX = `${-el.scrollLeft * 0.6}px`;
-      }
+    const scroll = (delta: number, instant = false) => {
+      const maxScroll = rowRef.current
+        ? rowRef.current.scrollWidth - 1920
+        : 0;
+      scrollRef.current = Math.max(0, Math.min(maxScroll, scrollRef.current + delta));
+      if (rowRef.current) rowRef.current.style.transition = instant ? 'none' : 'transform 0.45s ease';
+      syncScroll(scrollRef.current);
     };
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      // Divide by scale so physical trackpad/wheel delta maps correctly
-      // to the CSS px coordinate space of the scaled inner canvas.
       const s = Math.min(1, window.innerWidth / 1920);
-      el.scrollLeft += (e.deltaX !== 0 ? e.deltaX : e.deltaY * 2) / s;
-      syncLine();
+      scroll((e.deltaX !== 0 ? e.deltaX : e.deltaY * 2) / s, true);
     };
-    el.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('wheel', onWheel, { passive: false });
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') el.scrollBy({ left: 1920, behavior: 'smooth' });
-      if (e.key === 'ArrowLeft') el.scrollBy({ left: -1920, behavior: 'smooth' });
+      if (e.key === 'ArrowRight') scroll(1920);
+      if (e.key === 'ArrowLeft') scroll(-1920);
     };
     window.addEventListener('keydown', onKey);
 
+    // RAF loop: keep scrollLeft state in sync (drives progress/bubbleVisible).
     let rafId: number;
-    let lastScroll = el.scrollLeft;
+    let last = 0;
     const rafLoop = () => {
-      const s = el.scrollLeft;
-      if (s !== lastScroll) {
-        lastScroll = s;
-        syncLine();
-        setScrollLeft(s);
+      if (scrollRef.current !== last) {
+        last = scrollRef.current;
+        setScrollLeft(last);
       }
       rafId = requestAnimationFrame(rafLoop);
     };
@@ -161,7 +164,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     layoutChannel.onmessage = () => window.location.reload();
 
     return () => {
-      el.removeEventListener('wheel', onWheel);
+      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
       cancelAnimationFrame(rafId);
       layoutChannel.close();
@@ -170,9 +173,11 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
   const scrollToSection = (sectionId: string) => {
     const el = document.getElementById(`section-${sectionId}`);
-    if (el && trackRef.current) {
-      const target = (el.firstElementChild as HTMLElement)?.offsetLeft ?? el.offsetLeft;
-      trackRef.current.scrollTo({ left: target, behavior: 'smooth' });
+    if (el) {
+      const target = el.offsetLeft;
+      scrollRef.current = target;
+      if (rowRef.current) rowRef.current.style.transition = 'transform 0.5s ease';
+      syncScroll(target);
     }
     setMenuOpen(false);
   };
@@ -246,7 +251,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   }
 
   return (
-    // Outer: clips to the physical viewport — no CSS zoom dependency
+    // Outer: clips to the physical viewport
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
       {/* Inner: 1920px design canvas scaled to fill the viewport */}
       <div style={{
@@ -255,9 +260,10 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         transform: scale < 1 ? `scale(${scale})` : undefined,
         transformOrigin: 'top left',
         position: 'relative',
+        overflow: 'hidden',
       }}>
 
-        {/* Logo with nav menu — absolute inside scaled canvas */}
+        {/* Logo with nav menu */}
         <div style={{
           position: 'absolute', top: '2%', left: '50%',
           transform: 'translateX(-50%)',
@@ -285,7 +291,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
                 return (
                   <div
                     key={s.id}
-                    onClick={() => scrollToSection(s.id)}
+                    onClick={(e) => { e.stopPropagation(); scrollToSection(s.id); }}
                     style={{
                       padding: '0.5rem 0.9rem',
                       cursor: 'pointer',
@@ -308,7 +314,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           )}
         </div>
 
-        {/* Ground line — absolute inside scaled canvas */}
+        {/* Ground line */}
         <div
           ref={lineRef}
           style={{
@@ -329,19 +335,25 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           }}
         />
 
-        {/* Scrollable track — fills the scaled canvas, overflow hidden clips horizontally */}
+        {/* Gulbenkian logo */}
+        <div style={{
+          position: 'absolute', bottom: 16, left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 999, pointerEvents: 'none',
+        }}>
+          <img src="/gulbenkian-logo.png" alt="Gulbenkian" style={{ height: 48, width: 'auto' }} />
+        </div>
+
+        {/* Scrolling row — translated horizontally to scroll through sections */}
         <div
-          ref={trackRef}
+          ref={rowRef}
           style={{
             display: 'flex',
             alignItems: 'center',
-            width: 1920,
             height: '100%',
             minHeight: 800,
-            overflow: 'hidden',
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            willChange: 'transform',
+            position: 'relative',
           }}
         >
           {sections.map((section) => {

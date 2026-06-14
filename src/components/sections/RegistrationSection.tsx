@@ -38,6 +38,8 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
     email: '',
     birthday: '',
     city: '',
+    interview_language: '',
+    mailing_language: '',
     consent: false,
   });
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
@@ -148,6 +150,40 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
                   value={form.city}
                   onChange={(e) => set('city', e.target.value)}
                 />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.4rem' }}>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
+                <select
+                  style={inputStyle}
+                  value={form.interview_language}
+                  onChange={(e) => set('interview_language', e.target.value)}
+                  required
+                >
+                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                  <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
+                  <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
+                  <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
+                </select>
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
+                <select
+                  style={inputStyle}
+                  value={form.mailing_language}
+                  onChange={(e) => set('mailing_language', e.target.value)}
+                  required
+                >
+                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                </select>
               </div>
             </div>
 
