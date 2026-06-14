@@ -7,6 +7,7 @@ const TAB_IDS = [9, 10, 11];
 const REGISTRATION_ID = 7;
 const WHATS_THERE_ID = 6;
 const ABOUT_US_ID = 12;
+const ACCORDION_IDS = [12, 16];
 const CONDITIONS_ID = 15;
 
 interface Translation {
@@ -163,8 +164,8 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
           );
         }
 
-        // About Us — no image, accordion
-        if (id === ABOUT_US_ID) {
+        // About Us + section 16 — no image, accordion
+        if (ACCORDION_IDS.includes(id)) {
           return (
             <div key={section.id} style={card}>
               <Accordion header={decodeHtml(t?.Header ?? '')}>
