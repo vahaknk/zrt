@@ -29,6 +29,8 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
   const [bubbleVisible, setBubbleVisible] = useState(false);
   useEffect(() => {
     if (progress > 0.3) setBubbleVisible(true);
+    else if (progress < 0.1) setBubbleVisible(false);
+    else if (progress < 0.1) setBubbleVisible(false);
   }, [progress]);
   const t = section.translations?.[0];
 
