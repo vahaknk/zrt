@@ -98,10 +98,12 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
         opacity: 0;
         object-fit: contain;
       }
-      .door-wrap:hover .door-closed {
+      .door-wrap:hover .door-closed,
+      .door-wrap:active .door-closed {
         opacity: 0;
       }
-      .door-wrap:hover .door-open {
+      .door-wrap:hover .door-open,
+      .door-wrap:active .door-open {
         opacity: 1;
       }
 
@@ -155,6 +157,48 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       .footer img {
         height: min(48px, 6vh);
         width: auto;
+      }
+
+      /* ── Mobile ── */
+      @media (max-width: 700px) {
+        .page {
+          height: auto;
+          min-height: 100vh;
+          overflow-y: auto;
+        }
+        .columns {
+          grid-template-columns: 1fr;
+          padding: 28px 20px 16px;
+          gap: 28px;
+        }
+        .col-logo { order: 1; }
+        .col-langs { order: 2; }
+        .col-door  { order: 3; }
+
+        .col-logo img {
+          width: min(180px, 55vw);
+        }
+        .door-wrap img {
+          height: min(46vh, 300px);
+        }
+        .lang-grid {
+          column-gap: 12px;
+          row-gap: 10px;
+        }
+        .lang-card img {
+          width: 28vw;
+          height: 36vw;
+        }
+        .lang-placeholder {
+          width: 28vw;
+          height: 36vw;
+        }
+        .footer {
+          padding: 12px 20px 28px;
+        }
+        .footer img {
+          height: 36px;
+        }
       }
     </style>
   </head>
