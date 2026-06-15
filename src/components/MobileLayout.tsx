@@ -278,7 +278,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
               <FadeIn key={section.id}>
                 <div style={card}>
                   <img src="/aboug_us_5.webp" alt="" onError={onImgErr}
-                    style={{ width: '100%', height: 'auto', objectFit: 'contain', borderRadius: 12, marginBottom: '0.9rem', display: 'block' }} />
+                    style={{ maxWidth: '100%', height: 'auto', display: 'block', marginBottom: '0.9rem' }} />
                   {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
                   {bullets.length > 0
                     ? <TextCarousel bullets={bullets} />
