@@ -69,7 +69,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
             className={open ? '' : 'bubble-hang'}
             style={{
               position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
-              transform: bubbleVisible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% - 120px))',
+              transform: bubbleVisible ? 'translate(-50%, -50%) rotate(0deg)' : 'translate(-50%, calc(-50% - 120px)) rotate(0deg)',
               opacity: bubbleVisible ? 1 : 0,
               transition: 'transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s, opacity 0.9s ease 0.3s',
               zIndex: open ? 2 : 4, cursor: 'pointer',
