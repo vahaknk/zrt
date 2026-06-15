@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { decodeHtml } from '../lib/text';
 import RegistrationSection from './sections/RegistrationSection';
 import type { SavedLayout } from '../lib/layouts';
@@ -32,35 +32,27 @@ interface Props {
   savedLayouts: SavedLayout[];
 }
 
+// ─── Shared styles ────────────────────────────────────────────────────────────
+
 const card: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.92)',
+  background: 'rgba(255,255,255,0.95)',
   borderRadius: 20,
   padding: '1.25rem',
   margin: '0 1rem 1rem',
   boxShadow: '0 2px 20px rgba(0,0,0,0.08)',
 };
 
-const h2Style: React.CSSProperties = {
-  fontSize: '1.25rem', fontWeight: 700, marginBottom: '0.75rem', lineHeight: 1.35,
-};
-
-const h3Style: React.CSSProperties = {
-  fontSize: '1rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3,
-};
-
 const contentStyle: React.CSSProperties = {
-  fontSize: '0.9rem', lineHeight: 1.75, color: '#111',
+  fontSize: '0.9rem', lineHeight: 1.8, color: '#111',
 };
 
-// Convert <ul>/<ol> list markup to plain <p> blocks
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
 function listToText(html: string): string {
   return html
-    .replace(/<ul[^>]*>/gi, '')
-    .replace(/<\/ul>/gi, '')
-    .replace(/<ol[^>]*>/gi, '')
-    .replace(/<\/ol>/gi, '')
-    .replace(/<li[^>]*>/gi, '<p style="margin-bottom:0.35rem">')
-    .replace(/<\/li>/gi, '</p>');
+    .replace(/<ul[^>]*>/gi, '').replace(/<\/ul>/gi, '')
+    .replace(/<ol[^>]*>/gi, '').replace(/<\/ol>/gi, '')
+    .replace(/<li[^>]*>/gi, '<p style="margin-bottom:0.4rem">').replace(/<\/li>/gi, '</p>');
 }
 
 function parseBullets(html: string): string[] {
@@ -73,157 +65,293 @@ const COL2_HEADER: Record<string, string> = {
   en: 'The main programs we implement include:',
 };
 
+function onImgErr(e: React.SyntheticEvent<HTMLImageElement>) {
+  (e.target as HTMLImageElement).style.display = 'none';
+}
+
+// ─── FadeIn ───────────────────────────────────────────────────────────────────
+
+function FadeIn({ children, delay = 0, style }: { children: React.ReactNode; delay?: number; style?: React.CSSProperties }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div ref={ref} style={{
+      transition: `opacity 0.55s ease ${delay}ms, transform 0.55s ease ${delay}ms`,
+      opacity: visible ? 1 : 0,
+      transform: visible ? 'translateY(0)' : 'translateY(22px)',
+      ...style,
+    }}>
+      {children}
+    </div>
+  );
+}
+
+// ─── Accordion ────────────────────────────────────────────────────────────────
+
 function Accordion({ header, children }: { header: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div>
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-          fontFamily: 'inherit', textAlign: 'left',
-        }}
-      >
-        <span style={{ ...h2Style, marginBottom: 0, flex: 1 }}>{header}</span>
-        <span style={{ fontSize: '1.4rem', fontWeight: 300, marginLeft: '0.75rem', lineHeight: 1 }}>
-          {open ? '−' : '+'}
-        </span>
+      <button onClick={() => setOpen(o => !o)} style={{
+        width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+        fontFamily: 'inherit', textAlign: 'left',
+      }}>
+        <span style={{ fontSize: '1.1rem', fontWeight: 700, flex: 1, lineHeight: 1.35, textAlign: 'left' }}>{header}</span>
+        <span style={{
+          width: 28, height: 28, borderRadius: '50%',
+          background: '#9683fe', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '1.3rem', fontWeight: 300, flexShrink: 0, marginLeft: '0.75rem',
+          transition: 'transform 0.3s ease',
+          transform: open ? 'rotate(45deg)' : 'rotate(0deg)',
+        }}>+</span>
       </button>
-      {open && <div style={{ marginTop: '0.75rem' }}>{children}</div>}
+      {/* Smooth height animation via grid trick */}
+      <div style={{ display: 'grid', gridTemplateRows: open ? '1fr' : '0fr', transition: 'grid-template-rows 0.35s ease' }}>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ paddingTop: '0.75rem', ...contentStyle }}>{children}</div>
+        </div>
+      </div>
     </div>
   );
 }
+
+// ─── Section header with accent bar ──────────────────────────────────────────
+
+function SectionHeader({ title, light = false }: { title: string; light?: boolean }) {
+  return (
+    <div style={{ marginBottom: '0.9rem' }}>
+      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.35, margin: 0, color: light ? '#fff' : '#000' }}>{title}</h2>
+      <div style={{ height: 3, width: 32, background: light ? 'rgba(255,255,255,0.6)' : '#9683fe', borderRadius: 2, marginTop: '0.35rem' }} />
+    </div>
+  );
+}
+
+// ─── Bullet card (WhatsThereSection) ─────────────────────────────────────────
+
+function BulletCard({ text, index, picSrc }: { text: string; index: number; picSrc?: string }) {
+  return (
+    <FadeIn delay={index * 65}>
+      <div style={{
+        background: '#fff',
+        borderRadius: 14,
+        padding: '0.8rem 0.85rem',
+        marginBottom: '0.5rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.65rem',
+        boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
+        borderLeft: '3px solid #9683fe',
+      }}>
+        <div style={{
+          width: 24, height: 24, borderRadius: '50%',
+          background: '#9683fe', color: '#fff',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontWeight: 700, fontSize: '0.72rem', flexShrink: 0,
+        }}>{index + 1}</div>
+        <div style={{ fontSize: '0.87rem', lineHeight: 1.6, flex: 1 }}
+          dangerouslySetInnerHTML={{ __html: text }} />
+        {picSrc && (
+          <img src={picSrc} alt="" onError={onImgErr}
+            style={{ height: 54, width: 'auto', flexShrink: 0 }} />
+        )}
+      </div>
+    </FadeIn>
+  );
+}
+
+// ─── Team photo strip (About Us) ─────────────────────────────────────────────
+
+function PhotoStrip() {
+  return (
+    <div style={{
+      display: 'flex', gap: '0.5rem',
+      overflowX: 'auto', paddingBottom: '0.25rem', marginBottom: '1rem',
+      scrollbarWidth: 'none',
+    }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <img key={i} src={`/aboug_us_${i}.webp`} alt="" onError={onImgErr}
+          style={{ height: 88, width: 'auto', borderRadius: 10, flexShrink: 0, objectFit: 'cover' }} />
+      ))}
+    </div>
+  );
+}
+
+// ─── Main layout ─────────────────────────────────────────────────────────────
 
 export default function MobileLayout({ sections, directusUrl, labels }: Props) {
   const visible = sections.filter(s => !TAB_IDS.includes(Number(s.id)));
 
   return (
-    <div style={{ minHeight: '100vh', background: '#9683fe', color: '#000', fontFamily: 'inherit', paddingBottom: '2rem' }}>
+    <div style={{ minHeight: '100vh', background: '#9683fe', color: '#000', fontFamily: 'inherit' }}>
 
       {/* Header */}
-      <div style={{ textAlign: 'center', padding: '2rem 1rem 1.5rem' }}>
-        <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 72, width: 'auto' }} />
+      <div style={{ textAlign: 'center', padding: '2.5rem 1rem 2rem', position: 'relative', overflow: 'hidden' }}>
+        <img src="/top-left.webp" alt="" onError={onImgErr}
+          style={{ position: 'absolute', top: 0, left: 0, height: 72, opacity: 0.55, pointerEvents: 'none' }} />
+        <img src="/top-right.webp" alt="" onError={onImgErr}
+          style={{ position: 'absolute', top: 0, right: 0, height: 72, opacity: 0.55, pointerEvents: 'none' }} />
+        <img src="/zartsants-logo.svg" alt="Zartsants"
+          style={{ height: 72, width: 'auto', position: 'relative', zIndex: 1 }} />
       </div>
 
-      {visible.map(section => {
-        const t = section.translations?.[0];
-        const id = Number(section.id);
+      <div style={{ paddingBottom: '2.5rem' }}>
+        {visible.map(section => {
+          const t = section.translations?.[0];
+          const id = Number(section.id);
 
-        // Registration — full form, no image
-        if (id === REGISTRATION_ID) {
-          return (
-            <div key={section.id} style={card}>
-              <RegistrationSection
-                labels={labels}
-                sectionHeader={t?.Header ?? ''}
-                sectionContent={t?.Content ?? ''}
-                mainImage={null}
-                directusUrl={directusUrl}
-                layout={{}}
-                mobileMode
-              />
-            </div>
-          );
-        }
-
-        // WhatsThereSection — two separate cards
-        if (id === WHATS_THERE_ID) {
-          const bullets = parseBullets(t?.Content ?? '');
-          const col1 = bullets.slice(0, 5);
-          const col2 = bullets.slice(5);
-          const lang = t?.languages_id ?? 'hyw';
-          const col2Header = COL2_HEADER[lang] ?? COL2_HEADER['en'];
-
-          return (
-            <React.Fragment key={section.id}>
-              <div style={card}>
-                {section.main_image && (
-                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                    <img
-                      src={`${directusUrl}/assets/${section.main_image}`}
-                      alt=""
-                      style={{ maxHeight: 180, maxWidth: '100%', objectFit: 'contain', display: 'inline-block' }}
-                    />
-                  </div>
-                )}
-                {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
-                {col1.map((b, i) => (
-                  <div key={i} style={{ ...contentStyle, marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: b }} />
-                ))}
-              </div>
-              {col2.length > 0 && (
+          // ── Registration ────────────────────────────────────────────────
+          if (id === REGISTRATION_ID) {
+            return (
+              <FadeIn key={section.id}>
                 <div style={card}>
-                  <h2 style={h2Style}>{col2Header}</h2>
-                  {col2.map((b, i) => (
-                    <div key={i} style={{ ...contentStyle, marginBottom: '0.5rem' }} dangerouslySetInnerHTML={{ __html: b }} />
-                  ))}
+                  <RegistrationSection
+                    labels={labels}
+                    sectionHeader={t?.Header ?? ''}
+                    sectionContent={t?.Content ?? ''}
+                    mainImage={null}
+                    directusUrl={directusUrl}
+                    layout={{}}
+                    mobileMode
+                  />
                 </div>
-              )}
-            </React.Fragment>
-          );
-        }
+              </FadeIn>
+            );
+          }
 
-        // About Us + section 16 — no image, accordion
-        if (ACCORDION_IDS.includes(id)) {
-          return (
-            <div key={section.id} style={card}>
-              <Accordion header={decodeHtml(t?.Header ?? '')}>
-                {t?.Content && (
-                  <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+          // ── WhatsThereSection ───────────────────────────────────────────
+          if (id === WHATS_THERE_ID) {
+            const bullets = parseBullets(t?.Content ?? '');
+            const col1 = bullets.slice(0, 5);
+            const col2 = bullets.slice(5);
+            const lang = t?.languages_id ?? 'hyw';
+            const col2Header = COL2_HEADER[lang] ?? COL2_HEADER['en'];
+            return (
+              <React.Fragment key={section.id}>
+                <FadeIn>
+                  <div style={{ ...card, paddingBottom: '0.75rem' }}>
+                    {section.main_image && (
+                      <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
+                        <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
+                          style={{ maxHeight: 130, maxWidth: '65%', objectFit: 'contain', display: 'inline-block' }} />
+                      </div>
+                    )}
+                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
+                    {col1.map((b, i) => (
+                      <BulletCard key={i} text={b} index={i} picSrc={`/whats_there_pic_${i + 1}.webp`} />
+                    ))}
+                  </div>
+                </FadeIn>
+                {col2.length > 0 && (
+                  <FadeIn>
+                    <div style={{ ...card, paddingBottom: '0.75rem' }}>
+                      <SectionHeader title={col2Header} />
+                      {col2.map((b, i) => (
+                        <BulletCard key={i} text={b} index={i} />
+                      ))}
+                    </div>
+                  </FadeIn>
                 )}
-              </Accordion>
-            </div>
-          );
-        }
+              </React.Fragment>
+            );
+          }
 
-        // Conditions — include tab section content below
-        if (id === CONDITIONS_ID) {
-          const tabSections = sections.filter(s => TAB_IDS.includes(Number(s.id)));
-          return (
-            <div key={section.id} style={card}>
-              {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
-              {t?.Content && (
-                <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-              )}
-              {tabSections.map(tab => {
-                const tabT = tab.translations?.[0];
-                return (
-                  <div key={tab.id} style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid rgba(0,0,0,0.12)' }}>
-                    {tabT?.Header && <h3 style={h3Style}>{decodeHtml(tabT.Header)}</h3>}
-                    {tabT?.Content && (
-                      <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(tabT.Content) }} />
+          // ── About Us / Section 16 — accordion ──────────────────────────
+          if (ACCORDION_IDS.includes(id)) {
+            return (
+              <FadeIn key={section.id}>
+                <div style={card}>
+                  {id === ABOUT_US_ID && <PhotoStrip />}
+                  <Accordion header={decodeHtml(t?.Header ?? '')}>
+                    {t?.Content && (
+                      <div dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+                    )}
+                  </Accordion>
+                </div>
+              </FadeIn>
+            );
+          }
+
+          // ── Conditions — purple header + tab accordions ─────────────────
+          if (id === CONDITIONS_ID) {
+            const tabSections = sections.filter(s => TAB_IDS.includes(Number(s.id)));
+            return (
+              <FadeIn key={section.id}>
+                <div style={{ ...card, padding: 0, overflow: 'hidden' }}>
+                  <div style={{
+                    background: 'linear-gradient(135deg, #9683fe 0%, #7060cc 100%)',
+                    padding: '1.1rem 1.25rem 0.9rem',
+                    position: 'relative', overflow: 'hidden',
+                  }}>
+                    <img src="/conditions_background_image.webp" alt="" onError={onImgErr}
+                      style={{ position: 'absolute', right: -10, top: '50%', transform: 'translateY(-50%)', height: '140%', width: 'auto', opacity: 0.12, pointerEvents: 'none' }} />
+                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} light />}
+                    {t?.Content && (
+                      <div style={{ ...contentStyle, color: 'rgba(255,255,255,0.9)', fontSize: '0.85rem' }}
+                        dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
                     )}
                   </div>
-                );
-              })}
-            </div>
-          );
-        }
+                  <div style={{ padding: '0.5rem 1.25rem 0.75rem' }}>
+                    {tabSections.map((tab, i) => {
+                      const tabT = tab.translations?.[0];
+                      return (
+                        <div key={tab.id} style={{ borderTop: '1px solid rgba(0,0,0,0.07)', paddingTop: '0.6rem', marginTop: '0.6rem' }}>
+                          <Accordion header={decodeHtml(tabT?.Header ?? '')}>
+                            {tabT?.Content && (
+                              <div dangerouslySetInnerHTML={{ __html: listToText(tabT.Content) }} />
+                            )}
+                          </Accordion>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </FadeIn>
+            );
+          }
 
-        // Default — image (contain) + header + content
-        return (
-          <div key={section.id} style={card}>
-            {section.main_image && (
-              <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                <img
-                  src={`${directusUrl}/assets/${section.main_image}`}
-                  alt=""
-                  style={{ maxHeight: 180, maxWidth: '100%', objectFit: 'contain', display: 'inline-block' }}
-                />
+          // ── Default — character image floats right, text left ───────────
+          return (
+            <FadeIn key={section.id} delay={30}>
+              <div style={card}>
+                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
+                    {t?.Content && (
+                      <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+                    )}
+                  </div>
+                  {section.main_image && (
+                    <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
+                      style={{ height: 110, width: 'auto', flexShrink: 0, objectFit: 'contain', marginTop: '0.15rem' }}
+                      onError={onImgErr} />
+                  )}
+                </div>
               </div>
-            )}
-            {t?.Header && <h2 style={h2Style}>{decodeHtml(t.Header)}</h2>}
-            {t?.Content && (
-              <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-            )}
-          </div>
-        );
-      })}
+            </FadeIn>
+          );
+        })}
+      </div>
 
       {/* Footer */}
-      <div style={{ textAlign: 'center', padding: '1.5rem 1rem 0' }}>
-        <img src="/gulbenkian-logo.png" alt="Gulbenkian" style={{ height: 36, width: 'auto', opacity: 0.85 }} />
+      <div style={{ textAlign: 'center', padding: '1rem 1rem 2rem', position: 'relative' }}>
+        <img src="/bottom-left.webp" alt="" onError={onImgErr}
+          style={{ position: 'absolute', bottom: 0, left: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
+        <img src="/bottom-right.webp" alt="" onError={onImgErr}
+          style={{ position: 'absolute', bottom: 0, right: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
+        <img src="/gulbenkian-logo.png" alt="Gulbenkian"
+          style={{ height: 36, width: 'auto', opacity: 0.85, position: 'relative' }} />
       </div>
     </div>
   );
