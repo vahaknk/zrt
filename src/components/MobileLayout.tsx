@@ -7,7 +7,6 @@ const TAB_IDS = [9, 10, 11];
 const REGISTRATION_ID = 7;
 const WHATS_THERE_ID = 6;
 const ABOUT_US_ID = 12;
-const ACCORDION_IDS = [12, 16];
 const CONDITIONS_ID = 15;
 
 interface Translation {
@@ -139,51 +138,61 @@ function SectionHeader({ title, light = false }: { title: string; light?: boolea
   );
 }
 
-// ─── Bullet card (WhatsThereSection) ─────────────────────────────────────────
+// ─── App icon (WhatsThereSection col1) ───────────────────────────────────────
 
-function BulletCard({ text, index, picSrc }: { text: string; index: number; picSrc?: string }) {
+
+function AppIcon({ text, index, picSrc }: { text: string; index: number; picSrc: string }) {
   return (
-    <FadeIn delay={index * 65}>
-      <div style={{
-        background: '#fff',
-        borderRadius: 14,
-        padding: '0.8rem 0.85rem',
-        marginBottom: '0.5rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.65rem',
-        boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
-        borderLeft: '3px solid #9683fe',
-      }}>
+    <FadeIn delay={index * 70} style={{ width: 'calc(33.33% - 0.45rem)', minWidth: 0 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.4rem' }}>
         <div style={{
-          width: 24, height: 24, borderRadius: '50%',
-          background: '#9683fe', color: '#fff',
+          width: '100%', height: 100,
+          borderRadius: 18,
+          background: '#fff',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: '0.72rem', flexShrink: 0,
-        }}>{index + 1}</div>
-        <div style={{ fontSize: '0.87rem', lineHeight: 1.6, flex: 1 }}
-          dangerouslySetInnerHTML={{ __html: text }} />
-        {picSrc && (
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        }}>
           <img src={picSrc} alt="" onError={onImgErr}
-            style={{ height: 54, width: 'auto', flexShrink: 0 }} />
-        )}
+            style={{ height: '80%', width: 'auto', maxWidth: '80%', objectFit: 'contain', display: 'block' }} />
+        </div>
+        <div style={{ fontSize: '0.72rem', lineHeight: 1.35, textAlign: 'center', color: '#000' }}
+          dangerouslySetInnerHTML={{ __html: text }} />
       </div>
     </FadeIn>
   );
 }
 
-// ─── Team photo strip (About Us) ─────────────────────────────────────────────
 
-function PhotoStrip() {
+// ─── Swipeable text carousel ─────────────────────────────────────────────────
+
+function TextCarousel({ bullets }: { bullets: string[] }) {
   return (
     <div style={{
-      display: 'flex', gap: '0.5rem',
-      overflowX: 'auto', paddingBottom: '0.25rem', marginBottom: '1rem',
+      display: 'flex',
+      overflowX: 'auto',
+      scrollSnapType: 'x mandatory',
+      gap: '0.75rem',
+      paddingBottom: '0.25rem',
+      WebkitOverflowScrolling: 'touch',
       scrollbarWidth: 'none',
-    }}>
-      {[1, 2, 3, 4, 5].map(i => (
-        <img key={i} src={`/aboug_us_${i}.webp`} alt="" onError={onImgErr}
-          style={{ height: 88, width: 'auto', borderRadius: 10, flexShrink: 0, objectFit: 'cover' }} />
+    } as React.CSSProperties}>
+      {bullets.map((b, i) => (
+        <div key={i} style={{
+          flexShrink: 0,
+          width: '82%',
+          scrollSnapAlign: 'center',
+          background: '#fff',
+          borderRadius: 18,
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          padding: '1rem',
+          minHeight: 110,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <div style={{ fontSize: '0.87rem', lineHeight: 1.6, textAlign: 'center' }}
+            dangerouslySetInnerHTML={{ __html: b }} />
+        </div>
       ))}
     </div>
   );
@@ -243,24 +252,18 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
                 <FadeIn>
                   <div style={{ ...card, paddingBottom: '0.75rem' }}>
                     {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
-                    {section.main_image && (
-                      <div style={{ marginBottom: '0.75rem' }}>
-                        <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
-                          style={{ maxHeight: 130, maxWidth: '65%', objectFit: 'contain', display: 'block' }} />
-                      </div>
-                    )}
-                    {col1.map((b, i) => (
-                      <BulletCard key={i} text={b} index={i} picSrc={`/whats_there_pic_${i + 1}.webp`} />
-                    ))}
+                    <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: '0.65rem', rowGap: '1.2rem', marginTop: '0.25rem' }}>
+                      {col1.map((b, i) => (
+                        <AppIcon key={i} text={b} index={i} picSrc={`/whats_there_pic_${i + 1}.webp`} />
+                      ))}
+                    </div>
                   </div>
                 </FadeIn>
                 {col2.length > 0 && (
                   <FadeIn>
-                    <div style={{ ...card, paddingBottom: '0.75rem' }}>
+                    <div style={{ ...card, paddingBottom: '1rem' }}>
                       <SectionHeader title={col2Header} />
-                      {col2.map((b, i) => (
-                        <BulletCard key={i} text={b} index={i} />
-                      ))}
+                        <TextCarousel bullets={col2} />
                     </div>
                   </FadeIn>
                 )}
@@ -268,12 +271,29 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
             );
           }
 
-          // ── About Us / Section 16 — accordion ──────────────────────────
-          if (ACCORDION_IDS.includes(id)) {
+          // ── About Us — single photo + title + bullet carousel ──────────
+          if (id === ABOUT_US_ID) {
+            const bullets = parseBullets(t?.Content ?? '');
             return (
               <FadeIn key={section.id}>
                 <div style={card}>
-                  {id === ABOUT_US_ID && <PhotoStrip />}
+                  <img src="/aboug_us_5.webp" alt="" onError={onImgErr}
+                    style={{ width: '100%', height: 160, objectFit: 'cover', borderRadius: 12, marginBottom: '0.9rem', display: 'block' }} />
+                  {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
+                  {bullets.length > 0
+                    ? <TextCarousel bullets={bullets} />
+                    : t?.Content && <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+                  }
+                </div>
+              </FadeIn>
+            );
+          }
+
+          // ── Section 16 — accordion ──────────────────────────────────────
+          if (id === 16) {
+            return (
+              <FadeIn key={section.id}>
+                <div style={card}>
                   <Accordion header={decodeHtml(t?.Header ?? '')}>
                     {t?.Content && (
                       <div dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
