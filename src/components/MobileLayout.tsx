@@ -29,6 +29,7 @@ interface Props {
   directusUrl: string;
   labels: Record<string, string>;
   savedLayouts: SavedLayout[];
+  lang: string;
 }
 
 // ─── Shared styles ────────────────────────────────────────────────────────────
@@ -200,7 +201,7 @@ function TextCarousel({ bullets }: { bullets: string[] }) {
 
 // ─── Main layout ─────────────────────────────────────────────────────────────
 
-export default function MobileLayout({ sections, directusUrl, labels }: Props) {
+export default function MobileLayout({ sections, directusUrl, labels, lang }: Props) {
   const visible = sections.filter(s => !TAB_IDS.includes(Number(s.id)));
 
   return (
@@ -369,7 +370,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
           style={{ position: 'absolute', bottom: 0, left: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
         <img src="/bottom-right.webp" alt="" onError={onImgErr}
           style={{ position: 'absolute', bottom: 0, right: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
-        <img src="/gulbenkian-logo.png" alt="Gulbenkian"
+        <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian"
           style={{ height: 36, width: 'auto', opacity: 0.85, position: 'relative' }} />
       </div>
     </div>

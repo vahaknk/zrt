@@ -10,6 +10,7 @@ interface Props {
   directusUrl: string;
   labels: Record<string, string>;
   savedLayouts: SavedLayout[];
+  lang: string;
 }
 
 export default function AppShell(props: Props) {

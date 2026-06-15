@@ -45,6 +45,7 @@ interface Props {
   directusUrl: string;
   labels: Record<string, string>;
   savedLayouts: SavedLayout[];
+  lang: string;
 }
 
 function fileUrl(directusUrl: string, id: string) {
@@ -80,7 +81,7 @@ function SectionPanel({ section, directusUrl }: { section: Section; directusUrl:
 }
 
 
-export default function HorizontalScroller({ sections, directusUrl, labels, savedLayouts }: Props) {
+export default function HorizontalScroller({ sections, directusUrl, labels, savedLayouts, lang }: Props) {
   const lineRef = useRef<HTMLDivElement>(null);
   const rowRef = useRef<HTMLDivElement>(null); // the flex row that slides left/right
   const [menuOpen, setMenuOpen] = useState(false);
@@ -350,7 +351,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           transform: 'translateX(-50%)',
           zIndex: 999, pointerEvents: 'none',
         }}>
-          <img src="/gulbenkian-logo.png" alt="Gulbenkian" style={{ height: 48, width: 'auto' }} />
+          <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: 48, width: 'auto' }} />
         </div>
 
         {/* Scrolling row — translated horizontally to scroll through sections */}
