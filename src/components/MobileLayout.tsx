@@ -242,9 +242,9 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
                 <FadeIn>
                   <div style={{ ...card, paddingBottom: '0.75rem' }}>
                     {section.main_image && (
-                      <div style={{ textAlign: 'center', marginBottom: '0.75rem' }}>
+                      <div style={{ marginBottom: '0.75rem' }}>
                         <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
-                          style={{ maxHeight: 130, maxWidth: '65%', objectFit: 'contain', display: 'inline-block' }} />
+                          style={{ maxHeight: 130, maxWidth: '65%', objectFit: 'contain', display: 'block' }} />
                       </div>
                     )}
                     {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
@@ -327,9 +327,9 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
               <div style={card}>
                 {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
                 {section.main_image && (
-                  <div style={{ textAlign: 'center', margin: '0.5rem 0 0.75rem' }}>
+                  <div style={{ margin: '0.5rem 0 0.75rem' }}>
                     <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
-                      style={{ maxHeight: 180, maxWidth: '80%', objectFit: 'contain', display: 'inline-block' }}
+                      style={{ maxHeight: 180, maxWidth: '80%', objectFit: 'contain', display: 'block' }}
                       onError={onImgErr} />
                   </div>
                 )}
