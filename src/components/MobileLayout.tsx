@@ -52,7 +52,8 @@ function listToText(html: string): string {
   return html
     .replace(/<ul[^>]*>/gi, '').replace(/<\/ul>/gi, '')
     .replace(/<ol[^>]*>/gi, '').replace(/<\/ol>/gi, '')
-    .replace(/<li[^>]*>/gi, '<p style="margin-bottom:0.4rem">').replace(/<\/li>/gi, '</p>');
+    .replace(/<li[^>]*>/gi, '<p style="margin-bottom:0.4rem">').replace(/<\/li>/gi, '</p>')
+    .replace(/text-align\s*:\s*center\s*;?/gi, 'text-align: left;');
 }
 
 function parseBullets(html: string): string[] {
