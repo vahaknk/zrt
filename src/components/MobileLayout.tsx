@@ -303,7 +303,7 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
                     )}
                   </div>
                   <div style={{ padding: '0.5rem 1.25rem 0.75rem' }}>
-                    {tabSections.map((tab, i) => {
+                    {tabSections.map((tab) => {
                       const tabT = tab.translations?.[0];
                       return (
                         <div key={tab.id} style={{ borderTop: '1px solid rgba(0,0,0,0.07)', paddingTop: '0.6rem', marginTop: '0.6rem' }}>
@@ -321,23 +321,21 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
             );
           }
 
-          // ── Default — character image floats right, text left ───────────
+          // ── Default — title → image → content (single column) ─────────
           return (
             <FadeIn key={section.id} delay={30}>
               <div style={card}>
-                <div style={{ display: 'flex', gap: '0.8rem', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
-                    {t?.Content && (
-                      <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
-                    )}
-                  </div>
-                  {section.main_image && (
+                {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
+                {section.main_image && (
+                  <div style={{ textAlign: 'center', margin: '0.5rem 0 0.75rem' }}>
                     <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
-                      style={{ height: 110, width: 'auto', flexShrink: 0, objectFit: 'contain', marginTop: '0.15rem' }}
+                      style={{ maxHeight: 180, maxWidth: '80%', objectFit: 'contain', display: 'inline-block' }}
                       onError={onImgErr} />
-                  )}
-                </div>
+                  </div>
+                )}
+                {t?.Content && (
+                  <div style={contentStyle} dangerouslySetInnerHTML={{ __html: listToText(t.Content) }} />
+                )}
               </div>
             </FadeIn>
           );
