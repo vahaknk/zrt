@@ -9,6 +9,7 @@ import AboutUsSection from './sections/AboutUsSection';
 import ConditionsSection from './sections/ConditionsSection';
 import ContactUsSection from './sections/ContactUsSection';
 import GoToPlatformSection from './sections/GoToPlatformSection';
+import Section16Section from './sections/Section16Section';
 import { getLayout, type Breakpoint, type SavedLayout } from '../lib/layouts';
 
 const REGISTRATION_SECTION_ID = 7;
@@ -21,6 +22,7 @@ const SECTION12_ID = 12;
 const SECTION13_ID = 13;
 const SECTION14_ID = 14;
 const SECTION15_ID = 15;
+const SECTION16_ID = 16;
 const TAB_SECTION_IDS = [9, 10, 11];
 
 interface Translation {
@@ -85,6 +87,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const [scrollLeft, setScrollLeft] = useState(0);
   const scrollRef = useRef(0); // current scroll offset in CSS px (design coordinates)
   const sectionOffsetsRef = useRef<Record<string, number>>({});
+  const [offsetsReady, setOffsetsReady] = useState(false);
   const breakpoint: Breakpoint = 'large';
 
   // Scale the 1920px design canvas to fit the physical viewport.
@@ -119,6 +122,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         if (el) offsets[s.id] = el.offsetLeft;
       });
       sectionOffsetsRef.current = offsets;
+      setOffsetsReady(true);
     };
     computeOffsets();
     window.addEventListener('resize', computeOffsets);
@@ -182,7 +186,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     setMenuOpen(false);
   };
 
-  const navSections = sections.filter(s => !TAB_SECTION_IDS.includes(Number(s.id)));
+  const navSections = sections.filter(s => !TAB_SECTION_IDS.includes(Number(s.id)) && Number(s.id) !== SECTION16_ID);
 
   function layout(sectionId: number) {
     return getLayout(sectionId, breakpoint, savedLayouts);
@@ -192,8 +196,10 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const progresses: Record<string, number> = {};
   sections.forEach(s => {
     if (TAB_SECTION_IDS.includes(Number(s.id))) return;
-    const offset = sectionOffsetsRef.current[s.id] ?? 0;
-    progresses[s.id] = Math.max(0, Math.min(1, 1 - Math.abs(scrollLeft - offset) / vw));
+    const offset = sectionOffsetsRef.current[s.id];
+    progresses[s.id] = (offsetsReady && offset !== undefined)
+      ? Math.max(0, Math.min(1, 1 - Math.abs(scrollLeft - offset) / vw))
+      : 0;
   });
 
   function getSectionContent(section: Section, progress: number) {
@@ -221,6 +227,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     }
     if (id === SECTION14_ID) {
       return <GoToPlatformSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} onNavigateToRegistration={() => scrollToSection('7')} />;
+    }
+    if (id === SECTION16_ID) {
+      return <Section16Section section={section} directusUrl={directusUrl} layout={layout(id)} />;
     }
     if (TAB_SECTION_IDS.includes(id)) return null;
     if (id === SECTION15_ID) {

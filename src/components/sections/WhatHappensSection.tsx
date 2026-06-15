@@ -49,9 +49,9 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
           className={open ? '' : 'bubble-hang'}
           style={{
             position: 'absolute', top: layout.bubbleTop, left: layout.bubbleLeft,
-            transform: bubbleVisible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% - 60px))',
+            transform: bubbleVisible ? 'translate(-50%, -50%)' : 'translate(-50%, calc(-50% - 120px))',
             opacity: bubbleVisible ? 1 : 0,
-            transition: 'transform 0.6s ease, opacity 0.4s ease',
+            transition: 'transform 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.3s, opacity 0.9s ease 0.3s',
             zIndex: 4, cursor: 'pointer',
             userSelect: 'none',
             display: 'inline-block',

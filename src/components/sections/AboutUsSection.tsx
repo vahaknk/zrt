@@ -55,7 +55,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           <img
             src={fileUrl(directusUrl, section.main_image)}
             alt=""
-            style={{ height: 240, width: 'auto', display: 'block' }}
+            style={{ height: 400, width: 'auto', display: 'block' }}
           />
           <div style={{
             position: 'absolute', top: '20%', left: '10%',
