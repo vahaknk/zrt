@@ -242,13 +242,13 @@ export default function MobileLayout({ sections, directusUrl, labels }: Props) {
               <React.Fragment key={section.id}>
                 <FadeIn>
                   <div style={{ ...card, paddingBottom: '0.75rem' }}>
+                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
                     {section.main_image && (
                       <div style={{ marginBottom: '0.75rem' }}>
                         <img src={`${directusUrl}/assets/${section.main_image}`} alt=""
                           style={{ maxHeight: 130, maxWidth: '65%', objectFit: 'contain', display: 'block' }} />
                       </div>
                     )}
-                    {t?.Header && <SectionHeader title={decodeHtml(t.Header)} />}
                     {col1.map((b, i) => (
                       <BulletCard key={i} text={b} index={i} picSrc={`/whats_there_pic_${i + 1}.webp`} />
                     ))}
