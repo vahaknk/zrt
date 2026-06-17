@@ -64,7 +64,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: '1.8rem', lineHeight: 1.3, color: '#000',
+            fontSize: '1.5rem', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -90,7 +90,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
                   position: 'absolute', top: '40%', left: '55%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: '1.32rem', lineHeight: 1.6,
+                  fontSize: '1.1rem', lineHeight: 1.6,
                   color: '#000', fontWeight: 400,
                   pointerEvents: 'all',
                 }}
@@ -106,7 +106,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
                   background: '#000', color: '#fff',
                   border: 'none', borderRadius: 999,
                   padding: '0.45rem 1.2rem',
-                  fontWeight: 500, fontSize: '1.32rem',
+                  fontWeight: 500, fontSize: '1.1rem',
                   cursor: 'pointer', whiteSpace: 'nowrap',
                   fontFamily: 'inherit',
                 }}
