@@ -81,30 +81,14 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
       }
       .door-wrap {
         position: relative;
-        cursor: pointer;
       }
       .door-wrap img {
         display: block;
         height: min(78vh, 580px);
         width: auto;
-        transition: opacity 0.3s ease;
       }
       .door-open {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        opacity: 0;
-        object-fit: contain;
-      }
-      .door-wrap:hover .door-closed,
-      .door-wrap:active .door-closed {
-        opacity: 0;
-      }
-      .door-wrap:hover .door-open,
-      .door-wrap:active .door-open {
-        opacity: 1;
+        display: none;
       }
 
       /* Column 3: Language grid */
@@ -123,15 +107,10 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
         display: block;
         cursor: pointer;
         border-radius: 8px;
-        transition: transform 0.3s ease, outline 0.15s ease;
-        outline: 3px solid transparent;
-        outline-offset: 3px;
+        transition: transform 0.2s ease;
       }
       .lang-card:hover {
         transform: scale(1.08);
-      }
-      .lang-card.selected {
-        outline-color: #fff;
       }
       .lang-card img {
         width: min(120px, 12vw);
@@ -210,27 +189,26 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
           <img src="/zartsants-logo.svg" alt="Zartsants" />
         </div>
 
-        <!-- Column 2: Door -->
+        <!-- Column 2: Door (decorative only) -->
         <div class="col-door">
-          <div class="door-wrap" id="door" title="Enter">
-            <img class="door-closed" src="/door_closed.png" alt="Enter" />
-            <img class="door-open" src="/door_open.png" alt="Enter open" />
+          <div class="door-wrap">
+            <img class="door-closed" src="/door_closed.png" alt="" />
           </div>
         </div>
 
-        <!-- Column 3: 3x3 language grid -->
+        <!-- Column 3: 3x3 language grid — click to navigate -->
         <div class="col-langs">
           <div class="lang-grid">
             {languages.map((lang) => (
-              <div
-                class={`lang-card${lang.id === 'hyw' ? ' selected' : ''}`}
-                data-lang={lang.id}
+              <a
+                class="lang-card"
+                href={`/?lang=${lang.id}`}
               >
                 {lang.landing_image
                   ? <img src={`${DIRECTUS_URL}/assets/${lang.landing_image}`} alt={lang.name} />
                   : <div class="lang-placeholder" />
                 }
-              </div>
+              </a>
             ))}
           </div>
         </div>
@@ -243,19 +221,7 @@ const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
     </div>
 
     <script>
-      let selected = 'hyw';
-
-      document.querySelectorAll<HTMLElement>('.lang-card').forEach((card) => {
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.lang-card').forEach((c) => c.classList.remove('selected'));
-          card.classList.add('selected');
-          selected = card.dataset.lang!;
-        });
-      });
-
-      document.getElementById('door')!.addEventListener('click', () => {
-        window.location.href = `/?lang=${selected}`;
-      });
+      // Navigation is handled by <a href> links — no JS needed.
     </script>
   </body>
 </html>
