@@ -63,7 +63,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: '1.5rem', lineHeight: 1.3, color: '#000',
+            fontSize: '1.65rem', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -89,7 +89,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
                   position: 'absolute', top: '50%', left: '55%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: '1rem', lineHeight: 1.6,
+                  fontSize: '1.1rem', lineHeight: 1.6,
                   color: '#000', fontWeight: 500,
                   pointerEvents: 'all',
                 }}

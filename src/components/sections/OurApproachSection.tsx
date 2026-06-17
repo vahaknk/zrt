@@ -62,7 +62,7 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
             position: 'absolute', top: '50%', left: '45%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 22, lineHeight: 1.3, color: '#000',
+            fontSize: 24, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none',
             opacity: bubbleLoaded ? 1 : 0,
@@ -89,7 +89,7 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
           />
         )}
         <div
-          style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#ffffff' }}
+          style={{ fontSize: '1.32rem', lineHeight: 1.5, color: '#ffffff' }}
           dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
         />
       </div>

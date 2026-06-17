@@ -70,7 +70,7 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
             position: 'absolute', top: '40%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 22, lineHeight: 1.3, color: '#000',
+            fontSize: 24, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -107,7 +107,7 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
                 >⬅</button>
                 <span style={{
                   flex: 1,
-                  fontSize: 18,
+                  fontSize: 20,
                   lineHeight: 1.5, color: '#ffffff', fontWeight: 400,
                   wordBreak: 'break-word', whiteSpace: 'normal',
                 }}>

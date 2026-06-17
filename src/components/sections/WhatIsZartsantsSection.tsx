@@ -55,7 +55,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
         {[0, 2].map((bi, row) => (
           <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
             <img src={LEFT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-            <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
+            <p style={{ fontSize: '1.32rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
               {bullets[bi]}
             </p>
           </div>
@@ -74,7 +74,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
         {[1, 3].map((bi, row) => (
           <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
             <img src={RIGHT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-            <p style={{ fontSize: '1.2rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
+            <p style={{ fontSize: '1.32rem', lineHeight: 1.5, color: '#fff', margin: 0 }}>
               {bullets[bi]}
             </p>
           </div>
@@ -107,7 +107,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 22, lineHeight: 1.3, color: '#000',
+            fontSize: 24, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal', pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
