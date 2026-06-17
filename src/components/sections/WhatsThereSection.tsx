@@ -166,7 +166,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
                   [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
                   width: i < 5 ? '50%' : '80%',
                   textAlign: 'left',
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: 400, color: '#000',
                   wordBreak: i < 5 ? 'break-word' : 'normal', whiteSpace: i < 5 ? 'normal' : 'nowrap',
                   lineHeight: 1.3,

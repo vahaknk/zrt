@@ -110,7 +110,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 700,
-                        fontSize: 22,
+                        fontSize: 20,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
                         wordBreak: 'break-word',
@@ -127,7 +127,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
               {/* Tab content */}
               <div style={{
                 flex: 1, overflowY: 'auto',
-                fontSize: 22,
+                fontSize: 20,
                 lineHeight: 1.6, color: '#000',
               }}
                 dangerouslySetInnerHTML={{ __html: tabSections[activeTab]?.translations?.[0]?.Content ?? '' }}

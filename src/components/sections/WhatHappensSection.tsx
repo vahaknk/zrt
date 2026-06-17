@@ -107,7 +107,7 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
                 >⬅</button>
                 <span style={{
                   flex: 1,
-                  fontSize: 22,
+                  fontSize: 20,
                   lineHeight: 1.5, color: '#ffffff', fontWeight: 400,
                   wordBreak: 'break-word', whiteSpace: 'normal',
                 }}>

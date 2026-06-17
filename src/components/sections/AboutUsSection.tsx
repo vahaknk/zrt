@@ -83,7 +83,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
               >⬅</button>
               <span style={{
                 flex: 1, textAlign: 'center',
-                fontSize: 22,
+                fontSize: 20,
                 lineHeight: 1.4, color: '#000', fontWeight: 400,
                 wordBreak: 'break-word', whiteSpace: 'normal',
                 overflowWrap: 'break-word',
