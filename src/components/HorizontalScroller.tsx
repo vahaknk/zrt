@@ -275,7 +275,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
         {/* Logo with nav menu */}
         <div style={{
-          position: 'absolute', top: '2%', left: '50%',
+          position: 'absolute', top: '5%', left: '50%',
           transform: 'translateX(-50%)',
           zIndex: 1000, textAlign: 'center',
         }}>
