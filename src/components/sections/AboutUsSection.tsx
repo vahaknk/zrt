@@ -65,7 +65,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           }}>
             {t?.Header && (
               <h2 style={{
-                fontSize: 24, fontWeight: 700,
+                fontSize: 29, fontWeight: 700,
                 color: '#000', flexShrink: 0, width: '15%',
                 lineHeight: 1.3, wordBreak: 'break-word',
               }}>
@@ -83,7 +83,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
               >⬅</button>
               <span style={{
                 flex: 1, textAlign: 'center',
-                fontSize: 18,
+                fontSize: 22,
                 lineHeight: 1.4, color: '#000', fontWeight: 400,
                 wordBreak: 'break-word', whiteSpace: 'normal',
                 overflowWrap: 'break-word',

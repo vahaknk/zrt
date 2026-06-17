@@ -88,7 +88,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
               position: 'absolute', top: '42%', left: '50%',
               transform: 'translate(-50%, -50%)',
               textAlign: 'center', fontWeight: 700,
-              fontSize: 22, lineHeight: 1.3, color: '#000',
+              fontSize: 26, lineHeight: 1.3, color: '#000',
               width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
               pointerEvents: 'none', paddingRight: '1rem',
               opacity: bubbleLoaded ? 1 : 0,
@@ -117,7 +117,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
               <div style={{
                 position: 'absolute',
                 top: '8%', left: 'calc(60% + 500px)',
-                fontWeight: 700, fontSize: 20, color: '#000',
+                fontWeight: 700, fontSize: 29, color: '#000',
                 whiteSpace: 'nowrap',
               }}>
                 <span dangerouslySetInnerHTML={{ __html: heading }} />
@@ -166,7 +166,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
                   [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
                   width: i < 5 ? '50%' : '80%',
                   textAlign: 'left',
-                  fontSize: 18,
+                  fontSize: 22,
                   fontWeight: 400, color: '#000',
                   wordBreak: i < 5 ? 'break-word' : 'normal', whiteSpace: i < 5 ? 'normal' : 'nowrap',
                   lineHeight: 1.3,
