@@ -107,7 +107,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
             position: 'absolute', top: '45%', left: '48%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 30, lineHeight: 1.3, color: '#000',
+            fontSize: 26, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal', pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>

@@ -62,7 +62,7 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
             position: 'absolute', top: '50%', left: '45%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 30, lineHeight: 1.3, color: '#000',
+            fontSize: 26, lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none',
             opacity: bubbleLoaded ? 1 : 0,
