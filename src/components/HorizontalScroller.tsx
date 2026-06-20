@@ -284,7 +284,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
             className={menuOpen ? '' : 'logo-hang'}
             style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-block' }}
           >
-            <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 100 }} />
+            <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 120 }} />
           </div>
 
           {menuOpen && (
@@ -351,7 +351,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           transform: 'translateX(-50%)',
           zIndex: 999, pointerEvents: 'none',
         }}>
-          <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: 48, width: 'auto' }} />
+          <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: 58, width: 'auto' }} />
         </div>
 
         {/* Scrolling row — translated horizontally to scroll through sections */}
