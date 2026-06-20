@@ -33,7 +33,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
 
   return (
     <div style={{
-      width: 1920, minWidth: 1280, height: 800, flexShrink: 0,
+      width: layout.sectionWidth ?? 1220, minWidth: 1280, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -60,11 +60,11 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
             style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
           />
           <div style={{
-            position: 'absolute', top: '45%', left: '48%',
+            position: 'absolute', top: '48%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: '2.06rem', lineHeight: 1.3, color: '#000',
-            width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
+            fontSize: 26, lineHeight: 1.3, color: '#000',
+            width: '80%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>
@@ -89,7 +89,7 @@ export default function ContactUsSection({ section, directusUrl, layout, progres
                   position: 'absolute', top: '50%', left: '55%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: '1.38rem', lineHeight: 1.6,
+                  fontSize: 20, lineHeight: 1.6,
                   color: '#000', fontWeight: 500,
                   pointerEvents: 'all',
                 }}

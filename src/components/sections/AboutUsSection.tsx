@@ -65,7 +65,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           }}>
             {t?.Header && (
               <h2 style={{
-                fontSize: 33, fontWeight: 700,
+                fontSize: 25, fontWeight: 700,
                 color: '#000', flexShrink: 0, width: '15%',
                 lineHeight: 1.3, wordBreak: 'break-word',
               }}>

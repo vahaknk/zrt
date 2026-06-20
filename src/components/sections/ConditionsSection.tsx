@@ -36,7 +36,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
 
   return (
     <div style={{
-      width: 1920, minWidth: 1280, height: 800, flexShrink: 0,
+      width: 1220, minWidth: 1220, height: 800, flexShrink: 0,
       position: 'relative', overflow: 'visible',
     }}>
 
@@ -92,7 +92,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
             />
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-              display: 'flex', flexDirection: 'column', padding: '8% 10% 10%',
+              display: 'flex', flexDirection: 'column', padding: '8% 10% 8%',
             }}>
               {/* Tab buttons */}
               <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -110,7 +110,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
                         border: 'none',
                         borderRadius: 8,
                         fontWeight: 700,
-                        fontSize: 20,
+                        fontSize: 17,
                         cursor: 'pointer',
                         fontFamily: 'inherit',
                         wordBreak: 'break-word',
@@ -128,7 +128,7 @@ export default function ConditionsSection({ section, tabSections, directusUrl, l
               <div style={{
                 flex: 1, overflowY: 'auto',
                 fontSize: 20,
-                lineHeight: 1.6, color: '#000',
+                lineHeight: 1.4, color: '#000',
               }}
                 dangerouslySetInnerHTML={{ __html: tabSections[activeTab]?.translations?.[0]?.Content ?? '' }}
               />

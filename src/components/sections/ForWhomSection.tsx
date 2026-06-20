@@ -89,7 +89,7 @@ export default function ForWhomSection({ section, directusUrl, layout, progress 
                   position: 'absolute', top: '43%', left: '50%',
                   transform: 'translate(-50%, -50%)',
                   width: '75%', textAlign: 'center',
-                  fontSize: 20, lineHeight: 1.3,
+                  fontSize: 18, lineHeight: 1.3,
                   color: '#000', fontWeight: 400, pointerEvents: 'none',
                 }}
                 dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}

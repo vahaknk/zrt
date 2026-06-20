@@ -23,17 +23,17 @@ function parseBullets(html: string): string[] {
 
 const BUBBLE_CONFIG = [
   // Row 1 — left of character
-  { topPct: 8.7, left: '13%', picOnLeft: true,  picOffset: '7%', picTop: '35%', textOffset: '8%', textTop: '45%', flip: false, scale: 1 },
-  { topPct: 24, left: '12%', picOnLeft: false, picOffset: '4%', picTop: '50%', textOffset: '8%', textTop: '40%', flip: false, scale: 1 },
-  { topPct: 37, left: '17%', picOnLeft: true,  picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '47%', flip: false, scale: 1 },
-  { topPct: 50.5, left: '12%', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '36%', flip: false, scale: 1 },
-  { topPct: 62, left: '18%', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%', flip: false, scale: 1 },
+  { topPct: 14, left: '10%', picOnLeft: true,  picOffset: '7%', picTop: '35%', textOffset: '8%', textTop: '45%', flip: false, scale: 1.05 },
+  { topPct: 30, left: '9%', picOnLeft: false, picOffset: '4%', picTop: '50%', textOffset: '5%', textTop: '40%', flip: false, scale: 1.05 },
+  { topPct: 43.5, left: '15%', picOnLeft: true,  picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '47%', flip: false, scale: 1.05 },
+  { topPct: 58, left: '8%', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '36%', flip: false, scale: 1.2 },
+  { topPct: 71.5, left: '16%', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.1 },
   // Row 2 — right of character (mirrored horizontally)
-  { topPct: 20, left: 'calc(60% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '35%', textOffset: '8%', textTop: '58%', flip: false, scale: 1 },
-  { topPct: 35, left: 'calc(56% + 450px)', picOnLeft: false,  picOffset: '7%', picTop: '50%', textOffset: '6%', textTop: '38%', flip: false, scale: 1.2 },
-  { topPct: 49, left: 'calc(64% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.0 },
-  { topPct: 63, left: 'calc(55% + 450px)', picOnLeft: false,  picOffset: '4%', picTop: '30%', textOffset: '6%', textTop: '50%', flip: false, scale: 1.25 },
-  { topPct: 59, left: 'calc(54% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '47%', flip: true, scale: 1.2 },
+  { topPct: 16, left: 'calc(65% + 150px)', picOnLeft: false, picOffset: '4%', picTop: '35%', textOffset: '8%', textTop: '58%', flip: false, scale: 1.2 },
+  { topPct: 34, left: 'calc(63% + 120px)', picOnLeft: false,  picOffset: '7%', picTop: '50%', textOffset: '6%', textTop: '38%', flip: false, scale: 1.3 },
+  { topPct: 49, left: 'calc(68% + 140px)', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.2 },
+  { topPct: 66, left: 'calc(64% + 120px)', picOnLeft: false,  picOffset: '4%', picTop: '30%', textOffset: '6%', textTop: '50%', flip: false, scale: 1.4 },
+  { topPct: 59, left: 'calc(54% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '47%', flip: true, scale: 1.4 },
 ];
 
 export default function WhatsThereSection({ section, directusUrl, layout, progress = 1 }: Props) {
@@ -82,7 +82,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
               src={asset(directusUrl, section.bubble)!}
               alt=""
               onLoad={() => setBubbleLoaded(true)}
-              style={{ height: layout.bubbleHeight, width: 'auto', display: 'block', transform: 'scaleX(-1)' }}
+              style={{ height: layout.bubbleHeight, width: 'auto', display: 'block' }}
             />
             <div style={{
               position: 'absolute', top: '42%', left: '50%',
@@ -116,8 +116,8 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
             return (
               <div style={{
                 position: 'absolute',
-                top: '8%', left: 'calc(60% + 500px)',
-                fontWeight: 700, fontSize: 33, color: '#000',
+                top: '5%', left: 'calc(70% + 200px)',
+                fontWeight: 700, fontSize: 25, color: '#000',
                 whiteSpace: 'nowrap',
               }}>
                 <span dangerouslySetInnerHTML={{ __html: heading }} />
