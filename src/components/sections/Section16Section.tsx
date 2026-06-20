@@ -21,7 +21,7 @@ export default function Section16Section({ section, directusUrl, layout }: Props
       {section.main_image && (
         <div style={{
           position: 'absolute',
-          top: layout.imgTop ?? 400,
+          top: layout.imgTop ?? 420,
           left: layout.imgLeft ?? 960,
           transform: 'translate(-50%, -50%)',
         }}>

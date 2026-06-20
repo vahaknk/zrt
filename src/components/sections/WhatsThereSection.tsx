@@ -108,7 +108,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
           {/* Second column heading */}
           {bullets.length > 5 && (() => {
             const COL2_HEADER: Record<string, string> = {
-              hyw: 'Մեր կիրարկած<br>հիմնական ծրագիրներուն<br>մաս կը կազմեն՝',
+              hyw: 'Մեր կիրարկած հիմնական<br>ծրագիրներուն մաս կը կազմեն՝',
               en: 'The main programs<br>we implement include:',
             };
             const lang = t?.languages_id ?? 'hyw';
@@ -116,8 +116,8 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
             return (
               <div style={{
                 position: 'absolute',
-                top: '5%', left: 'calc(70% + 200px)',
-                fontWeight: 700, fontSize: 25, color: '#000',
+                top: '12%', left: 'calc(67% + 200px)',
+                fontWeight: 700, fontSize: 20, color: '#000',
                 whiteSpace: 'nowrap',
               }}>
                 <span dangerouslySetInnerHTML={{ __html: heading }} />
