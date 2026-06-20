@@ -102,7 +102,10 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     window.addEventListener('resize', update);
     return () => window.removeEventListener('resize', update);
   }, []);
-  const innerH = screenH / scale;
+  const gulbenkianH = Math.round(58 * scale);
+  const gulbenkianBottom = Math.round(16 * scale);
+  const safeZone = gulbenkianH + gulbenkianBottom + Math.round(8 * scale);
+  const innerH = (screenH - safeZone) / scale;
 
   // Sync the parallax line and state after a scroll offset change.
   const syncScroll = (offset: number) => {
@@ -261,8 +264,9 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   }
 
   return (
-    // Outer: clips to the physical viewport
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+    <>
+    {/* Outer: clips to the physical viewport */}
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: `calc(100% - ${safeZone}px)`, overflow: 'hidden' }}>
       {/* Inner: 1920px design canvas scaled to fill the viewport */}
       <div style={{
         width: 1920,
@@ -277,7 +281,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         <div style={{
           position: 'absolute', top: '5%', left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 1000, textAlign: 'center',
+          zIndex: 0, textAlign: 'center',
         }}>
           <div
             onClick={() => setMenuOpen(o => !o)}
@@ -345,15 +349,6 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
           }}
         />
 
-        {/* Gulbenkian logo */}
-        <div style={{
-          position: 'absolute', bottom: 16, left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 999, pointerEvents: 'none',
-        }}>
-          <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: 58, width: 'auto' }} />
-        </div>
-
         {/* Scrolling row — translated horizontally to scroll through sections */}
         <div
           ref={rowRef}
@@ -380,5 +375,15 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
 
       </div>
     </div>
+
+    {/* Gulbenkian logo — fixed outside the scaled canvas to avoid stacking context issues */}
+    <div style={{
+      position: 'fixed', bottom: gulbenkianBottom, left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 9999, pointerEvents: 'none',
+    }}>
+      <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: gulbenkianH, width: 'auto' }} />
+    </div>
+    </>
   );
 }
