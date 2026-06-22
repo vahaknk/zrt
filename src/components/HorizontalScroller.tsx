@@ -281,7 +281,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         <div style={{
           position: 'absolute', top: '5%', left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 0, textAlign: 'center',
+          zIndex: 1000, textAlign: 'center',
         }}>
           <div
             onClick={() => setMenuOpen(o => !o)}

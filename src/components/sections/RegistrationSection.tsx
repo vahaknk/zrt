@@ -66,65 +66,67 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   if (mobileMode) {
     return (
       <div>
-        <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>
-          {decodeHtml(sectionHeader)}
-        </h2>
-        {sectionContent && (
-          <div style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '0.6rem' }}
-            dangerouslySetInnerHTML={{ __html: sectionContent }} />
-        )}
         {status === 'success' ? (
-          <p style={{ fontSize: '1.1rem' }}>✓ {labels['submit_button'] ?? 'Submitted'}</p>
+          <p style={{ fontSize: '1.1rem' }}>✓ {labels['success_message'] ?? 'Submitted'}</p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div>
-              <label style={labelStyle}>{labels['name_label']}</label>
-              <input style={inputStyle} type="text" placeholder={labels['name_placeholder']} value={form.full_name} onChange={(e) => set('full_name', e.target.value)} required />
-            </div>
-            <div>
-              <label style={labelStyle}>{labels['email_label']}</label>
-              <input style={inputStyle} type="email" placeholder={labels['email_placeholder']} value={form.email} onChange={(e) => set('email', e.target.value)} required />
-            </div>
-            <div>
-              <label style={labelStyle}>{labels['birthday']}</label>
-              <input style={inputStyle} type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
-            </div>
-            <div>
-              <label style={labelStyle}>{labels['city']}</label>
-              <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
-            </div>
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
-                <select style={inputStyle} value={form.interview_language} onChange={(e) => set('interview_language', e.target.value)} required>
-                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                  <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
-                  <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
-                  <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
-                </select>
+          <>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>
+              {decodeHtml(sectionHeader)}
+            </h2>
+            {sectionContent && (
+              <div style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '0.6rem' }}
+                dangerouslySetInnerHTML={{ __html: sectionContent }} />
+            )}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div>
+                <label style={labelStyle}>{labels['name_label']}</label>
+                <input style={inputStyle} type="text" placeholder={labels['name_placeholder']} value={form.full_name} onChange={(e) => set('full_name', e.target.value)} required />
               </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
-                <select style={inputStyle} value={form.mailing_language} onChange={(e) => set('mailing_language', e.target.value)} required>
-                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                </select>
+              <div>
+                <label style={labelStyle}>{labels['email_label']}</label>
+                <input style={inputStyle} type="email" placeholder={labels['email_placeholder']} value={form.email} onChange={(e) => set('email', e.target.value)} required />
               </div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-              <input type="checkbox" id="consent-mobile" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} required style={{ marginTop: 3, flexShrink: 0 }} />
-              <label htmlFor="consent-mobile" style={{ fontSize: '0.85rem', color: '#000', cursor: 'pointer' }}>{labels['consent_label']}</label>
-            </div>
-            {status === 'error' && <p style={{ color: 'red', fontSize: '0.85rem' }}>Something went wrong. Please try again.</p>}
-            <button type="submit" disabled={status === 'sending'} style={{ alignSelf: 'center', padding: '0.6rem 1.5rem', background: '#000', color: '#fff', border: 'none', borderRadius: 999, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
-              {status === 'sending' ? '...' : labels['submit_button']}
-            </button>
-          </form>
+              <div>
+                <label style={labelStyle}>{labels['birthday']}</label>
+                <input style={inputStyle} type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
+              </div>
+              <div>
+                <label style={labelStyle}>{labels['city']}</label>
+                <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.4rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
+                  <select style={inputStyle} value={form.interview_language} onChange={(e) => set('interview_language', e.target.value)} required>
+                    <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                    <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                    <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                    <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                    <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
+                    <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
+                    <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
+                  </select>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
+                  <select style={inputStyle} value={form.mailing_language} onChange={(e) => set('mailing_language', e.target.value)} required>
+                    <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                    <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                    <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                    <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                  </select>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                <input type="checkbox" id="consent-mobile" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} required style={{ marginTop: 3, flexShrink: 0 }} />
+                <label htmlFor="consent-mobile" style={{ fontSize: '0.85rem', color: '#000', cursor: 'pointer' }}>{labels['consent_label']}</label>
+              </div>
+              {status === 'error' && <p style={{ color: 'red', fontSize: '0.85rem' }}>Something went wrong. Please try again.</p>}
+              <button type="submit" disabled={status === 'sending'} style={{ alignSelf: 'center', padding: '0.6rem 1.5rem', background: '#000', color: '#fff', border: 'none', borderRadius: 999, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                {status === 'sending' ? '...' : labels['submit_button']}
+              </button>
+            </form>
+          </>
         )}
       </div>
     );
@@ -161,19 +163,19 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
             display: 'flex', flexDirection: 'column', justifyContent: 'center',
           }}>
         <div style={{ width: '100%' }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
-          {decodeHtml(sectionHeader)}
-        </h2>
-        {sectionContent && (
-          <div
-            style={{ fontSize: '0.78rem', lineHeight: 1.3, marginBottom: '0.6rem' }}
-            dangerouslySetInnerHTML={{ __html: sectionContent }}
-          />
-        )}
-
         {status === 'success' ? (
-          <p style={{ fontSize: '1.1rem' }}>✓ {labels['submit_button'] ?? 'Submitted'}</p>
+          <p style={{ fontSize: '1.1rem' }}>✓ {labels['success_message'] ?? 'Submitted'}</p>
         ) : (
+          <>
+          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+            {decodeHtml(sectionHeader)}
+          </h2>
+          {sectionContent && (
+            <div
+              style={{ fontSize: '0.78rem', lineHeight: 1.3, marginBottom: '0.6rem' }}
+              dangerouslySetInnerHTML={{ __html: sectionContent }}
+            />
+          )}
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
 
             <div>
@@ -296,6 +298,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
             </button>
 
           </form>
+          </>
         )}
         </div>
           </div>

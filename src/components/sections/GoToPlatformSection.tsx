@@ -61,7 +61,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
             style={{ height: 200, width: 'auto', display: 'block' }}
           />
           <div style={{
-            position: 'absolute', top: '41%', left: '50%',
+            position: 'absolute', top: '48%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
             fontSize: 26, lineHeight: 1.3, color: '#000',
