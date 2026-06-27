@@ -72,24 +72,27 @@ export default function OurApproachSection({ section, directusUrl, layout, progr
         </div>
       )}
 
-      {/* Right column: bird + text */}
+      {/* Content bubble */}
       <div style={{
         position: 'absolute', top: layout.contentTop, right: layout.contentRight,
-        width: layout.contentWidth, zIndex: 2,
-        display: 'flex', flexDirection: 'column', gap: '0.75rem',
-        transform: open ? 'translateY(0)' : 'translateY(-40px)',
+        zIndex: 3, display: 'inline-block',
+        transform: open ? 'translateY(-80px)' : 'translateY(10px)',
         opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
         transition: 'transform 0.35s ease, opacity 0.35s ease',
       }}>
-        {section.hoover_image && (
-          <img
-            src={asset(directusUrl, section.hoover_image)!}
-            alt=""
-            style={{ height: 80, width: 'auto' }}
-          />
-        )}
+        <img
+          src="/ourapproach_content_bubble.png"
+          alt=""
+          style={{ height: layout.contentBubbleHeight ?? 720, width: 'auto', display: 'block' }}
+        />
         <div
-          style={{ fontSize: 20, lineHeight: 1.5, color: '#ffffff' }}
+          style={{
+            position: 'absolute', top: '40%', left: '65%',
+            transform: 'translate(-60%, -30%)',
+            width: '80%', textAlign: 'left',
+            fontSize: 20, lineHeight: 1.6,
+            color: '#000', fontWeight: 400,
+          }}
           dangerouslySetInnerHTML={{ __html: t?.Content ?? '' }}
         />
       </div>
