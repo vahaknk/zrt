@@ -277,55 +277,73 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
         overflow: 'hidden',
       }}>
 
-        {/* Logo with nav menu */}
+        {/* Zartsants logo — decorative, behind content, not clickable */}
         <div style={{
           position: 'absolute', top: '5%', left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 1000, textAlign: 'center',
+          zIndex: 0, textAlign: 'center',
+          pointerEvents: 'none',
         }}>
-          <div
-            onClick={() => setMenuOpen(o => !o)}
-            className={menuOpen ? '' : 'logo-hang'}
-            style={{ cursor: 'pointer', userSelect: 'none', display: 'inline-block' }}
-          >
-            <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 120 }} />
+          <img src="/zartsants-logo.svg" alt="Zartsants" style={{ height: 120 }} />
+        </div>
+
+        {/* Right-side controls: bird (menu) + keys (language select) */}
+        <div style={{
+          position: 'absolute', top: '0%', right: '2%',
+          zIndex: 1000,
+          display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 5,
+        }}>
+          {/* Bird — opens nav menu */}
+          <div style={{ position: 'relative' }}>
+            <img
+              src="/bird.png"
+              alt="Menu"
+              onClick={() => setMenuOpen(o => !o)}
+              style={{ height: 100, width: 'auto', cursor: 'pointer', display: 'block', transform: 'scaleX(-1)', marginTop: 35 }}
+            />
+            {menuOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                background: 'rgba(255,255,255,0.95)',
+                borderRadius: 12, padding: '0.5rem',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+                minWidth: 220,
+              }}>
+                {navSections.map((s) => {
+                  const label = s.translations?.[0]?.Header ?? `Section ${s.id}`;
+                  return (
+                    <div
+                      key={s.id}
+                      onClick={(e) => { e.stopPropagation(); scrollToSection(s.id); }}
+                      style={{
+                        padding: '0.5rem 0.9rem',
+                        cursor: 'pointer',
+                        borderRadius: 8,
+                        fontWeight: 600,
+                        fontSize: '0.95rem',
+                        color: '#000',
+                        whiteSpace: 'nowrap',
+                        textAlign: 'left',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#f0ecff')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                    >
+                      {label}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
-          {menuOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 8px)', left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(255,255,255,0.95)',
-              borderRadius: 12, padding: '0.5rem',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-              minWidth: 220,
-            }}>
-              {navSections.map((s) => {
-                const label = s.translations?.[0]?.Header ?? `Section ${s.id}`;
-                return (
-                  <div
-                    key={s.id}
-                    onClick={(e) => { e.stopPropagation(); scrollToSection(s.id); }}
-                    style={{
-                      padding: '0.5rem 0.9rem',
-                      cursor: 'pointer',
-                      borderRadius: 8,
-                      fontWeight: 600,
-                      fontSize: '0.95rem',
-                      color: '#000',
-                      whiteSpace: 'nowrap',
-                      textAlign: 'left',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#f0ecff')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                  >
-                    {label}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* Keys — goes to language selection */}
+          <img
+            src="/keys_collection.png"
+            alt="Select language"
+            onClick={() => { window.location.href = '/select-language'; }}
+            style={{ height: 180, width: 'auto', cursor: 'pointer', display: 'block' }}
+          />
         </div>
 
         {/* Ground line */}
