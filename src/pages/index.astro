@@ -175,7 +175,7 @@ try {
   </head>
   <body>
     <div id="mobile-popup">
-      <video src="/mobile-invite.mp4" autoplay muted playsinline loop></video>
+      <video id="mobile-popup-video" src="/mobile-invite.mp4" muted playsinline webkit-playsinline loop></video>
       <button id="mobile-popup-close">✕</button>
     </div>
 
@@ -191,9 +191,15 @@ try {
   <script>
     if (window.innerWidth <= 899) {
       const popup = document.getElementById('mobile-popup');
+      const video = document.getElementById('mobile-popup-video') as HTMLVideoElement;
       if (popup) popup.classList.add('visible');
+      if (video) {
+        video.load();
+        video.play().catch(() => {});
+      }
       document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
         popup?.classList.remove('visible');
+        if (video) { video.pause(); video.currentTime = 0; }
       });
     }
   </script>
