@@ -148,12 +148,6 @@ try {
       #mobile-popup.visible {
         display: flex;
       }
-      #mobile-popup video {
-        width: 100%;
-        max-width: 420px;
-        border-radius: 12px;
-        display: block;
-      }
       #mobile-popup-close {
         position: absolute;
         top: 16px;
@@ -175,7 +169,7 @@ try {
   </head>
   <body>
     <div id="mobile-popup">
-      <video id="mobile-popup-video" src="/mobile-invite.mp4" autoplay muted playsinline webkit-playsinline loop></video>
+      <div id="mobile-popup-video-slot" style="width:100%;max-width:420px;"></div>
       <button id="mobile-popup-close">✕</button>
     </div>
 
@@ -191,15 +185,23 @@ try {
   <script>
     if (window.innerWidth <= 899) {
       const popup = document.getElementById('mobile-popup');
-      const video = document.getElementById('mobile-popup-video') as HTMLVideoElement;
+      const slot = document.getElementById('mobile-popup-video-slot');
       if (popup) popup.classList.add('visible');
-      if (video) {
-        video.load();
-        video.play().catch(() => {});
-      }
+
+      const video = document.createElement('video');
+      video.src = '/mobile-invite.mp4';
+      video.muted = true;
+      video.loop = true;
+      video.setAttribute('autoplay', '');
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
+      video.style.cssText = 'width:100%;border-radius:12px;display:block;';
+      slot?.appendChild(video);
+      video.play().catch(() => {});
+
       document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
         popup?.classList.remove('visible');
-        if (video) { video.pause(); video.currentTime = 0; }
+        video.pause();
       });
     }
   </script>
