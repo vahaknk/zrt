@@ -148,11 +148,34 @@ try {
       #mobile-popup.visible {
         display: flex;
       }
-      #mobile-popup video {
+      #mobile-popup-video-wrap {
+        position: relative;
         width: 100%;
         max-width: 420px;
+      }
+      #mobile-popup video {
+        width: 100%;
         border-radius: 12px;
         display: block;
+      }
+      #mobile-popup-play {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0,0,0,0.3);
+        border-radius: 12px;
+        cursor: pointer;
+        border: none;
+      }
+      #mobile-popup-play svg {
+        width: 64px;
+        height: 64px;
+        fill: rgba(255,255,255,0.9);
+      }
+      #mobile-popup-play.hidden {
+        display: none;
       }
       #mobile-popup-close {
         position: absolute;
@@ -175,7 +198,12 @@ try {
   </head>
   <body>
     <div id="mobile-popup">
-      <video id="mobile-popup-video" src="/mobile-invite.mp4" muted playsinline webkit-playsinline loop></video>
+      <div id="mobile-popup-video-wrap">
+        <video id="mobile-popup-video" src="/mobile-invite.mp4" muted playsinline webkit-playsinline loop></video>
+        <button id="mobile-popup-play">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+      </div>
       <button id="mobile-popup-close">✕</button>
     </div>
 
@@ -193,10 +221,16 @@ try {
       const popup = document.getElementById('mobile-popup');
       const video = document.getElementById('mobile-popup-video') as HTMLVideoElement;
       if (popup) popup.classList.add('visible');
+      const playBtn = document.getElementById('mobile-popup-play');
       if (video) {
         video.load();
-        video.play().catch(() => {});
+        video.play().then(() => {
+          playBtn?.classList.add('hidden');
+        }).catch(() => {});
       }
+      playBtn?.addEventListener('click', () => {
+        video?.play().then(() => playBtn.classList.add('hidden')).catch(() => {});
+      });
       document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
         popup?.classList.remove('visible');
         if (video) { video.pause(); video.currentTime = 0; }
