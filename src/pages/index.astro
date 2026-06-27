@@ -132,8 +132,53 @@ try {
         background: #333;
       }
     </style>
+    <style>
+      #mobile-popup {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        z-index: 99999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        padding: 24px;
+        position: fixed;
+      }
+      #mobile-popup.visible {
+        display: flex;
+      }
+      #mobile-popup video {
+        width: 100%;
+        max-width: 420px;
+        border-radius: 12px;
+        display: block;
+      }
+      #mobile-popup-close {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 36px;
+        height: 36px;
+        background: rgba(255,255,255,0.15);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        font-size: 1.2rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+    </style>
   </head>
   <body>
+    <div id="mobile-popup">
+      <video src="/mobile-invite.mp4" autoplay muted playsinline loop></video>
+      <button id="mobile-popup-close">✕</button>
+    </div>
+
     <AppShell
       sections={sections}
       directusUrl={DIRECTUS_URL}
@@ -143,6 +188,15 @@ try {
       client:only="react"
     />
   </body>
+  <script>
+    if (window.innerWidth <= 899) {
+      const popup = document.getElementById('mobile-popup');
+      if (popup) popup.classList.add('visible');
+      document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
+        popup?.classList.remove('visible');
+      });
+    }
+  </script>
   <script>
     let visitorId = localStorage.getItem('zrt_vid');
     if (!visitorId) {
