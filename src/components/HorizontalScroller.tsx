@@ -299,6 +299,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
               src="/bird.png"
               alt="Menu"
               onClick={() => setMenuOpen(o => !o)}
+              className="logo-hang"
               style={{ height: 100, width: 'auto', cursor: 'pointer', display: 'block', transform: 'scaleX(-1)', marginTop: 35 }}
             />
             {menuOpen && (
@@ -342,6 +343,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
             src="/keys_collection.png"
             alt="Select language"
             onClick={() => { window.location.href = '/select-language'; }}
+            className="logo-hang"
             style={{ height: 180, width: 'auto', cursor: 'pointer', display: 'block' }}
           />
         </div>

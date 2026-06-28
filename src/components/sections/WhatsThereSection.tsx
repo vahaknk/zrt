@@ -116,11 +116,23 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
             return (
               <div style={{
                 position: 'absolute',
-                top: '12%', left: 'calc(67% + 200px)',
-                fontWeight: 700, fontSize: 20, color: '#000',
-                whiteSpace: 'nowrap',
+                top: '4%', left: 'calc(67% + 200px)',
+                display: 'inline-block',
               }}>
-                <span dangerouslySetInnerHTML={{ __html: heading }} />
+                <img
+                  src="/whatsthere-secondcolumn-title.png"
+                  alt=""
+                  style={{ height: layout.col2TitleHeight ?? 120, width: 'auto', display: 'block' }}
+                />
+                <div style={{
+                  position: 'absolute', top: '50%', left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  fontWeight: 700, fontSize: 20, color: '#000',
+                  textAlign: 'center', whiteSpace: 'nowrap',
+                  pointerEvents: 'none',
+                }}>
+                  <span dangerouslySetInnerHTML={{ __html: heading }} />
+                </div>
               </div>
             );
           })()}

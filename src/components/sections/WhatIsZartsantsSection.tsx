@@ -14,8 +14,14 @@ interface Props {
   progress?: number;
 }
 
-const LEFT_BALLOONS  = ['/top-left.webp',  '/bottom-left.webp'];
-const RIGHT_BALLOONS = ['/top-right.webp', '/bottom-right.webp'];
+const WHATIS_BUBBLES = ['/whatis-1.png', '/whatis-2.png', '/whatis-3.png', '/whatis-4.png'];
+
+const WHATIS_CONFIG = [
+  { top: 130, left: 280,  height: 180, textTop: 40, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 1
+  { top: 110, left: 1130, height: 160, textTop: 43, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 2
+  { top: 320, left:  230,  height: 130, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 3
+  { top: 270, left: 1130, height: 100, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 4
+];
 
 function parseBullets(html: string): string[] {
   const matches = html.match(/<li[^>]*>([\s\S]*?)<\/li>/g) ?? [];
@@ -43,43 +49,39 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
       position: 'relative', overflow: 'visible',
     }}>
 
-      {/* Left column */}
-      <div style={{
-        position: 'absolute', top: '30%', left: '5%',
-        display: 'flex', flexDirection: 'column', gap: '1rem',
-        maxWidth: '22%', zIndex: 2,
-        transform: open ? 'translateY(-50%)' : 'translateY(calc(-50% - 40px))',
-        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
-        transition: 'transform 0.35s ease, opacity 0.35s ease',
-      }}>
-        {[0, 2].map((bi, row) => (
-          <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-            <img src={LEFT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-            <p style={{ fontSize: 20, lineHeight: 1.5, color: '#fff', margin: 0 }}>
+      {/* Four individual bubbles — each positioned independently */}
+      {[0, 1, 2, 3].map((bi) => {
+        const cfg = WHATIS_CONFIG[bi];
+        return (
+          <div key={bi} style={{
+            position: 'absolute',
+            top: cfg.top, left: cfg.left,
+            display: 'inline-block',
+            zIndex: 1,
+            transform: open ? 'translateY(0)' : 'translateY(-40px)',
+            opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+            transition: 'transform 0.35s ease, opacity 0.35s ease',
+          }}>
+            <img
+              src={WHATIS_BUBBLES[bi]}
+              alt=""
+              style={{ height: cfg.height, width: 'auto', display: 'block' }}
+            />
+            <div style={{
+              position: 'absolute',
+              top: `${cfg.textTop}%`, left: `${cfg.textLeft}%`,
+              transform: 'translate(-50%, -50%)',
+              width: `${cfg.textWidth}%`,
+              textAlign: 'center',
+              fontSize: cfg.fontSize,
+              lineHeight: 1.4, color: '#000', fontWeight: 500,
+              pointerEvents: 'none',
+            }}>
               {bullets[bi]}
-            </p>
+            </div>
           </div>
-        ))}
-      </div>
-
-      {/* Right column */}
-      <div style={{
-        position: 'absolute', top: '30%', right: '5%',
-        display: 'flex', flexDirection: 'column', gap: '1rem',
-        maxWidth: '22%', zIndex: 2,
-        transform: open ? 'translateY(-50%)' : 'translateY(calc(-50% - 40px))',
-        opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
-        transition: 'transform 0.35s ease, opacity 0.35s ease',
-      }}>
-        {[1, 3].map((bi, row) => (
-          <div key={row} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
-            <img src={RIGHT_BALLOONS[row]} alt="" style={{ height: 80, width: 60, objectFit: 'contain', flexShrink: 0 }} />
-            <p style={{ fontSize: 20, lineHeight: 1.5, color: '#fff', margin: 0 }}>
-              {bullets[bi]}
-            </p>
-          </div>
-        ))}
-      </div>
+        );
+      })}
 
       {/* Yellow speech bubble */}
       {section.bubble && (
@@ -123,7 +125,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
           alt=""
           style={{
             position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
-            width: layout.charWidth, height: 'auto', display: 'block',
+            width: layout.charWidth, height: 'auto', display: 'block', zIndex: 2,
           }}
         />
       )}
