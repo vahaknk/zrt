@@ -17,10 +17,10 @@ interface Props {
 const WHATIS_BUBBLES = ['/whatis-1.png', '/whatis-2.png', '/whatis-3.png', '/whatis-4.png'];
 
 const WHATIS_CONFIG = [
-  { top: 130, left: 280,  height: 180, textTop: 40, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 1
-  { top: 110, left: 1130, height: 160, textTop: 43, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 2
-  { top: 320, left:  230,  height: 130, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 3
-  { top: 270, left: 1130, height: 100, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 4
+  { top: 110, left: 280,  height: 180, textTop: 40, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 1
+  { top: 100, left: 1100, height: 160, textTop: 43, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 2
+  { top: 300, left:  250,  height: 130, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 3
+  { top: 250, left: 1100, height: 100, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 4
 ];
 
 function parseBullets(html: string): string[] {
