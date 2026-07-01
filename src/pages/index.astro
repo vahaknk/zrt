@@ -184,25 +184,27 @@ try {
   </body>
   <script>
     if (window.innerWidth <= 899) {
-      const popup = document.getElementById('mobile-popup');
-      const slot = document.getElementById('mobile-popup-video-slot');
-      if (popup) popup.classList.add('visible');
+      setTimeout(() => {
+        const popup = document.getElementById('mobile-popup');
+        const slot = document.getElementById('mobile-popup-video-slot');
+        if (popup) popup.classList.add('visible');
 
-      const video = document.createElement('video');
-      video.src = '/mobile-invite.mp4';
-      video.muted = true;
-      video.loop = true;
-      video.setAttribute('autoplay', '');
-      video.setAttribute('playsinline', '');
-      video.setAttribute('webkit-playsinline', '');
-      video.style.cssText = 'width:100%;border-radius:12px;display:block;';
-      slot?.appendChild(video);
-      video.play().catch(() => {});
+        const video = document.createElement('video');
+        video.src = '/mobile-invite.mp4';
+        video.muted = true;
+        video.loop = true;
+        video.setAttribute('autoplay', '');
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.style.cssText = 'width:100%;border-radius:12px;display:block;';
+        slot?.appendChild(video);
+        video.play().catch(() => {});
 
-      document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
-        popup?.classList.remove('visible');
-        video.pause();
-      });
+        document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
+          popup?.classList.remove('visible');
+          video.pause();
+        });
+      }, 3000);
     }
   </script>
   <script>
