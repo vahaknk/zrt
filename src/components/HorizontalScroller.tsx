@@ -357,7 +357,8 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
             left: 0,
             width: 1920,
             height: 80,
-            transform: 'translateY(-50%)',
+            transform: 'translateY(-50%) translateZ(0)',
+            backfaceVisibility: 'hidden',
             backgroundImage: 'url(/line.png)',
             backgroundRepeat: 'repeat-x',
             backgroundPositionX: '0px',
@@ -365,7 +366,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
             backgroundSize: 'auto 100%',
             pointerEvents: 'none',
             zIndex: 0,
-            willChange: 'background-position',
+            willChange: 'transform',
           }}
         />
 

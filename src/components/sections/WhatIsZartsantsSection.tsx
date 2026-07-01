@@ -18,9 +18,9 @@ const WHATIS_BUBBLES = ['/whatis-1.png', '/whatis-2.png', '/whatis-3.png', '/wha
 
 const WHATIS_CONFIG = [
   { top: 110, left: 280,  height: 180, textTop: 40, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 1
-  { top: 100, left: 1100, height: 160, textTop: 43, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 2
-  { top: 300, left:  250,  height: 130, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 3
-  { top: 250, left: 1100, height: 100, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 4
+  { top: 80, left: 1100, height: 180, textTop: 43, textLeft: 54, textWidth: 75, fontSize: 18 }, // bubble 2
+  { top: 300, left:  280,  height: 120, textTop: 50, textLeft: 50, textWidth: 75, fontSize: 18 }, // bubble 3
+  { top: 250, left: 1100, height: 100, textTop: 50, textLeft: 60, textWidth: 75, fontSize: 18 }, // bubble 4
 ];
 
 function parseBullets(html: string): string[] {
@@ -72,7 +72,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
               top: `${cfg.textTop}%`, left: `${cfg.textLeft}%`,
               transform: 'translate(-50%, -50%)',
               width: `${cfg.textWidth}%`,
-              textAlign: 'center',
+              textAlign: 'left',
               fontSize: cfg.fontSize,
               lineHeight: 1.4, color: '#000', fontWeight: 500,
               pointerEvents: 'none',

@@ -135,7 +135,7 @@ export default function WhatHappensSection({ section, directusUrl, layout, progr
           style={{
             position: 'absolute', bottom: layout.charBottom, left: layout.charLeft,
             width: layout.charWidth, height: 'auto', display: 'block',
-            zIndex: 5,
+            zIndex: 2,
           }}
         />
       )}
