@@ -24,6 +24,9 @@ const SECTION14_ID = 14;
 const SECTION15_ID = 15;
 const SECTION16_ID = 16;
 const TAB_SECTION_IDS = [9, 10, 11];
+// line.png renders ~6733px wide at full scale (20199x240 native, scaled to an 80px-tall strip);
+// 5 tiles (~33.6k px) comfortably outlasts the parallax travel distance on any realistic viewport.
+const LINE_TILES = Array.from({ length: 5 });
 
 interface Translation {
   languages_id: string;
@@ -115,7 +118,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       rowRef.current.style.transform = `translateX(${-offset}px)`;
     }
     if (lineRef.current) {
-      lineRef.current.style.backgroundPositionX = `${Math.round(-offset * 0.6 * scale)}px`;
+      lineRef.current.style.transform = `translateX(${Math.round(-offset * 0.6 * scale)}px)`;
     }
   };
 
@@ -270,28 +273,37 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     {/* Outer: clips to the physical viewport */}
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: `calc(100% - ${safeZone}px)`, overflow: 'hidden' }}>
       {/* Ground line — rendered in real (unscaled) viewport pixels, outside the scaled canvas below.
-          Chrome can't reliably tile a repeating background under a fractional CSS transform: scale()
-          ancestor (sub-pixel tile-boundary rounding causes it to intermittently vanish at certain
-          scroll offsets); keeping it out of that scaled ancestor avoids the bug entirely. */}
+          line.png (20199x240) is narrower than the total parallax travel distance, so it must repeat.
+          CSS `background-repeat` tiles a fractional-width texture internally and Chrome can't reliably
+          rasterize that under a moving position (sub-pixel tile-boundary rounding makes it intermittently
+          vanish mid-scroll). Tiling with real <img> elements moved by transform — the same technique the
+          section row already uses — sidesteps that renderer entirely. LINE_TILES covers the worst
+          case (max parallax travel + a very wide viewport) with margin to spare. */}
       <div
-        ref={lineRef}
         style={{
           position: 'absolute',
           top: (innerH / 2 + 285) * scale,
           left: 0,
           width: '100%',
           height: 80 * scale,
-          backgroundImage: 'url(/line.png)',
-          backgroundRepeat: 'repeat-x',
-          backgroundPositionX: '0px',
-          backgroundPositionY: 'center',
-          backgroundSize: 'auto 100%',
+          transform: 'translateY(-50%)',
+          overflow: 'hidden',
           pointerEvents: 'none',
           zIndex: 0,
-          willChange: 'background-position',
-          transform: 'translateY(-50%)',
         }}
-      />
+      >
+        <div ref={lineRef} style={{ display: 'flex', height: '100%', willChange: 'transform' }}>
+          {LINE_TILES.map((_, i) => (
+            <img
+              key={i}
+              src="/line.png"
+              alt=""
+              draggable={false}
+              style={{ height: '100%', width: 'auto', flexShrink: 0, display: 'block' }}
+            />
+          ))}
+        </div>
+      </div>
       {/* Inner: 1920px design canvas scaled to fill the viewport */}
       <div style={{
         width: 1920,
