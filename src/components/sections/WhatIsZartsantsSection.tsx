@@ -73,7 +73,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
               transform: 'translate(-50%, -50%)',
               width: `${cfg.textWidth}%`,
               textAlign: 'left',
-              fontSize: cfg.fontSize,
+              fontSize: `calc(${cfg.fontSize}px * var(--font-scale, 1))`,
               lineHeight: 1.4, color: '#000', fontWeight: 500,
               pointerEvents: 'none',
             }}>
@@ -109,7 +109,7 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
             position: 'absolute', top: '48%', left: '47%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 26, lineHeight: 1.3, color: '#000',
+            fontSize: 'calc(26px * var(--font-scale, 1))', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal', pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
           }}>

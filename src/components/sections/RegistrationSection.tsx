@@ -14,7 +14,7 @@ interface Props {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
-  height: '2.1rem',
+  height: '2.0rem',
   padding: '0.4rem 0.7rem',
   background: '#fff',
   border: '1px solid rgba(0,0,0,0.15)',
@@ -29,6 +29,7 @@ const labelStyle: React.CSSProperties = {
   display: 'block',
   fontSize: '0.75rem',
   fontWeight: 600,
+  lineHeight: 1.1,
   marginBottom: '0.15rem',
   color: '#000',
 };
@@ -176,7 +177,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               dangerouslySetInnerHTML={{ __html: sectionContent }}
             />
           )}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
 
             <div>
               <label style={labelStyle}>{labels['name_label']}</label>

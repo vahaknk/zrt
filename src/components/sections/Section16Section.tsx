@@ -39,7 +39,7 @@ export default function Section16Section({ section, directusUrl, layout }: Props
                 transform: 'translate(-50%, -50%)',
                 width: `${layout.textWidth ?? 80}%`,
                 textAlign: 'left',
-                fontSize: layout.fontSize ?? 18,
+                fontSize: `calc(${layout.fontSize ?? 18}px * var(--font-scale, 1))`,
                 lineHeight: 1.5,
                 color: '#000',
               }}

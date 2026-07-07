@@ -11,13 +11,14 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  labels: Record<string, string>;
   layout: Record<string, number>;
   onNavigateToRegistration: () => void;
   progress?: number;
 }
 
 
-export default function GoToPlatformSection({ section, directusUrl, layout, onNavigateToRegistration, progress = 1 }: Props) {
+export default function GoToPlatformSection({ section, directusUrl, labels, layout, onNavigateToRegistration, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
@@ -64,7 +65,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
             position: 'absolute', top: '48%', left: '50%',
             transform: 'translate(-50%, -50%)',
             textAlign: 'center', fontWeight: 700,
-            fontSize: 26, lineHeight: 1.3, color: '#000',
+            fontSize: 'calc(26px * var(--font-scale, 1))', lineHeight: 1.3, color: '#000',
             width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
             pointerEvents: 'none', paddingRight: '1rem',
             opacity: bubbleLoaded ? 1 : 0,
@@ -90,7 +91,7 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
                   position: 'absolute', top: '40%', left: '55%',
                   transform: 'translate(-50%, -50%)',
                   width: '70%', textAlign: 'center',
-                  fontSize: 20, lineHeight: 1.6,
+                  fontSize: 'calc(20px * var(--font-scale, 1))', lineHeight: 1.6,
                   color: '#000', fontWeight: 400,
                   pointerEvents: 'all',
                 }}
@@ -106,14 +107,14 @@ export default function GoToPlatformSection({ section, directusUrl, layout, onNa
                   background: '#000', color: '#fff',
                   border: 'none', borderRadius: 999,
                   padding: '0.45rem 1.2rem',
-                  fontWeight: 500, fontSize: 20,
+                  fontWeight: 500, fontSize: 'calc(20px * var(--font-scale, 1))',
                   cursor: 'pointer', whiteSpace: 'nowrap',
                   fontFamily: 'inherit',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#333')}
                 onMouseLeave={e => (e.currentTarget.style.background = '#000')}
               >
-                Հետաքրքրուած եմ
+                {labels['interested_button'] ?? ''}
               </button>
             </div>
           </div>

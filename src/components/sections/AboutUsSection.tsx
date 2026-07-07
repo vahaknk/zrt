@@ -21,6 +21,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
   const [index, setIndex] = useState(0);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
+  const lang = t?.languages_id ?? 'hyw';
 
   const scatteredImages = [
     { src: '/aboug_us_1.webp', top: layout.p1t, left: layout.p1l, width: layout.p1w },
@@ -65,7 +66,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
           }}>
             {t?.Header && (
               <h2 style={{
-                fontSize: 25, fontWeight: 700,
+                fontSize: lang === 'tr' ? '19px' : 'calc(25px * var(--font-scale, 1))', fontWeight: 700,
                 color: '#000', flexShrink: 0, width: '15%',
                 lineHeight: 1.3, wordBreak: 'break-word',
               }}>
@@ -83,7 +84,7 @@ export default function AboutUsSection({ section, directusUrl, layout }: Props) 
               >⬅</button>
               <span style={{
                 flex: 1, textAlign: 'left',
-                fontSize: 20,
+                fontSize: 'calc(20px * var(--font-scale, 1))',
                 lineHeight: 1.4, color: '#000', fontWeight: 400,
                 wordBreak: 'break-word', whiteSpace: 'normal',
                 overflowWrap: 'break-word',

@@ -108,12 +108,14 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   const innerH = (screenH - safeZone) / scale;
 
   // Sync the parallax line and state after a scroll offset change.
+  // The line lives outside the scaled canvas (see JSX below) in real viewport pixels, so its
+  // shift must be scaled down to match — offset/scale are both in design-space px otherwise.
   const syncScroll = (offset: number) => {
     if (rowRef.current) {
       rowRef.current.style.transform = `translateX(${-offset}px)`;
     }
     if (lineRef.current) {
-      lineRef.current.style.backgroundPositionX = `${-offset * 0.6}px`;
+      lineRef.current.style.backgroundPositionX = `${Math.round(-offset * 0.6 * scale)}px`;
     }
   };
 
@@ -221,7 +223,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       return <WhatHappensSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION6_ID) {
-      return <WhatsThereSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
+      return <WhatsThereSection section={section} directusUrl={directusUrl} labels={labels} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION12_ID) {
       return <AboutUsSection section={section} directusUrl={directusUrl} layout={layout(id)} />;
@@ -230,7 +232,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       return <ContactUsSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
     }
     if (id === SECTION14_ID) {
-      return <GoToPlatformSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} onNavigateToRegistration={() => scrollToSection('7')} />;
+      return <GoToPlatformSection section={section} directusUrl={directusUrl} labels={labels} layout={layout(id)} progress={progress} onNavigateToRegistration={() => scrollToSection('7')} />;
     }
     if (id === SECTION16_ID) {
       return <Section16Section section={section} directusUrl={directusUrl} layout={layout(id)} />;
@@ -267,6 +269,29 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
     <>
     {/* Outer: clips to the physical viewport */}
     <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: `calc(100% - ${safeZone}px)`, overflow: 'hidden' }}>
+      {/* Ground line — rendered in real (unscaled) viewport pixels, outside the scaled canvas below.
+          Chrome can't reliably tile a repeating background under a fractional CSS transform: scale()
+          ancestor (sub-pixel tile-boundary rounding causes it to intermittently vanish at certain
+          scroll offsets); keeping it out of that scaled ancestor avoids the bug entirely. */}
+      <div
+        ref={lineRef}
+        style={{
+          position: 'absolute',
+          top: (innerH / 2 + 285) * scale,
+          left: 0,
+          width: '100%',
+          height: 80 * scale,
+          backgroundImage: 'url(/line.png)',
+          backgroundRepeat: 'repeat-x',
+          backgroundPositionX: '0px',
+          backgroundPositionY: 'center',
+          backgroundSize: 'auto 100%',
+          pointerEvents: 'none',
+          zIndex: 0,
+          willChange: 'background-position',
+          transform: 'translateY(-50%)',
+        }}
+      />
       {/* Inner: 1920px design canvas scaled to fill the viewport */}
       <div style={{
         width: 1920,
@@ -299,7 +324,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
               src="/bird.png"
               alt="Menu"
               onClick={() => setMenuOpen(o => !o)}
-              className="logo-hang"
+              className="bird-hang"
               style={{ height: 100, width: 'auto', cursor: 'pointer', display: 'block', transform: 'scaleX(-1)', marginTop: 35 }}
             />
             {menuOpen && (
@@ -347,28 +372,6 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
             style={{ height: 180, width: 'auto', cursor: 'pointer', display: 'block' }}
           />
         </div>
-
-        {/* Ground line */}
-        <div
-          ref={lineRef}
-          style={{
-            position: 'absolute',
-            top: 'calc(50% + 285px)',
-            left: 0,
-            width: 1920,
-            height: 80,
-            transform: 'translateY(-50%) translateZ(0)',
-            backfaceVisibility: 'hidden',
-            backgroundImage: 'url(/line.png)',
-            backgroundRepeat: 'repeat-x',
-            backgroundPositionX: '0px',
-            backgroundPositionY: 'center',
-            backgroundSize: 'auto 100%',
-            pointerEvents: 'none',
-            zIndex: 0,
-            willChange: 'transform',
-          }}
-        />
 
         {/* Scrolling row — translated horizontally to scroll through sections */}
         <div

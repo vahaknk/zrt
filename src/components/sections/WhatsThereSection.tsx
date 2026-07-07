@@ -11,6 +11,7 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  labels: Record<string, string>;
   layout: Record<string, number>;
   progress?: number;
 }
@@ -23,11 +24,11 @@ function parseBullets(html: string): string[] {
 
 const BUBBLE_CONFIG = [
   // Row 1 — left of character
-  { topPct: 14, left: '10%', picOnLeft: true,  picOffset: '7%', picTop: '35%', textOffset: '8%', textTop: '45%', flip: false, scale: 1.05 },
+  { topPct: 14, left: '10%', picOnLeft: true,  picOffset: '15%', picTop: '35%', textOffset: '8%', textTop: '45%', flip: false, scale: 1.05 },
   { topPct: 30, left: '9%', picOnLeft: false, picOffset: '4%', picTop: '50%', textOffset: '5%', textTop: '40%', flip: false, scale: 1.05 },
-  { topPct: 43.5, left: '15%', picOnLeft: true,  picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '47%', flip: false, scale: 1.05 },
-  { topPct: 58, left: '8%', picOnLeft: false, picOffset: '4%', picTop: '30%', textOffset: '8%', textTop: '36%', flip: false, scale: 1.2 },
-  { topPct: 71.5, left: '16%', picOnLeft: true,  picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.1 },
+  { topPct: 43.5, left: '15%', picOnLeft: true,  picOffset: '14%', picTop: '30%', textOffset: '8%', textTop: '47%', flip: false, scale: 1.05 },
+  { topPct: 58, left: '8%', picOnLeft: false, picOffset: '15%', picTop: '30%', textOffset: '8%', textTop: '36%', flip: false, scale: 1.2 },
+  { topPct: 71.5, left: '16%', picOnLeft: true,  picOffset: '11%', picTop: '55%', textOffset: '8%', textTop: '40%', flip: false, scale: 1.1 },
   // Row 2 — right of character (mirrored horizontally)
   { topPct: 16, left: 'calc(65% + 150px)', picOnLeft: false, picOffset: '4%', picTop: '35%', textOffset: '8%', textTop: '58%', flip: false, scale: 1.2 },
   { topPct: 34, left: 'calc(63% + 120px)', picOnLeft: false,  picOffset: '7%', picTop: '50%', textOffset: '6%', textTop: '38%', flip: false, scale: 1.3 },
@@ -36,7 +37,7 @@ const BUBBLE_CONFIG = [
   { topPct: 59, left: 'calc(54% + 450px)', picOnLeft: false, picOffset: '4%', picTop: '55%', textOffset: '8%', textTop: '47%', flip: true, scale: 1.4 },
 ];
 
-export default function WhatsThereSection({ section, directusUrl, layout, progress = 1 }: Props) {
+export default function WhatsThereSection({ section, directusUrl, labels, layout, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
@@ -51,6 +52,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
   }, [progress]);
   const t = section.translations?.[0];
   const bullets = parseBullets(t?.Content ?? '');
+  const lang = t?.languages_id ?? 'hyw';
 
   return (
     <div style={{
@@ -88,7 +90,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
               position: 'absolute', top: '42%', left: '50%',
               transform: 'translate(-50%, -50%)',
               textAlign: 'center', fontWeight: 700,
-              fontSize: 26, lineHeight: 1.3, color: '#000',
+              fontSize: lang === 'gr' ? '20px' : 'calc(26px * var(--font-scale, 1))', lineHeight: 1.3, color: '#000',
               width: '60%', wordBreak: 'break-word', whiteSpace: 'normal',
               pointerEvents: 'none', paddingRight: '1rem',
               opacity: bubbleLoaded ? 1 : 0,
@@ -107,12 +109,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
         }}>
           {/* Second column heading */}
           {bullets.length > 5 && (() => {
-            const COL2_HEADER: Record<string, string> = {
-              hyw: 'Մեր կիրարկած հիմնական<br>ծրագիրներուն մաս կը կազմեն՝',
-              en: 'The main programs<br>we implement include:',
-            };
-            const lang = t?.languages_id ?? 'hyw';
-            const heading = COL2_HEADER[lang] ?? COL2_HEADER['en'];
+            const heading = labels['main_programmes'] ?? '';
             return (
               <div style={{
                 position: 'absolute',
@@ -127,7 +124,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
                 <div style={{
                   position: 'absolute', top: '50%', left: '50%',
                   transform: 'translate(-50%, -50%)',
-                  fontWeight: 700, fontSize: 20, color: '#000',
+                  fontWeight: 700, fontSize: lang === 'gr' ? '15px' : 'calc(20px * var(--font-scale, 1))', color: '#000',
                   textAlign: 'center', whiteSpace: 'nowrap',
                   pointerEvents: 'none',
                 }}>
@@ -178,7 +175,7 @@ export default function WhatsThereSection({ section, directusUrl, layout, progre
                   [cfg.picOnLeft ? 'right' : 'left']: cfg.textOffset,
                   width: i < 5 ? '50%' : '80%',
                   textAlign: 'left',
-                  fontSize: 20,
+                  fontSize: 'calc(20px * var(--font-scale, 1))',
                   fontWeight: 400, color: '#000',
                   wordBreak: i < 5 ? 'break-word' : 'normal', whiteSpace: i < 5 ? 'normal' : 'nowrap',
                   lineHeight: 1.3,

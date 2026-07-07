@@ -78,6 +78,8 @@ try {
     <link rel="preload" as="image" href="/aboug_us_5.webp" />
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
+      :root { --font-scale: 1; }
+      html[lang="gr"] { --font-scale: 0.82; }
       html, body { height: 100%; overflow: hidden; background: #9683fe; color: #000; font-family: 'Noto Sans', 'Noto Sans Armenian', system-ui, sans-serif; }
       *::-webkit-scrollbar { width: 0 !important; height: 0 !important; display: none !important; }
       * { scrollbar-width: none !important; }
@@ -115,6 +117,20 @@ try {
       }
       .logo-hang:hover {
         animation: logo-hang 0.8s ease;
+      }
+      @keyframes bird-hang {
+        0%   { transform: scaleX(-1) rotate(0deg); }
+        20%  { transform: scaleX(-1) rotate(-8deg); }
+        40%  { transform: scaleX(-1) rotate(6deg); }
+        60%  { transform: scaleX(-1) rotate(-4deg); }
+        80%  { transform: scaleX(-1) rotate(2deg); }
+        100% { transform: scaleX(-1) rotate(0deg); }
+      }
+      .bird-hang {
+        transform-origin: 50% 0%;
+      }
+      .bird-hang:hover {
+        animation: bird-hang 0.8s ease;
       }
       .contact-content a {
         display: inline-block;
@@ -182,15 +198,25 @@ try {
       client:only="react"
     />
   </body>
-  <script>
+  <script define:vars={{ lang }}>
     if (window.innerWidth <= 899) {
       setTimeout(() => {
         const popup = document.getElementById('mobile-popup');
         const slot = document.getElementById('mobile-popup-video-slot');
         if (popup) popup.classList.add('visible');
 
+        const VIDEO_BY_LANG = {
+          de: '/mobile-invite-DE.mp4',
+          it: '/mobile-invite-IT.mp4',
+          tr: '/mobile-invite-TR.mp4',
+          sp: '/mobile-invite-ESP.mp4',
+          en: '/mobile-invite-ING.mp4',
+          pt: '/mobile-invite-POR.mp4',
+          fr: '/mobile-invite-FR.mp4',
+        };
+
         const video = document.createElement('video');
-        video.src = '/mobile-invite.mp4';
+        video.src = VIDEO_BY_LANG[lang] ?? '/mobile-invite.mp4';
         video.muted = true;
         video.loop = true;
         video.setAttribute('autoplay', '');

@@ -61,11 +61,6 @@ function parseBullets(html: string): string[] {
   return matches.map(m => m.replace(/^<li[^>]*>|<\/li>$/g, '').trim()).filter(Boolean);
 }
 
-const COL2_HEADER: Record<string, string> = {
-  hyw: 'Մեր կիրարկած հիմնական ծրագիրներուն մաս կը կազմեն՝',
-  en: 'The main programs we implement include:',
-};
-
 function onImgErr(e: React.SyntheticEvent<HTMLImageElement>) {
   (e.target as HTMLImageElement).style.display = 'none';
 }
@@ -246,8 +241,7 @@ export default function MobileLayout({ sections, directusUrl, labels, lang }: Pr
             const bullets = parseBullets(t?.Content ?? '');
             const col1 = bullets.slice(0, 5);
             const col2 = bullets.slice(5);
-            const lang = t?.languages_id ?? 'hyw';
-            const col2Header = COL2_HEADER[lang] ?? COL2_HEADER['en'];
+            const col2Header = labels['main_programmes'] ?? '';
             return (
               <React.Fragment key={section.id}>
                 <FadeIn>

@@ -32,8 +32,8 @@ export const LAYOUT_DEFAULTS: Record<number, Record<Breakpoint, Record<string, n
     large:  { sectionWidth: 1920, charBottom: 90, charLeft: 650, charWidth: 475, bubbleTop: 368, bubbleLeft: 870, bubbleHeight: 275, bubbleStartTop: 11, bubbleGap: 12, contentBubbleHeight: 165, contentBubbleWidth: 578 },
   },
   7: {
-    normal: { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 894, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
-    large:  { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 894, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
+    normal: { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 980, formTop: 14, formLeft: 28, formWidth: 36, formHeight: 72 },
+    large:  { sectionWidth: 1920, imgTop: 75, imgLeft: 960, imgHeight: 980, formTop: 20, formLeft: 28, formWidth: 35, formHeight: 63 },
   },
   12: {
     normal: {
