@@ -5,7 +5,6 @@ import { getLabels } from '../../lib/labels';
 import SlotPicker from '../../components/SlotPicker';
 
 const { token } = Astro.params;
-const lang = getLanguage(Astro.request) ?? 'hyw';
 
 // Fetch registration by token
 let registration: any = null;
@@ -13,17 +12,22 @@ let expired = false;
 let labels: Record<string, string> = {};
 
 try {
-  labels = await getLabels(lang);
-} catch {}
-
-try {
   const res = await adminGet(
-    `/items/registration_requests?filter[token][_eq]=${token}&fields=id,full_name,email,token_expires_at,slot_chosen&limit=1`
+    `/items/registration_requests?filter[token][_eq]=${token}&fields=id,full_name,email,token_expires_at,slot_chosen,mailing_language&limit=1`
   );
   registration = res.data?.[0] ?? null;
 } catch (e) {
   console.error('Failed to fetch registration:', e);
 }
+
+// The registration's mailing_language (chosen at signup) drives the page language —
+// it's what the Directus flows already use to pick the email's language, so the
+// booking link should render in that same language regardless of any ?lang= param.
+const lang = registration?.mailing_language ?? getLanguage(Astro.request) ?? 'hyw';
+
+try {
+  labels = await getLabels(lang);
+} catch {}
 
 if (!registration) {
   expired = true;
@@ -74,6 +78,7 @@ if (!expired) {
         slots={slots}
         token={token!}
         labels={labels}
+        lang={lang}
         client:load
       />
     )}

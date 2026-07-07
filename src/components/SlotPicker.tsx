@@ -19,11 +19,20 @@ interface Props {
   slots: Slot[];
   token: string;
   labels: Record<string, string>;
+  lang: string;
 }
 
 const MONTHS_HY = [
   'Յունուար', 'Փետրուար', 'Մարտ', 'Ապրիլ', 'Մայիս', 'Յունիս',
   'Յուլիս', 'Օգոստոս', 'Սեպտեմբեր', 'Հոկտեմբեր', 'Նոյեմբեր', 'Դեկտեմբեր',
+];
+const MONTHS_EN = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
+const MONTHS_FR = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
 ];
 
 // getDay() returns 0=Sunday, 1=Monday...
@@ -31,6 +40,11 @@ const WEEKDAYS_HY = [
   'Կիրակի', 'Երկուշաբթի', 'Երեքշաբթի', 'Չորեքշաբթի',
   'Հինգշաբթի', 'Ուրբաթ', 'Շաբաթ',
 ];
+const WEEKDAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const WEEKDAYS_FR = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+const MONTHS_BY_LANG: Record<string, string[]> = { hyw: MONTHS_HY, en: MONTHS_EN, fr: MONTHS_FR };
+const WEEKDAYS_BY_LANG: Record<string, string[]> = { hyw: WEEKDAYS_HY, en: WEEKDAYS_EN, fr: WEEKDAYS_FR };
 
 const PARIS_TZ = 'Europe/Paris';
 
@@ -43,14 +57,16 @@ function hhmm(date: Date, tz?: string): string {
   });
 }
 
-function formatDateParis(date: Date): string {
+function formatDateParis(date: Date, lang: string): string {
+  const months = MONTHS_BY_LANG[lang] ?? MONTHS_HY;
+  const weekdays = WEEKDAYS_BY_LANG[lang] ?? WEEKDAYS_HY;
   // en-CA gives reliable YYYY-MM-DD
   const [year, monthIdx, day] = new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ })
     .format(date).split('-').map(Number);
   const weekdayShort = new Intl.DateTimeFormat('en', { timeZone: PARIS_TZ, weekday: 'short' }).format(date);
   const wdMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-  const weekday = WEEKDAYS_HY[wdMap[weekdayShort] ?? 0];
-  return `${year} ${MONTHS_HY[monthIdx - 1]} ${day}, ${weekday}`;
+  const weekday = weekdays[wdMap[weekdayShort] ?? 0];
+  return `${year} ${months[monthIdx - 1]} ${day}, ${weekday}`;
 }
 
 interface SlotTimes {
@@ -60,15 +76,15 @@ interface SlotTimes {
   sameAsLocal: boolean;
 }
 
-function slotTimes(start: string, end: string): SlotTimes {
+function slotTimes(start: string, end: string, lang: string): SlotTimes {
   const s = new Date(start);
   const e = new Date(end);
   const paris = `${hhmm(s, PARIS_TZ)}–${hhmm(e, PARIS_TZ)}`;
   const local = `${hhmm(s)}–${hhmm(e)}`;
-  return { date: formatDateParis(s), paris, local, sameAsLocal: paris === local };
+  return { date: formatDateParis(s, lang), paris, local, sameAsLocal: paris === local };
 }
 
-export default function SlotPicker({ registration, slots, token, labels }: Props) {
+export default function SlotPicker({ registration, slots, token, labels, lang }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
@@ -84,7 +100,7 @@ export default function SlotPicker({ registration, slots, token, labels }: Props
         body: JSON.stringify({ token, slot_id: selected }),
       });
       if (res.ok) {
-        window.location.href = '/book/confirmed';
+        window.location.href = `/book/confirmed?lang=${lang}`;
       } else {
         const data = await res.json();
         setErrorMsg(data.error ?? 'Something went wrong.');
@@ -145,16 +161,16 @@ export default function SlotPicker({ registration, slots, token, labels }: Props
                 />
                 <div>
                   {(() => {
-                    const t = slotTimes(slot.start_time, slot.end_time);
+                    const t = slotTimes(slot.start_time, slot.end_time, lang);
                     return (
                       <>
                         <div style={{ fontWeight: 600 }}>{t.date}</div>
                         <div style={{ marginTop: '0.2rem' }}>
-                          <span style={{ fontWeight: 600 }}>Փարիզի ժամով․ </span>{t.paris}
+                          <span style={{ fontWeight: 600 }}>{labels['paris_time_label'] ?? 'Paris time'}: </span>{t.paris}
                         </div>
                         {!t.sameAsLocal && (
                           <div style={{ marginTop: '0.1rem', opacity: 0.8, fontSize: '0.9em' }}>
-                            <span style={{ fontWeight: 600 }}>Քու ժամովդ․ </span>{t.local}
+                            <span style={{ fontWeight: 600 }}>{labels['your_time_label'] ?? 'Your time'}: </span>{t.local}
                           </div>
                         )}
                       </>
