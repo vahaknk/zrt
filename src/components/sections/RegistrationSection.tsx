@@ -44,7 +44,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
     mailing_language: '',
     consent: false,
   });
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'duplicate_booking' | 'duplicate_pending'>('idle');
 
   const set = (field: string, value: string | boolean) =>
     setForm((f) => ({ ...f, [field]: value }));
@@ -58,7 +58,14 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
       });
-      setStatus(res.ok ? 'success' : 'error');
+      if (res.ok) {
+        setStatus('success');
+      } else if (res.status === 409) {
+        const data = await res.json().catch(() => null);
+        setStatus(data?.error === 'duplicate_pending' ? 'duplicate_pending' : 'duplicate_booking');
+      } else {
+        setStatus('error');
+      }
     } catch {
       setStatus('error');
     }
@@ -69,6 +76,10 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
       <div>
         {status === 'success' ? (
           <p style={{ fontSize: '1.1rem' }}>✓ {labels['success_message'] ?? 'Submitted'}</p>
+        ) : status === 'duplicate_booking' ? (
+          <p style={{ fontSize: '1rem' }}>{labels['duplicate_booking_message'] ?? 'This email has already booked an interview slot.'}</p>
+        ) : status === 'duplicate_pending' ? (
+          <p style={{ fontSize: '1rem' }}>{labels['duplicate_pending_message'] ?? 'This email already has a pending registration. Please check your inbox for the booking link.'}</p>
         ) : (
           <>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>
@@ -166,6 +177,10 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
         <div style={{ width: '100%' }}>
         {status === 'success' ? (
           <p style={{ fontSize: '1.1rem' }}>✓ {labels['success_message'] ?? 'Submitted'}</p>
+        ) : status === 'duplicate_booking' ? (
+          <p style={{ fontSize: '0.9rem' }}>{labels['duplicate_booking_message'] ?? 'This email has already booked an interview slot.'}</p>
+        ) : status === 'duplicate_pending' ? (
+          <p style={{ fontSize: '0.9rem' }}>{labels['duplicate_pending_message'] ?? 'This email already has a pending registration. Please check your inbox for the booking link.'}</p>
         ) : (
           <>
           <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
