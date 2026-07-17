@@ -14,12 +14,12 @@ interface Props {
 const inputStyle: React.CSSProperties = {
   width: '100%',
   boxSizing: 'border-box',
-  height: '2.0rem',
+  height: '2.3rem',
   padding: '0.4rem 0.7rem',
   background: '#fff',
   border: '1px solid rgba(0,0,0,0.15)',
   borderRadius: 8,
-  fontSize: '0.85rem',
+  fontSize: '1rem',
   color: '#000',
   outline: 'none',
   fontFamily: 'inherit',
@@ -27,10 +27,10 @@ const inputStyle: React.CSSProperties = {
 
 const labelStyle: React.CSSProperties = {
   display: 'block',
-  fontSize: '0.75rem',
+  fontSize: '0.9rem',
   fontWeight: 600,
   lineHeight: 1.1,
-  marginBottom: '0.15rem',
+  marginBottom: '0.2rem',
   color: '#000',
 };
 
@@ -82,14 +82,14 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
           <p style={{ fontSize: '1rem' }}>{labels['duplicate_pending_message'] ?? 'This email already has a pending registration. Please check your inbox for the booking link.'}</p>
         ) : (
           <>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.4rem', lineHeight: 1.3 }}>
               {decodeHtml(sectionHeader)}
             </h2>
             {sectionContent && (
-              <div style={{ fontSize: '0.85rem', lineHeight: 1.5, marginBottom: '0.6rem' }}
+              <div style={{ fontSize: '0.95rem', lineHeight: 1.5, marginBottom: '0.6rem' }}
                 dangerouslySetInnerHTML={{ __html: sectionContent }} />
             )}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
               <div>
                 <label style={labelStyle}>{labels['name_label']}</label>
                 <input style={inputStyle} type="text" placeholder={labels['name_placeholder']} value={form.full_name} onChange={(e) => set('full_name', e.target.value)} required />
@@ -106,32 +106,30 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
                 <label style={labelStyle}>{labels['city']}</label>
                 <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
               </div>
-              <div style={{ display: 'flex', gap: '0.4rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
-                  <select style={inputStyle} value={form.interview_language} onChange={(e) => set('interview_language', e.target.value)} required>
-                    <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                    <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                    <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                    <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                    <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
-                    <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
-                    <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
-                  </select>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
-                  <select style={inputStyle} value={form.mailing_language} onChange={(e) => set('mailing_language', e.target.value)} required>
-                    <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                    <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                    <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                    <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                  </select>
-                </div>
+              <div>
+                <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
+                <select style={inputStyle} value={form.interview_language} onChange={(e) => set('interview_language', e.target.value)} required>
+                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                  <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
+                  <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
+                  <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
+                </select>
+              </div>
+              <div>
+                <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
+                <select style={inputStyle} value={form.mailing_language} onChange={(e) => set('mailing_language', e.target.value)} required>
+                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                </select>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                 <input type="checkbox" id="consent-mobile" checked={form.consent} onChange={(e) => set('consent', e.target.checked)} required style={{ marginTop: 3, flexShrink: 0 }} />
-                <label htmlFor="consent-mobile" style={{ fontSize: '0.85rem', color: '#000', cursor: 'pointer' }}>{labels['consent_label']}</label>
+                <label htmlFor="consent-mobile" style={{ fontSize: '0.95rem', color: '#000', cursor: 'pointer' }}>{labels['consent_label']}</label>
               </div>
               {status === 'error' && <p style={{ color: 'red', fontSize: '0.85rem' }}>Something went wrong. Please try again.</p>}
               <button type="submit" disabled={status === 'sending'} style={{ alignSelf: 'center', padding: '0.6rem 1.5rem', background: '#000', color: '#fff', border: 'none', borderRadius: 999, fontSize: '1rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -171,8 +169,10 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
             position: 'absolute',
             top: `${layout.formTop}%`, left: `${layout.formLeft}%`,
             width: `${layout.formWidth}%`, height: `${layout.formHeight}%`,
+            boxSizing: 'border-box', padding: '0.9rem 1.1rem',
             overflowY: 'auto', overflowX: 'hidden',
-            display: 'flex', flexDirection: 'column', justifyContent: 'center',
+            scrollBehavior: 'smooth', overscrollBehavior: 'contain',
+            display: 'flex', flexDirection: 'column', justifyContent: 'flex-start',
           }}>
         <div style={{ width: '100%' }}>
         {status === 'success' ? (
@@ -183,16 +183,16 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
           <p style={{ fontSize: '0.9rem' }}>{labels['duplicate_pending_message'] ?? 'This email already has a pending registration. Please check your inbox for the booking link.'}</p>
         ) : (
           <>
-          <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '0.4rem' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: '0.4rem' }}>
             {decodeHtml(sectionHeader)}
           </h2>
           {sectionContent && (
             <div
-              style={{ fontSize: '0.78rem', lineHeight: 1.3, marginBottom: '0.6rem' }}
+              style={{ fontSize: '0.88rem', lineHeight: 1.4, marginBottom: '0.6rem' }}
               dangerouslySetInnerHTML={{ __html: sectionContent }}
             />
           )}
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
 
             <div>
               <label style={labelStyle}>{labels['name_label']}</label>
@@ -218,59 +218,57 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'flex-end' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['birthday']}</label>
-                <input
-                  style={inputStyle}
-                  type="date"
-                  value={form.birthday}
-                  onChange={(e) => set('birthday', e.target.value)}
-                />
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['city']}</label>
-                <input
-                  style={inputStyle}
-                  type="text"
-                  value={form.city}
-                  onChange={(e) => set('city', e.target.value)}
-                />
-              </div>
+            <div>
+              <label style={labelStyle}>{labels['birthday']}</label>
+              <input
+                style={inputStyle}
+                type="date"
+                value={form.birthday}
+                onChange={(e) => set('birthday', e.target.value)}
+              />
             </div>
 
-            <div style={{ display: 'flex', gap: '0.4rem' }}>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
-                <select
-                  style={inputStyle}
-                  value={form.interview_language}
-                  onChange={(e) => set('interview_language', e.target.value)}
-                  required
-                >
-                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                  <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
-                  <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
-                  <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
-                </select>
-              </div>
-              <div style={{ flex: 1 }}>
-                <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
-                <select
-                  style={inputStyle}
-                  value={form.mailing_language}
-                  onChange={(e) => set('mailing_language', e.target.value)}
-                  required
-                >
-                  <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
-                  <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
-                  <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
-                  <option value="en">{labels['lang_en'] ?? 'English'}</option>
-                </select>
-              </div>
+            <div>
+              <label style={labelStyle}>{labels['city']}</label>
+              <input
+                style={inputStyle}
+                type="text"
+                value={form.city}
+                onChange={(e) => set('city', e.target.value)}
+              />
+            </div>
+
+            <div>
+              <label style={labelStyle}>{labels['interview_language'] ?? 'Interview language'}</label>
+              <select
+                style={inputStyle}
+                value={form.interview_language}
+                onChange={(e) => set('interview_language', e.target.value)}
+                required
+              >
+                <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                <option value="en">{labels['lang_en'] ?? 'English'}</option>
+                <option value="de">{labels['lang_de'] ?? 'Deutsch'}</option>
+                <option value="it">{labels['lang_it'] ?? 'Italiano'}</option>
+                <option value="tr">{labels['lang_tr'] ?? 'Türkçe'}</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={labelStyle}>{labels['mailing_language'] ?? 'Mailing language'}</label>
+              <select
+                style={inputStyle}
+                value={form.mailing_language}
+                onChange={(e) => set('mailing_language', e.target.value)}
+                required
+              >
+                <option value="" disabled>{labels['select_placeholder'] ?? '—'}</option>
+                <option value="hyw">{labels['lang_hyw'] ?? 'Հայերէն'}</option>
+                <option value="fr">{labels['lang_fr'] ?? 'Français'}</option>
+                <option value="en">{labels['lang_en'] ?? 'English'}</option>
+              </select>
             </div>
 
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
@@ -282,7 +280,7 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
                 required
                 style={{ marginTop: 3, flexShrink: 0 }}
               />
-              <label htmlFor="consent" style={{ fontSize: '0.85rem', color: '#000', cursor: 'pointer' }}>
+              <label htmlFor="consent" style={{ fontSize: '0.95rem', color: '#000', cursor: 'pointer' }}>
                 {labels['consent_label']}
               </label>
             </div>
@@ -296,12 +294,12 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               disabled={status === 'sending'}
               style={{
                 alignSelf: 'center',
-                padding: '0.45rem 1.2rem',
+                padding: '0.55rem 1.3rem',
                 background: '#000',
                 color: '#fff',
                 border: 'none',
                 borderRadius: 999,
-                fontSize: '0.95rem',
+                fontSize: '1.05rem',
                 fontWeight: 700,
                 cursor: 'pointer',
                 fontFamily: 'inherit',
