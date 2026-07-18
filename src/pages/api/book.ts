@@ -12,7 +12,7 @@ export const POST: APIRoute = async ({ request }) => {
   let registration: any = null;
   try {
     const res = await adminGet(
-      `/items/registration_requests?filter[token][_eq]=${token}&fields=id,token_expires_at&limit=1`
+      `/items/registration_requests?filter[token][_eq]=${token}&fields=id,token_expires_at,slot_chosen&limit=1`
     );
     registration = res.data?.[0] ?? null;
   } catch (e) {
@@ -21,6 +21,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (!registration) {
     return new Response(JSON.stringify({ error: 'Invalid token' }), { status: 403 });
+  }
+
+  if (registration.slot_chosen) {
+    return new Response(JSON.stringify({ error: 'already_booked' }), { status: 409 });
   }
 
   const expiresAt = new Date(registration.token_expires_at);

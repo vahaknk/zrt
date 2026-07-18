@@ -31,6 +31,9 @@ try {
 
 if (!registration) {
   expired = true;
+} else if (registration.slot_chosen) {
+  // Already booked — sending them back through the picker would let them pick again.
+  return Astro.redirect(`/book/confirmed?lang=${lang}`);
 } else {
   const expiresAt = new Date(registration.token_expires_at);
   if (isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
