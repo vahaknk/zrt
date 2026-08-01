@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { adminGet, adminPatch } from '../../lib/directusAdmin';
-import { isSlotBookable, isSlotInPast } from '../../lib/booking';
+import { isSlotInPast } from '../../lib/booking';
 
 export const POST: APIRoute = async ({ request }) => {
   const { token, slot_id, interview_language } = await request.json();
@@ -48,18 +48,12 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Invalid slot' }), { status: 400 });
   }
 
-  // Hard floor, independent of the 3-day rule: a slot that has already
-  // started can never be booked, no matter what.
+  // A slot that has already started can never be booked, no matter what.
   if (isSlotInPast(slot.start_time)) {
     return new Response(JSON.stringify({ error: 'This slot has already passed.' }), { status: 400 });
   }
 
-  if (!isSlotBookable(slot.start_time)) {
-    return new Response(
-      JSON.stringify({ error: 'This slot is too close to book online. Please contact us directly.' }),
-      { status: 400 }
-    );
-  }
+  // TODO: 3-day minimum lead-time check reverted pending team approval.
 
   // Update registration
   try {

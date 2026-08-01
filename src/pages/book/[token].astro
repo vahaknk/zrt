@@ -2,7 +2,7 @@
 import { adminGet } from '../../lib/directusAdmin';
 import { getLanguage } from '../../lib/language';
 import { getLabels } from '../../lib/labels';
-import { isSlotBookable, isSlotInPast } from '../../lib/booking';
+import { isSlotInPast } from '../../lib/booking';
 import SlotPicker from '../../components/SlotPicker';
 
 const { token } = Astro.params;
@@ -49,7 +49,7 @@ if (!expired) {
     const res = await adminGet(
       `/items/intervew_slots?filter[status][_eq]=available&sort[]=start_time&fields=id,start_time,end_time,capacity,notes`
     );
-    slots = (res.data ?? []).filter((s: any) => !isSlotInPast(s.start_time) && isSlotBookable(s.start_time));
+    slots = (res.data ?? []).filter((s: any) => !isSlotInPast(s.start_time));
   } catch (e) {
     console.error('Failed to fetch slots:', e);
   }
