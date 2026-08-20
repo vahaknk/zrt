@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { adminGet, adminPatch } from '../../lib/directusAdmin';
 import { isSlotBookable, isSlotInPast } from '../../lib/booking';
+import { syncBookingToNotion } from '../../lib/notion';
 
 export const POST: APIRoute = async ({ request }) => {
   const { token, slot_id, interview_language } = await request.json();
@@ -13,7 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
   let registration: any = null;
   try {
     const res = await adminGet(
-      `/items/registration_requests?filter[token][_eq]=${token}&fields=id,token_expires_at,slot_chosen&limit=1`
+      `/items/registration_requests?filter[token][_eq]=${token}&fields=id,full_name,city,interview_language,token_expires_at,slot_chosen&limit=1`
     );
     registration = res.data?.[0] ?? null;
   } catch (e) {
@@ -72,6 +73,20 @@ export const POST: APIRoute = async ({ request }) => {
   } catch (e: any) {
     console.error('Booking patch error:', e?.message);
     return new Response(JSON.stringify({ error: e?.message ?? 'Failed to save booking' }), { status: 500 });
+  }
+
+  // Sync to Notion — only reserved slots go there, so this fires on booking,
+  // not on initial registration. Best-effort: a Notion outage shouldn't fail
+  // a booking that's already saved in Directus.
+  try {
+    await syncBookingToNotion({
+      fullName: registration.full_name,
+      city: registration.city ?? null,
+      interviewLanguage: interview_language ?? registration.interview_language ?? null,
+      slotStartTime: slot.start_time,
+    });
+  } catch (e: any) {
+    console.error('Notion sync error:', e?.message);
   }
 
   // Check slot capacity — mark full if needed

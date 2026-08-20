@@ -70,18 +70,36 @@ function formatDateParis(date: Date, lang: string): string {
 }
 
 interface SlotTimes {
-  date: string;
   paris: string;
   local: string;
   sameAsLocal: boolean;
 }
 
-function slotTimes(start: string, end: string, lang: string): SlotTimes {
+function slotTimes(start: string, end: string): SlotTimes {
   const s = new Date(start);
   const e = new Date(end);
   const paris = `${hhmm(s, PARIS_TZ)}–${hhmm(e, PARIS_TZ)}`;
   const local = `${hhmm(s)}–${hhmm(e)}`;
-  return { date: formatDateParis(s, lang), paris, local, sameAsLocal: paris === local };
+  return { paris, local, sameAsLocal: paris === local };
+}
+
+// Stable grouping key (Paris calendar date), independent of display language.
+function dateKey(start: string): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ }).format(new Date(start));
+}
+
+function groupByDate<T extends { start_time: string }>(slots: T[]): { key: string; slots: T[] }[] {
+  const groups: { key: string; slots: T[] }[] = [];
+  for (const slot of slots) {
+    const key = dateKey(slot.start_time);
+    const last = groups[groups.length - 1];
+    if (last && last.key === key) {
+      last.slots.push(slot);
+    } else {
+      groups.push({ key, slots: [slot] });
+    }
+  }
+  return groups;
 }
 
 export default function SlotPicker({ registration, slots, token, labels, lang }: Props) {
@@ -134,51 +152,52 @@ export default function SlotPicker({ registration, slots, token, labels, lang }:
             {labels['no_slots'] ?? 'Այժմ յարմար ժամ չիկայ։'}
           </p>
         ) : (
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {slots.map((slot) => (
-              <label
-                key={slot.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: '0.75rem',
-                  background: selected === slot.id ? '#000' : '#fff',
-                  color: selected === slot.id ? '#ffffff' : '#000',
-                  border: '1px solid rgba(0,0,0,0.15)',
-                  borderRadius: 8,
-                  padding: '1rem',
-                  cursor: 'pointer',
-                  transition: 'background 0.2s, color 0.2s',
-                }}
-              >
-                <input
-                  type="radio"
-                  name="slot"
-                  value={slot.id}
-                  checked={selected === slot.id}
-                  onChange={() => setSelected(slot.id)}
-                  style={{ marginTop: 3, accentColor: '#9683fe', flexShrink: 0 }}
-                />
-                <div>
-                  {(() => {
-                    const t = slotTimes(slot.start_time, slot.end_time, lang);
-                    return (
-                      <>
-                        <div style={{ fontWeight: 600 }}>{t.date}</div>
-                        <div style={{ marginTop: '0.2rem' }}>
-                          <span style={{ fontWeight: 600 }}>{labels['paris_time_label'] ?? 'Paris time'}: </span>{t.paris}
-                        </div>
-                        {!t.sameAsLocal && (
-                          <div style={{ marginTop: '0.1rem', opacity: 0.8, fontSize: '0.9em' }}>
-                            <span style={{ fontWeight: 600 }}>{labels['your_time_label'] ?? 'Your time'}: </span>{t.local}
-                          </div>
-                        )}
-                      </>
-                    );
-                  })()}
-                  {slot.notes && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', opacity: 0.75 }}>{slot.notes}</div>}
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {groupByDate(slots).map((group) => (
+              <div key={group.key}>
+                <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.5rem' }}>
+                  {formatDateParis(new Date(group.slots[0].start_time), lang)}
                 </div>
-              </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {group.slots.map((slot) => (
+                    <label
+                      key={slot.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.75rem',
+                        background: selected === slot.id ? '#000' : '#fff',
+                        color: selected === slot.id ? '#ffffff' : '#000',
+                        border: '1px solid rgba(0,0,0,0.15)',
+                        borderRadius: 8,
+                        padding: '0.75rem 1rem',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s, color 0.2s',
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="slot"
+                        value={slot.id}
+                        checked={selected === slot.id}
+                        onChange={() => setSelected(slot.id)}
+                        style={{ marginTop: 3, accentColor: '#9683fe', flexShrink: 0 }}
+                      />
+                      <div>
+                        {(() => {
+                          const t = slotTimes(slot.start_time, slot.end_time);
+                          return (
+                            <div>
+                              <span style={{ fontWeight: 600 }}>{labels['paris_time_label'] ?? 'Paris time'}: </span>{t.paris}
+                            </div>
+                          );
+                        })()}
+                        {slot.notes && <div style={{ fontSize: '0.85rem', marginTop: '0.25rem', opacity: 0.75 }}>{slot.notes}</div>}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
             ))}
 
             {status === 'error' && (
