@@ -1,0 +1,40 @@
+---
+import { requireMember } from '../../lib/platformAuth';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login');
+}
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants Platform — Calendar</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #9683fe;
+        font-family: system-ui, sans-serif;
+        color: #000;
+        padding: 2rem;
+        text-align: center;
+      }
+      a.back { position: absolute; top: 2rem; left: 2rem; color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
+      h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
+      p { opacity: 0.7; }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="/platform">&larr; Back</a>
+    <h1>Calendar</h1>
+    <p>Coming soon.</p>
+  </body>
+</html>

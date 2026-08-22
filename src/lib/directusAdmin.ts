@@ -29,3 +29,16 @@ export async function adminPatch(path: string, body: object) {
   }
   return res.json();
 }
+
+export async function adminPost(path: string, body: object) {
+  const res = await fetch(`${DIRECTUS_URL}${path}`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Directus POST ${path} → ${res.status}: ${text}`);
+  }
+  return res.json();
+}

@@ -1,0 +1,75 @@
+---
+import PlatformAdminPanel from '../components/PlatformAdminPanel';
+import { adminGet } from '../lib/directusAdmin';
+
+const pw = Astro.url.searchParams.get('pw') ?? '';
+const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD ?? '';
+const authed = ADMIN_PASSWORD !== '' && pw === ADMIN_PASSWORD;
+
+let enrolledRegistrations: any[] = [];
+let members: any[] = [];
+let workshops: any[] = [];
+let clouds: any[] = [];
+
+if (authed) {
+  try {
+    const [regsRes, membersRes, workshopsRes, cloudsRes] = await Promise.all([
+      adminGet(`/items/registration_requests?filter[status][_eq]=enrolled&fields=id,full_name,email&limit=-1`),
+      adminGet(`/items/platform_members?fields=id,full_name,email,registration_request,workshop.id,workshop.name,clouds.clouds_id.id,clouds.clouds_id.name&limit=-1`),
+      adminGet(`/items/workshops?filter[active][_eq]=true&fields=id,name&sort[]=name&limit=-1`),
+      adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name,bundle.name&sort[]=name&limit=-1`),
+    ]);
+    const linkedRegIds = new Set((membersRes.data ?? []).map((m: any) => m.registration_request));
+    enrolledRegistrations = (regsRes.data ?? []).filter((r: any) => !linkedRegIds.has(r.id));
+    members = membersRes.data ?? [];
+    workshops = workshopsRes.data ?? [];
+    clouds = cloudsRes.data ?? [];
+  } catch (e) {
+    console.error('admin-platform data load error:', e);
+  }
+}
+---
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Zartsants Platform Admin</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f2f2f2; font-family: system-ui, sans-serif; padding: 2rem; min-height: 100vh; }
+  </style>
+</head>
+<body>
+  {!authed ? (
+    <div style="max-width:340px;margin:12vh auto;background:#fff;padding:2rem;border-radius:14px;box-shadow:0 2px 20px rgba(0,0,0,0.12)">
+      <h1 style="font-size:1.4rem;font-weight:700;margin-bottom:1.25rem">Admin Login</h1>
+      <form method="get">
+        <input
+          name="pw"
+          type="password"
+          placeholder="Password"
+          autofocus
+          style="width:100%;padding:0.6rem 0.9rem;border:1px solid #ccc;border-radius:8px;font-size:1rem;margin-bottom:0.75rem;font-family:inherit"
+        />
+        <button
+          type="submit"
+          style="width:100%;padding:0.65rem;background:#000;color:#fff;border:none;border-radius:8px;font-size:1rem;font-weight:700;cursor:pointer;font-family:inherit"
+        >
+          Login
+        </button>
+      </form>
+    </div>
+  ) : (
+    <PlatformAdminPanel
+      pw={pw}
+      enrolledRegistrations={enrolledRegistrations}
+      members={members}
+      workshops={workshops}
+      clouds={clouds}
+      client:load
+    />
+  )}
+</body>
+</html>

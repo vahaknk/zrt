@@ -1,0 +1,107 @@
+---
+import { requireMember } from '../../lib/platformAuth';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login');
+}
+
+const workshop = member.workshop;
+// Effectively one bundle per member in practice — use the first.
+const cloudBundle = member.clouds[0]?.clouds_id?.bundle ?? null;
+const cloudNames = member.clouds.map((c) => c.clouds_id.name).join(', ');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants Platform</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #9683fe;
+        font-family: system-ui, sans-serif;
+        color: #000;
+        padding: 2rem;
+      }
+      h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 2rem; }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        width: 100%;
+        max-width: 420px;
+      }
+      .btn {
+        display: block;
+        text-align: center;
+        padding: 1.75rem 1rem;
+        background: #fff;
+        border-radius: 12px;
+        text-decoration: none;
+        color: #000;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        transition: transform 0.15s;
+      }
+      a.btn:hover { transform: scale(1.03); }
+      .btn .sub {
+        display: block;
+        font-weight: 400;
+        font-size: 0.75rem;
+        margin-top: 0.35rem;
+        opacity: 0.65;
+      }
+      .btn.disabled {
+        background: rgba(255,255,255,0.5);
+        color: rgba(0,0,0,0.4);
+        cursor: default;
+      }
+      .logout {
+        margin-top: 2.5rem;
+        font-size: 0.85rem;
+        color: #000;
+        opacity: 0.7;
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Welcome, {member.full_name}</h1>
+    <div class="grid">
+      {workshop ? (
+        <a class="btn" href={workshop.zoom_link} target="_blank" rel="noopener">
+          Workshops
+          <span class="sub">{workshop.name}</span>
+        </a>
+      ) : (
+        <div class="btn disabled">
+          Workshops
+          <span class="sub">Not assigned yet</span>
+        </div>
+      )}
+      {cloudBundle ? (
+        <a class="btn" href={cloudBundle.zoom_link} target="_blank" rel="noopener">
+          Clouds
+          <span class="sub">{cloudNames}</span>
+        </a>
+      ) : (
+        <div class="btn disabled">
+          Clouds
+          <span class="sub">Not assigned yet</span>
+        </div>
+      )}
+      <a class="btn" href="/platform/calendar">Calendar</a>
+      <a class="btn" href="/platform/library">Library</a>
+    </div>
+    <a class="logout" href="/api/platform/logout">Log out</a>
+  </body>
+</html>
