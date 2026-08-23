@@ -1,41 +1,3 @@
----
-import { adminGet, adminPatch } from '../../lib/directusAdmin';
-import { verifyPassword, generateSessionToken, sessionCookieOptions, SESSION_COOKIE } from '../../lib/platformAuth';
-
-let error = '';
-
-if (Astro.request.method === 'POST') {
-  const form = await Astro.request.formData();
-  const email = String(form.get('email') ?? '').trim();
-  const password = String(form.get('password') ?? '');
-
-  let member: any = null;
-  try {
-    const res = await adminGet(
-      `/items/platform_members?filter[email][_eq]=${encodeURIComponent(email)}&fields=id,email,password_hash,status&limit=1`
-    );
-    member = res.data?.[0] ?? null;
-  } catch {
-    member = null;
-  }
-
-  const validPassword = member ? await verifyPassword(password, member.password_hash) : false;
-
-  if (!member || !validPassword || member.status !== 'active') {
-    error = 'Invalid email or password.';
-  } else {
-    const token = generateSessionToken();
-    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    await adminPatch(`/items/platform_members/${member.id}`, {
-      session_token: token,
-      session_expires_at: expiresAt,
-    });
-    Astro.cookies.set(SESSION_COOKIE, token, sessionCookieOptions());
-    return Astro.redirect('/platform');
-  }
-}
----
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -89,20 +51,59 @@ if (Astro.request.method === 'POST') {
         transition: opacity 0.2s;
       }
       button:hover { opacity: 0.85; }
-      .error { color: #f66; font-size: 0.875rem; margin-bottom: 1rem; }
+      button:disabled { opacity: 0.6; cursor: default; }
+      .error { color: #f66; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
+      .error.visible { display: block; }
     </style>
   </head>
   <body>
     <div class="card">
       <h1>Sign In</h1>
-      {error && <p class="error">{error}</p>}
-      <form method="POST">
+      <p class="error" id="error">Invalid email or password.</p>
+      <form id="login-form">
         <label for="email">Email</label>
         <input id="email" name="email" type="email" required autocomplete="email" />
         <label for="password">Password</label>
         <input id="password" name="password" type="password" required autocomplete="current-password" />
-        <button type="submit">Continue</button>
+        <button type="submit" id="submit-btn">Continue</button>
       </form>
     </div>
+
+    <script>
+      const form = document.getElementById('login-form') as HTMLFormElement;
+      const errorEl = document.getElementById('error') as HTMLParagraphElement;
+      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errorEl.classList.remove('visible');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '...';
+
+        const email = (document.getElementById('email') as HTMLInputElement).value;
+        const password = (document.getElementById('password') as HTMLInputElement).value;
+
+        try {
+          const res = await fetch('/api/platform/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+          });
+          if (res.ok) {
+            window.location.href = '/platform';
+          } else {
+            const data = await res.json().catch(() => ({}));
+            errorEl.textContent = data.error ?? 'Invalid email or password.';
+            errorEl.classList.add('visible');
+          }
+        } catch {
+          errorEl.textContent = 'Something went wrong. Please try again.';
+          errorEl.classList.add('visible');
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Continue';
+      });
+    </script>
   </body>
 </html>
