@@ -38,7 +38,6 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
   const [form, setForm] = useState({
     full_name: '',
     email: '',
-    birthday: '',
     city: '',
     interview_language: '',
     mailing_language: '',
@@ -97,10 +96,6 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
               <div>
                 <label style={labelStyle}>{labels['email_label']}</label>
                 <input style={inputStyle} type="email" placeholder={labels['email_placeholder']} value={form.email} onChange={(e) => set('email', e.target.value)} required />
-              </div>
-              <div>
-                <label style={labelStyle}>{labels['birthday']}</label>
-                <input style={inputStyle} type="date" value={form.birthday} onChange={(e) => set('birthday', e.target.value)} />
               </div>
               <div>
                 <label style={labelStyle}>{labels['city']}</label>
@@ -215,16 +210,6 @@ export default function RegistrationSection({ labels, sectionHeader, sectionCont
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
                 required
-              />
-            </div>
-
-            <div>
-              <label style={labelStyle}>{labels['birthday']}</label>
-              <input
-                style={inputStyle}
-                type="date"
-                value={form.birthday}
-                onChange={(e) => set('birthday', e.target.value)}
               />
             </div>
 
