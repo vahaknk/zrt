@@ -1,0 +1,72 @@
+---
+import MinorRegistrationForm from '../components/MinorRegistrationForm';
+import { LANGS, FIELD_LABELS, type Lang } from '../lib/minorFormContent';
+
+const requested = Astro.url.searchParams.get('lang');
+const lang: Lang = (LANGS as readonly string[]).includes(requested ?? '') ? (requested as Lang) : 'hyw';
+---
+
+<!doctype html>
+<html lang={lang === 'hyw' ? 'hy' : lang}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light" />
+    <title>{FIELD_LABELS[lang].page_title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Armenian:wght@400;700&display=swap" rel="stylesheet" />
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { color-scheme: light; }
+      body {
+        min-height: 100vh;
+        background: #9683fe;
+        color: #000;
+        font-family: 'Noto Sans', 'Noto Sans Armenian', system-ui, sans-serif;
+      }
+      .header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 2rem 1rem 0;
+      }
+      .header img.logo {
+        height: 56px;
+        width: auto;
+      }
+      .hero {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 1rem 0;
+      }
+      .hero img {
+        width: min(320px, 70vw);
+        height: auto;
+        border-radius: 16px;
+        display: block;
+      }
+      .footer {
+        display: flex;
+        justify-content: center;
+        padding: 2rem 1rem 3rem;
+      }
+      .footer img {
+        height: 44px;
+        width: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <img class="logo" src="/zartsants-logo.svg" alt="Zartsants" />
+    </div>
+    <div class="hero">
+      <img src="/whats_there_pic_2.webp" alt="" />
+    </div>
+    <MinorRegistrationForm initialLang={lang} client:load />
+    <div class="footer">
+      <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+    </div>
+  </body>
+</html>
