@@ -248,6 +248,11 @@ function toggleInArray(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 }
 
+// Renders "...text **bold** text..." with the marked segment wrapped in <strong>.
+function renderBold(text: string) {
+  return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
+}
+
 export default function MinorRegistrationForm({ initialLang }: Props) {
   const [lang, setLang] = useState<Lang>(initialLang);
   const [participantType, setParticipantType] = useState<ParticipantType>('minor');
@@ -468,7 +473,6 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
 
       <div style={sectionStyle}>
         <label style={labelStyle}>{t.availability_title}</label>
-        <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{t.availability_hint}</p>
 
         <div style={{ marginBottom: '0.75rem', maxWidth: 420 }}>
           <label style={labelStyle}>{t.timezone_label}</label>
@@ -478,6 +482,8 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
             ))}
           </select>
         </div>
+
+        <p style={{ color: 'rgba(0,0,0,0.7)', fontSize: '0.85rem', marginBottom: '0.75rem', lineHeight: 1.5 }}>{renderBold(t.availability_hint)}</p>
 
         <div style={{ overflowX: 'auto', background: '#fff', border, borderRadius: 8, padding: '0.75rem' }}>
           <table style={{ borderCollapse: 'collapse', width: '100%', minWidth: 560, tableLayout: 'fixed' }}>
