@@ -1,0 +1,128 @@
+---
+import { requireAdmin } from '../../../lib/platformAuth';
+import { adminGet } from '../../../lib/directusAdmin';
+import { convertRange } from '../../../lib/timezone';
+import { WEEKDAYS, WEEKDAY_SHORT_LABELS, TIMEZONE_GROUPS, type Weekday } from '../../../lib/minorFormContent';
+
+const member = await requireAdmin(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform');
+}
+
+interface Row {
+  id: number;
+  full_name: string;
+  email: string;
+  respondent_name: string | null;
+  participant_type: string | null;
+  availability: Partial<Record<Weekday, string[]>> | null;
+  timezone: string | null;
+}
+
+let rows: Row[] = [];
+try {
+  const res = await adminGet(
+    `/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=id,full_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
+  );
+  rows = ((res.data ?? []) as Row[]).filter((r) => r.availability && Object.keys(r.availability).length > 0);
+} catch (e) {
+  console.error('Failed to load questionnaire responses:', e);
+}
+
+const requestedTz = Astro.url.searchParams.get('tz');
+const targetTz = TIMEZONE_GROUPS.some((g) => g.tz === requestedTz) ? requestedTz! : 'Europe/Paris';
+
+const today = new Date();
+const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz === tz)?.label.en ?? tz ?? '—';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Zartsants Platform — Questionnaire</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        background: #9683fe;
+        font-family: system-ui, sans-serif;
+        color: #000;
+        padding: 2rem;
+      }
+      a.back { color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
+      h1 { font-size: 1.6rem; font-weight: 700; margin: 1rem 0 0.25rem; }
+      p.hint { opacity: 0.7; font-size: 0.9rem; margin-bottom: 1rem; }
+      .tz-picker { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+      .tz-picker select {
+        padding: 0.4rem 0.6rem;
+        border-radius: 8px;
+        border: 1px solid rgba(0,0,0,0.15);
+        background: #fff;
+        color: #000;
+        font-size: 0.9rem;
+        max-width: 360px;
+      }
+      .table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; padding: 1rem; }
+      table { border-collapse: collapse; width: 100%; min-width: 900px; }
+      th, td { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.85rem; vertical-align: top; border-bottom: 1px solid rgba(0,0,0,0.08); }
+      th { font-weight: 700; white-space: nowrap; }
+      td.slots { white-space: nowrap; }
+      .empty { opacity: 0.35; }
+    </style>
+  </head>
+  <body>
+    <a class="back" href="/platform/admin">&larr; Back</a>
+    <h1>Questionnaire availability</h1>
+    <p class="hint">Times converted from each respondent's selected timezone to the timezone below.</p>
+
+    <form method="get" class="tz-picker">
+      <label for="tz">View times in:</label>
+      <select id="tz" name="tz" onchange="this.form.submit()">
+        {TIMEZONE_GROUPS.map((g) => (
+          <option value={g.tz} selected={g.tz === targetTz}>{g.label.en}</option>
+        ))}
+      </select>
+    </form>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Participant</th>
+            <th>Respondent</th>
+            <th>Type</th>
+            <th>Timezone</th>
+            {WEEKDAYS.map((day) => <th>{WEEKDAY_SHORT_LABELS[day].en}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr>
+              <td>{r.full_name}<br /><span style="opacity:0.5">{r.email}</span></td>
+              <td>{r.respondent_name ?? '—'}</td>
+              <td>{r.participant_type ?? '—'}</td>
+              <td>{timezoneLabel(r.timezone)}</td>
+              {WEEKDAYS.map((day) => {
+                const slots = r.availability?.[day] ?? [];
+                return (
+                  <td class="slots">
+                    {slots.length === 0 || !r.timezone ? (
+                      <span class="empty">—</span>
+                    ) : (
+                      slots.map((s) => <div>{convertRange(s, r.timezone!, targetTz, today)}</div>)
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+          {rows.length === 0 && (
+            <tr><td colspan={4 + WEEKDAYS.length} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
+          )}
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>

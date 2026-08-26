@@ -23,6 +23,16 @@ function namesLikelyMatch(a: string, b: string): boolean {
   return na.split(' ').some((w) => w.length > 1 && wordsB.includes(w));
 }
 
+// The birthday field is entered as free text in DD/MM/YYYY — convert to the
+// ISO format Directus's native `date` fields expect. Returns null (silently
+// dropped) if it doesn't parse, rather than sending Directus a bad value.
+function parseDDMMYYYY(s: string): string | null {
+  const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy] = m;
+  return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const body = await request.json();
 
@@ -38,6 +48,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   const availability = body.availability ?? {};
+  const participantBirthdayRaw = String(body.participant_birthday ?? '').trim();
+  const participantBirthdayISO = participantBirthdayRaw ? parseDDMMYYYY(participantBirthdayRaw) : null;
 
   const answers = {
     respondent_name: respondentName,
@@ -54,6 +66,9 @@ export const POST: APIRoute = async ({ request }) => {
     availability_other: body.availability_other || null,
     fee_acknowledged: feeAcknowledged,
     questionnaire_language: body.form_language || null,
+    // Availability slots are in this timezone, not Paris time — needed to make
+    // sense of them later (a future admin tool converts/reports across zones).
+    timezone: body.timezone || null,
   };
 
   // Match against an existing registration_requests row by email, disambiguating by
@@ -83,7 +98,7 @@ export const POST: APIRoute = async ({ request }) => {
     // Fill gaps in existing curated fields, but never clobber data that's already there.
     if (!match.city && body.city) patchBody.city = body.city;
     if (!match.country && body.country) patchBody.country = body.country;
-    if (!match.birthday && body.participant_birthday) patchBody.birthday = body.participant_birthday;
+    if (!match.birthday && participantBirthdayISO) patchBody.birthday = participantBirthdayISO;
 
     try {
       await adminPatch(`/items/registration_requests/${match.id}`, patchBody);
@@ -97,7 +112,7 @@ export const POST: APIRoute = async ({ request }) => {
         respondentName,
         participantName,
         participantType,
-        participantBirthday: body.participant_birthday || null,
+        participantBirthday: participantBirthdayRaw || null,
         currentSchool: answers.current_school,
         city: body.city || null,
         country: body.country || null,
@@ -107,6 +122,7 @@ export const POST: APIRoute = async ({ request }) => {
         feeAcknowledged,
         availability,
         formLanguage: answers.questionnaire_language,
+        timezone: answers.timezone,
       });
     } catch (e) {
       console.log('Notion sync failed for questionnaire (non-blocking):', (e as Error)?.message);
@@ -123,7 +139,7 @@ export const POST: APIRoute = async ({ request }) => {
       respondent_name: respondentName,
       participant_type: participantType,
       participant_name: participantName,
-      participant_birthday: body.participant_birthday || null,
+      participant_birthday: participantBirthdayISO,
       current_school: answers.current_school,
       profession: answers.profession,
       city: body.city || null,
@@ -138,6 +154,7 @@ export const POST: APIRoute = async ({ request }) => {
       availability_other: answers.availability_other,
       fee_acknowledged: feeAcknowledged,
       form_language: answers.questionnaire_language,
+      timezone: answers.timezone,
     });
   } catch (e) {
     console.log('Failed to save unmatched questionnaire lead:', (e as Error)?.message);

@@ -42,6 +42,7 @@ interface Member {
   id: number;
   email: string;
   full_name: string;
+  is_admin: boolean;
   workshop: { id: number; name: string; age_group: string; schedule_note: string | null; zoom_link: string } | null;
   clouds: Array<{
     clouds_id: {
@@ -76,7 +77,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link&limit=1`
     );
@@ -84,4 +85,13 @@ export async function requireMember(request: Request): Promise<Member | null> {
   } catch {
     return null;
   }
+}
+
+// Same session check as requireMember(), plus an is_admin gate — used by
+// /platform/admin/* pages. Returns null for both "not logged in" and
+// "logged in but not admin", so callers can redirect to /platform either
+// way (it will itself bounce to /platform/login if there's no session).
+export async function requireAdmin(request: Request): Promise<Member | null> {
+  const member = await requireMember(request);
+  return member?.is_admin ? member : null;
 }

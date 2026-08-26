@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   type Lang,
   type Weekday,
@@ -8,6 +8,9 @@ import {
   GRID_TIMES,
   DAY_SLOTS,
   WEEKDAY_SHORT_LABELS,
+  CALENDAR_WEEKDAYS,
+  MONTH_LABELS,
+  TIMEZONE_GROUPS,
   PROFICIENCY_OPTIONS,
   INTEREST_OPTIONS,
   RELATIONSHIP_OPTIONS,
@@ -58,44 +61,145 @@ const optionRowStyle: React.CSSProperties = {
   fontSize: '0.95rem',
 };
 
-const FALLBACK_TIMEZONES = [
-  'Europe/Paris', 'Europe/London', 'Europe/Istanbul', 'Europe/Athens', 'Asia/Yerevan',
-  'Europe/Berlin', 'Europe/Moscow', 'America/New_York', 'America/Los_Angeles',
-  'America/Sao_Paulo', 'Asia/Dubai', 'Asia/Beirut', 'Australia/Sydney',
-];
 
-function getTimezones(): string[] {
-  try {
-    // @ts-ignore — not in all TS lib targets yet, but widely supported at runtime
-    const list = Intl.supportedValuesOf?.('timeZone');
-    if (Array.isArray(list) && list.length > 0) return list;
-  } catch {}
-  return FALLBACK_TIMEZONES;
+function parseDMY(v: string): { d: number; m: number; y: number } | null {
+  const match = v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  return { d: Number(match[1]), m: Number(match[2]) - 1, y: Number(match[3]) };
 }
 
-// Grid times are Paris wall-clock times (e.g. "16:00"). To show them in another
-// timezone we treat the time as if it were on `referenceDate`, figure out Paris's
-// UTC offset for that date (handles DST), then reformat the resulting instant in
-// the target zone. Reference date only affects which DST offset applies, so using
-// "today" is accurate except right at a DST transition boundary.
-function parisOffsetMinutes(instant: Date): number {
-  const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Paris', timeZoneName: 'shortOffset' }).formatToParts(instant);
-  const tzName = parts.find((p) => p.type === 'timeZoneName')?.value ?? 'GMT+1';
-  const match = tzName.match(/GMT([+-]\d+)/);
-  return match ? parseInt(match[1], 10) * 60 : 60;
+function formatDMY(d: number, m: number, y: number): string {
+  return `${String(d).padStart(2, '0')}/${String(m + 1).padStart(2, '0')}/${y}`;
 }
 
-function convertParisTime(hhmm: string, targetTz: string, referenceDate: Date): string {
-  const [h, m] = hhmm.split(':').map(Number);
-  const naiveUTC = Date.UTC(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate(), h, m);
-  const offset = parisOffsetMinutes(new Date(naiveUTC));
-  const actualUTC = new Date(naiveUTC - offset * 60000);
-  return actualUTC.toLocaleTimeString('en-GB', { timeZone: targetTz, hour: '2-digit', minute: '2-digit', hour12: false });
+function daysInMonth(year: number, month: number): number {
+  return new Date(year, month + 1, 0).getDate();
 }
 
-function convertParisRange(range: string, targetTz: string, referenceDate: Date): string {
-  const [start, end] = range.split(' - ');
-  return `${convertParisTime(start, targetTz, referenceDate)} - ${convertParisTime(end, targetTz, referenceDate)}`;
+// 0=Monday..6=Sunday, matching CALENDAR_WEEKDAYS' order.
+function firstWeekdayMonFirst(year: number, month: number): number {
+  return (new Date(year, month, 1).getDay() + 6) % 7;
+}
+
+interface BirthdayPickerProps {
+  value: string; // "DD/MM/YYYY" or ''
+  onChange: (v: string) => void;
+  lang: Lang;
+  placeholder: string;
+}
+
+function BirthdayPicker({ value, onChange, lang, placeholder }: BirthdayPickerProps) {
+  const [open, setOpen] = useState(false);
+  const parsed = parseDMY(value);
+  const [viewYear, setViewYear] = useState(() => parsed?.y ?? new Date().getFullYear() - 10);
+  const [viewMonth, setViewMonth] = useState(() => parsed?.m ?? 0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
+
+  const openPicker = () => {
+    const p = parseDMY(value);
+    if (p) {
+      setViewYear(p.y);
+      setViewMonth(p.m);
+    }
+    setOpen(true);
+  };
+
+  const changeMonth = (delta: number) => {
+    let m = viewMonth + delta;
+    let y = viewYear;
+    if (m < 0) { m = 11; y -= 1; }
+    if (m > 11) { m = 0; y += 1; }
+    setViewMonth(m);
+    setViewYear(y);
+  };
+
+  const numDays = daysInMonth(viewYear, viewMonth);
+  const startOffset = firstWeekdayMonFirst(viewYear, viewMonth);
+  const cells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: numDays }, (_, i) => i + 1),
+  ];
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <input
+          style={{ ...inputStyle, flex: 1 }}
+          type="text"
+          inputMode="numeric"
+          placeholder={placeholder}
+          pattern="\d{1,2}/\d{1,2}/\d{4}"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button
+          type="button"
+          onClick={() => (open ? setOpen(false) : openPicker())}
+          aria-label="calendar"
+          style={{ width: 44, border, borderRadius: 8, background: '#fff', cursor: 'pointer', fontSize: '1.1rem' }}
+        >
+          📅
+        </button>
+      </div>
+      {open && (
+        <div
+          style={{
+            position: 'absolute', zIndex: 10, top: '110%', left: 0,
+            background: '#fff', border, borderRadius: 8, padding: '0.75rem',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)', width: 260,
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <button type="button" onClick={() => changeMonth(-1)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>‹</button>
+            <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#000' }}>{MONTH_LABELS[lang][viewMonth]} {viewYear}</div>
+            <button type="button" onClick={() => changeMonth(1)} style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>›</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: '0.25rem' }}>
+            {CALENDAR_WEEKDAYS[lang].map((d, i) => (
+              <div key={i} style={{ textAlign: 'center', fontSize: '0.7rem', color: 'rgba(0,0,0,0.5)' }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+            {cells.map((day, i) => {
+              const selected = day !== null && parsed && parsed.d === day && parsed.m === viewMonth && parsed.y === viewYear;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={day === null}
+                  onClick={() => {
+                    if (day) {
+                      onChange(formatDMY(day, viewMonth, viewYear));
+                      setOpen(false);
+                    }
+                  }}
+                  style={{
+                    height: 28,
+                    border: 'none',
+                    borderRadius: 6,
+                    background: selected ? '#000' : 'transparent',
+                    color: day === null ? 'transparent' : selected ? '#fff' : '#000',
+                    cursor: day ? 'pointer' : 'default',
+                    fontSize: '0.8rem',
+                  }}
+                >
+                  {day ?? ''}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 type ProficiencyValue = string;
@@ -151,13 +255,11 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'no_match'>('idle');
   const [timezone, setTimezone] = useState('Europe/Paris');
   const t = FIELD_LABELS[lang];
-  const timezones = useMemo(() => getTimezones(), []);
-  const today = useMemo(() => new Date(), []);
 
   useEffect(() => {
     try {
       const detected = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      if (detected) setTimezone(detected);
+      if (detected && TIMEZONE_GROUPS.some((g) => g.tz === detected)) setTimezone(detected);
     } catch {}
   }, []);
 
@@ -184,6 +286,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
           participant_name: participantType === 'adult' ? form.respondent_name : form.participant_name,
           participant_type: participantType,
           form_language: lang,
+          timezone,
         }),
       });
       if (res.ok) {
@@ -254,6 +357,30 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
         <input style={inputStyle} type="text" value={form.respondent_name} onChange={(e) => set('respondent_name', e.target.value)} required />
       </div>
 
+      <div style={sectionStyle}>
+        <label style={labelStyle}>{t.relationship}</label>
+        {RELATIONSHIP_OPTIONS.map((opt) => (
+          <label key={opt.value} style={optionRowStyle}>
+            <input
+              type="radio"
+              name="relationship"
+              checked={form.relationship === opt.value}
+              onChange={() => set('relationship', opt.value)}
+            />
+            {opt.label[lang]}
+          </label>
+        ))}
+        {form.relationship === 'other' && (
+          <input
+            style={{ ...inputStyle, marginTop: '0.5rem' }}
+            type="text"
+            placeholder={t.other_specify}
+            value={form.relationship_other}
+            onChange={(e) => set('relationship_other', e.target.value)}
+          />
+        )}
+      </div>
+
       {participantType === 'minor' && (
         <div style={sectionStyle}>
           <label style={labelStyle}>{t.participant_name}</label>
@@ -263,7 +390,12 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
 
       <div style={sectionStyle}>
         <label style={labelStyle}>{t.participant_birthday}</label>
-        <input style={inputStyle} type="date" value={form.participant_birthday} onChange={(e) => set('participant_birthday', e.target.value)} />
+        <BirthdayPicker
+          value={form.participant_birthday}
+          onChange={(v) => set('participant_birthday', v)}
+          lang={lang}
+          placeholder={t.birthday_format}
+        />
       </div>
 
       {participantType === 'minor' ? (
@@ -335,38 +467,14 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>{t.relationship}</label>
-        {RELATIONSHIP_OPTIONS.map((opt) => (
-          <label key={opt.value} style={optionRowStyle}>
-            <input
-              type="radio"
-              name="relationship"
-              checked={form.relationship === opt.value}
-              onChange={() => set('relationship', opt.value)}
-            />
-            {opt.label[lang]}
-          </label>
-        ))}
-        {form.relationship === 'other' && (
-          <input
-            style={{ ...inputStyle, marginTop: '0.5rem' }}
-            type="text"
-            placeholder={t.other_specify}
-            value={form.relationship_other}
-            onChange={(e) => set('relationship_other', e.target.value)}
-          />
-        )}
-      </div>
-
-      <div style={sectionStyle}>
         <label style={labelStyle}>{t.availability_title}</label>
         <p style={{ color: 'rgba(0,0,0,0.6)', fontSize: '0.85rem', marginBottom: '0.75rem' }}>{t.availability_hint}</p>
 
-        <div style={{ marginBottom: '0.75rem', maxWidth: 320 }}>
+        <div style={{ marginBottom: '0.75rem', maxWidth: 420 }}>
           <label style={labelStyle}>{t.timezone_label}</label>
           <select style={inputStyle} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
-            {timezones.map((tz) => (
-              <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+            {TIMEZONE_GROUPS.map((g) => (
+              <option key={g.tz} value={g.tz}>{g.label[lang]}</option>
             ))}
           </select>
         </div>
@@ -387,7 +495,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
               {GRID_TIMES.map((time) => (
                 <tr key={time}>
                   <td style={{ padding: '0.2rem 0.5rem', color: 'rgba(0,0,0,0.5)', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                    {timezone === 'Europe/Paris' ? time : convertParisRange(time, timezone, today)}
+                    {time}
                   </td>
                   {WEEKDAYS.map((day) => {
                     const valid = DAY_SLOTS[day].includes(time);

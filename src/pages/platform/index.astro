@@ -101,6 +101,7 @@ const cloudNames = member.clouds.map((c) => c.clouds_id.name).join(', ');
       )}
       <a class="btn" href="/platform/calendar">Calendar</a>
       <a class="btn" href="/platform/library">Library</a>
+      {member.is_admin && <a class="btn" href="/platform/admin">Admin</a>}
     </div>
     <a class="logout" href="/api/platform/logout">Log out</a>
   </body>

@@ -68,6 +68,7 @@ const MINOR_FORM_PROPS = {
   country: "Country",
   participant_type: "Participant Type",
   form_language: "Form Language",
+  timezone: "Timezone",
   proficiency: "Մասնակիցին լեզուական պատրաստութիւնը՝\nMaîtrise de la langue par le/la participant.e :\nParticipant's language proficiency:",
   interests: "Մասնակիցին հետաքրքրութիւնները՝\nCentres d'intérêt du/de la participant.e :\nParticipant's interests:",
   relationship: "Ձեր կապը մասնակիցին հետ՝\nVotre lien avec le/la participant.e :\nYour relationship to the participant:",
@@ -86,6 +87,29 @@ const FORM_LANGUAGE_LABELS: Record<string, string> = {
   en: 'English',
 };
 
+// English group labels for the questionnaire's timezone selector, with commas
+// replaced by "/" — Notion select options can't contain commas.
+const TIMEZONE_LABELS: Record<string, string> = {
+  'Europe/London': 'United Kingdom / Portugal',
+  'Europe/Paris': 'France / Germany / Belgium / Switzerland / Sweden / Spain / Norway / Poland / Netherlands',
+  'Europe/Athens': 'Greece / Bulgaria / Lebanon / Syria / Romania / Egypt',
+  'Europe/Istanbul': 'Turkey / Iraq / Jordan',
+  'Asia/Tehran': 'Iran',
+  'Asia/Yerevan': 'Armenia / Georgia / United Arab Emirates',
+  'Asia/Jerusalem': 'Israel',
+  'Australia/Sydney': 'Australia – East (Sydney / Melbourne)',
+  'America/Argentina/Buenos_Aires': 'Argentina / Uruguay',
+  'America/New_York': 'USA – East Coast (New York / Massachusetts / Washington D.C. / New Jersey / Pennsylvania / Florida / Boston / Watertown / Michigan / Detroit)',
+  'America/Toronto': 'Canada – East (Quebec / Ontario / Montreal / Toronto)',
+  'America/Chicago': 'USA – Central (Illinois / Texas / Chicago)',
+  'America/Denver': 'USA – Mountain (Arizona / Colorado / Las Vegas)',
+  'America/Los_Angeles': 'USA – West Coast (California / San Francisco / Nevada)',
+  'America/Vancouver': 'Canada – West (British Columbia / Vancouver)',
+  'America/Campo_Grande': 'Brazil - Dourados',
+  'America/Sao_Paulo': 'Brazil - Rio de Janeiro',
+  'America/Caracas': 'Venezuela',
+};
+
 interface MinorRegistrationSyncParams {
   respondentName: string;
   participantName: string;
@@ -100,6 +124,7 @@ interface MinorRegistrationSyncParams {
   feeAcknowledged: boolean;
   availability: Partial<Record<Weekday, string[]>>; // day -> exact slot strings (already match Notion option names)
   formLanguage: string | null; // hyw/fr/en
+  timezone: string | null; // IANA zone, e.g. "Asia/Yerevan" — see TIMEZONE_LABELS
 }
 
 function richText(content: string) {
@@ -120,6 +145,9 @@ export async function syncMinorRegistrationToNotion(params: MinorRegistrationSyn
   if (params.country) properties[MINOR_FORM_PROPS.country] = richText(params.country);
   if (params.formLanguage && FORM_LANGUAGE_LABELS[params.formLanguage]) {
     properties[MINOR_FORM_PROPS.form_language] = { select: { name: FORM_LANGUAGE_LABELS[params.formLanguage] } };
+  }
+  if (params.timezone && TIMEZONE_LABELS[params.timezone]) {
+    properties[MINOR_FORM_PROPS.timezone] = { select: { name: TIMEZONE_LABELS[params.timezone] } };
   }
 
   if (params.languageProficiency.length > 0) {

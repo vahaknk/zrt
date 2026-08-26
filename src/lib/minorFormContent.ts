@@ -14,25 +14,133 @@ export type Weekday = (typeof WEEKDAYS)[number];
 
 export type ParticipantType = 'minor' | 'adult';
 
-// Exact time-slot strings as they appear as Notion multi_select option names
-// for each day (Wed and Sat have different ranges than Mon/Tue/Thu/Fri).
-export const DAY_SLOTS: Record<Weekday, string[]> = {
-  monday: ['16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00'],
-  tuesday: ['16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00'],
-  wednesday: [
-    '11:00 - 12:00', '12:00 - 13:00', '13:00 - 14:00', '14:00 - 15:00', '15:00 - 16:00',
-    '16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00',
-  ],
-  thursday: ['16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00'],
-  friday: ['16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00'],
-  saturday: ['11:00 - 12:00', '12:00 - 13:00', '15:00 - 16:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00'],
-};
+// Curated timezone groups for the questionnaire's timezone selector, covering
+// the diaspora communities this form is actually used by. Each entry's `tz`
+// is a representative IANA zone for the whole group (the countries listed
+// share the same offset/DST rules), and `label` is the exact trilingual
+// group text as given, not machine-translated.
+export interface TimezoneGroup {
+  tz: string;
+  label: Record<Lang, string>;
+}
 
-// Union of all slot start times across days, for building the grid's rows.
-export const GRID_TIMES = [
-  '11:00 - 12:00', '12:00 - 13:00', '13:00 - 14:00', '14:00 - 15:00', '15:00 - 16:00',
-  '16:00 - 17:00', '17:00 - 18:00', '18:00 - 19:00', '19:00 - 20:00', '20:00 - 21:00', '21:00 - 22:00',
+export const TIMEZONE_GROUPS: TimezoneGroup[] = [
+  { tz: 'Europe/London', label: {
+    hyw: 'Միացեալ Թագաւորութիւն, Փորթուկալ',
+    fr: 'Royaume-Uni, Portugal',
+    en: 'United Kingdom, Portugal',
+  } },
+  { tz: 'Europe/Paris', label: {
+    hyw: 'Ֆրանսա, Գերմանիա, Պելճիքա, Զուիցերիա, Շուէտ, Սպանիա, Նորվեկիա, Լեհաստան, Հոլանտա',
+    fr: 'France, Allemagne, Belgique, Suisse, Suède, Espagne, Norvège, Pologne, Pays-Bas',
+    en: 'France, Germany, Belgium, Switzerland, Sweden, Spain, Norway, Poland, Netherlands',
+  } },
+  { tz: 'Europe/Athens', label: {
+    hyw: 'Յունաստան, Պուլկարիա, Լիբանան, Սուրիա, Ռումանիա, Եգիպտոս',
+    fr: 'Grèce, Bulgarie, Liban, Syrie, Roumanie, Égypte',
+    en: 'Greece, Bulgaria, Lebanon, Syria, Romania, Egypt',
+  } },
+  { tz: 'Europe/Istanbul', label: {
+    hyw: 'Թուրքիա, Իրաք, Յորդանան',
+    fr: 'Turquie, Irak, Jordanie',
+    en: 'Turkey, Iraq, Jordan',
+  } },
+  { tz: 'Asia/Tehran', label: {
+    hyw: 'Պարսկաստան',
+    fr: 'Iran',
+    en: 'Iran',
+  } },
+  { tz: 'Asia/Yerevan', label: {
+    hyw: 'Հայաստան, Վրաստան, Արաբական Միացեալ Էմիրութիւններ',
+    fr: 'Arménie, Géorgie, Émirats arabes unis',
+    en: 'Armenia, Georgia, United Arab Emirates',
+  } },
+  { tz: 'Asia/Jerusalem', label: {
+    hyw: 'Իսրայէլ',
+    fr: 'Israël',
+    en: 'Israel',
+  } },
+  { tz: 'Australia/Sydney', label: {
+    hyw: 'Աւստրալիա – Արեւելք (Սիտնի, Մելպուրն)',
+    fr: 'Australie – Est (Sydney, Melbourne)',
+    en: 'Australia – East (Sydney, Melbourne)',
+  } },
+  { tz: 'America/Argentina/Buenos_Aires', label: {
+    hyw: 'Արժանթին, Ուրուկուայ',
+    fr: 'Argentine, Uruguay',
+    en: 'Argentina, Uruguay',
+  } },
+  { tz: 'America/New_York', label: {
+    hyw: 'ԱՄՆ – Արեւելեան ափ (Նիւ Եորք, Մասաչուսէթս, Ուաշինկթըն Տի Սի, Նիւ Ճըրզի, Փենսիլվանիա, Ֆլորիտա, Պոսթոն, Ուոթըրթաուն, Միշիկըն, Տիթրոյթ)',
+    fr: 'États-Unis – Côte Est (New York, Massachusetts, Washington D.C., New Jersey, Pennsylvanie, Floride, Boston, Watertown, Michigan, Détroit)',
+    en: 'USA – East Coast (New York, Massachusetts, Washington D.C., New Jersey, Pennsylvania, Florida, Boston, Watertown, Michigan, Detroit)',
+  } },
+  { tz: 'America/Toronto', label: {
+    hyw: 'Քանատա – Արեւելք (Քեպէք, Օնթարիօ, Մոնթրէալ, Թորոնթօ)',
+    fr: 'Canada – Est (Québec, Ontario, Montréal, Toronto)',
+    en: 'Canada – East (Quebec, Ontario, Montreal, Toronto)',
+  } },
+  { tz: 'America/Chicago', label: {
+    hyw: 'ԱՄՆ – Կեդրոնական մաս (Իլինոյ, Թեքսաս, Շիքակօ)',
+    fr: 'États-Unis d’Amérique – Centre (Illinois, Texas, Chicago)',
+    en: 'USA – Central (Illinois, Texas, Chicago)',
+  } },
+  { tz: 'America/Denver', label: {
+    hyw: 'ԱՄՆ – Լեռնային մաս (Արիզոնա, Քոլորատօ, Լաս Վեկաս)',
+    fr: 'États-Unis d’Amérique – Montagnes (Arizona, Colorado, Las Vegas)',
+    en: 'USA – Mountain (Arizona, Colorado, Las Vegas)',
+  } },
+  { tz: 'America/Los_Angeles', label: {
+    hyw: 'ԱՄՆ – Արեւմտեան ափ (Քալիֆորնիա, Սան Ֆրանսիսքօ, Նեւատա)',
+    fr: 'États-Unis d’Amérique – Côte Ouest (Californie, San Francisco, Nevada)',
+    en: 'USA – West Coast (California, San Francisco, Nevada)',
+  } },
+  { tz: 'America/Vancouver', label: {
+    hyw: 'Քանատա – Արեւմուտք (Պրիթիշ Քոլումպիա, Վանգուվըր)',
+    fr: 'Canada – Ouest (Colombie-Britannique, Vancouver)',
+    en: 'Canada – West (British Columbia, Vancouver)',
+  } },
+  { tz: 'America/Campo_Grande', label: {
+    hyw: 'Պրազիլ - Տուրատոս',
+    fr: 'Brésil - Dourados',
+    en: 'Brazil - Dourados',
+  } },
+  { tz: 'America/Sao_Paulo', label: {
+    hyw: 'Պրազիլ - Ռիօ տը Ժաներօ',
+    fr: 'Brésil - Rio de Janeiro',
+    en: 'Brazil - Rio de Janeiro',
+  } },
+  { tz: 'America/Caracas', label: {
+    hyw: 'Վենեզուելա',
+    fr: 'Venezuela',
+    en: 'Venezuela',
+  } },
 ];
+
+// The grid always shows 10:00-22:00, one-hour slots, the same on every day —
+// these are NOT Paris time. They're whatever timezone the respondent has
+// picked in the timezone selector (stored alongside the answers), so the
+// picker always looks like a plain 10am-10pm day regardless of where the
+// respondent is. Converting these to Paris time (or any reporting basis) is
+// left to a future admin-side tool that reads the stored timezone + slots.
+function hourSlots(startHour: number, endHour: number): string[] {
+  const slots: string[] = [];
+  for (let h = startHour; h < endHour; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00 - ${String(h + 1).padStart(2, '0')}:00`);
+  }
+  return slots;
+}
+
+export const GRID_TIMES = hourSlots(10, 22);
+
+export const DAY_SLOTS: Record<Weekday, string[]> = {
+  monday: GRID_TIMES,
+  tuesday: GRID_TIMES,
+  wednesday: GRID_TIMES,
+  thursday: GRID_TIMES,
+  friday: GRID_TIMES,
+  saturday: GRID_TIMES,
+};
 
 export const WEEKDAY_LABELS: Record<Weekday, Record<Lang, string>> = {
   monday: { hyw: 'Երկուշաբթի', fr: 'Lundi', en: 'Monday' },
@@ -51,6 +159,19 @@ export const WEEKDAY_SHORT_LABELS: Record<Weekday, Record<Lang, string>> = {
   thursday: { hyw: 'Հնգ.', fr: 'Jeu.', en: 'Thu.' },
   friday: { hyw: 'Ուրբ.', fr: 'Ven.', en: 'Fri.' },
   saturday: { hyw: 'Շաբ.', fr: 'Sam.', en: 'Sat.' },
+};
+
+// For the custom birthday calendar picker (needs all 7 days, Monday-first).
+export const CALENDAR_WEEKDAYS: Record<Lang, string[]> = {
+  hyw: ['Երկ', 'Երք', 'Չրք', 'Հնգ', 'Ուրբ', 'Շաբ', 'Կիր'],
+  fr: ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'],
+  en: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
+};
+
+export const MONTH_LABELS: Record<Lang, string[]> = {
+  hyw: ['Յունուար', 'Փետրուար', 'Մարտ', 'Ապրիլ', 'Մայիս', 'Յունիս', 'Յուլիս', 'Օգոստոս', 'Սեպտեմբեր', 'Հոկտեմբեր', 'Նոյեմբեր', 'Դեկտեմբեր'],
+  fr: ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'],
+  en: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
 };
 
 export interface FormOption {
@@ -122,14 +243,15 @@ export const RELATIONSHIP_OPTIONS: FormOption[] = [
 
 export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
   hyw: {
-    page_title: 'Մասնակիցի հարցարան',
-    participant_type_label: 'Մասնակիցն է՝',
-    type_minor: 'Անչափահաս',
-    type_adult: 'Չափահաս',
+    page_title: 'Ձեր մասնակցութեան մասին',
+    participant_type_label: 'Մասնակիցը՝',
+    type_minor: 'Անչափահաս է',
+    type_adult: 'Չափահաս է',
     email: 'Ձեր իմակը',
     respondent_name: 'Ձեր անունը եւ մականունը',
     participant_name: 'Մասնակիցին անունը եւ մականունը',
     participant_birthday: 'Մասնակիցին ծննդեան թուականը',
+    birthday_format: 'ՕՕ/ԱԱ/ՏՏՏՏ',
     current_school: 'Յաճախած դպրոցը եւ դասարանը',
     profession: 'Ձեր ասպարէզը',
     city: 'Քաղաք',
@@ -150,7 +272,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     select_placeholder: '—',
   },
   fr: {
-    page_title: 'Questionnaire du participant',
+    page_title: 'Au sujet de votre participation',
     participant_type_label: 'Le/la participant.e est :',
     type_minor: 'Mineur.e',
     type_adult: 'Adulte',
@@ -158,6 +280,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     respondent_name: 'Votre prénom et votre nom',
     participant_name: 'Prénom et nom du/de la participant.e',
     participant_birthday: 'Date de naissance du/de la participant.e',
+    birthday_format: 'JJ/MM/AAAA',
     current_school: 'École actuelle et niveau',
     profession: 'Votre profession',
     city: 'Ville',
@@ -178,7 +301,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     select_placeholder: '—',
   },
   en: {
-    page_title: 'Participant Questionnaire',
+    page_title: 'About your participation',
     participant_type_label: 'The participant is a:',
     type_minor: 'Minor',
     type_adult: 'Adult',
@@ -186,6 +309,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     respondent_name: 'Your name and surname',
     participant_name: "The participant's name and surname",
     participant_birthday: "The participant's birthday",
+    birthday_format: 'DD/MM/YYYY',
     current_school: 'Current school and grade/class',
     profession: 'Your profession',
     city: 'City',
