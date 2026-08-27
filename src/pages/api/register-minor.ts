@@ -93,6 +93,25 @@ export const POST: APIRoute = async ({ request }) => {
     console.log('Lookup failed for questionnaire match:', (e as Error)?.message);
   }
 
+  // Every submission syncs to Notion regardless of match status.
+  const syncToNotion = () =>
+    syncMinorRegistrationToNotion({
+      respondentName,
+      participantName,
+      participantType,
+      participantBirthday: participantBirthdayRaw || null,
+      currentSchool: answers.current_school,
+      city: body.city || null,
+      country: body.country || null,
+      languageProficiency: answers.language_proficiency,
+      interests: answers.interests,
+      relationship: answers.relationship,
+      feeAcknowledged,
+      availability,
+      formLanguage: answers.questionnaire_language,
+      timezone: answers.timezone,
+    });
+
   if (match) {
     const patchBody: Record<string, unknown> = { ...answers };
     // Fill gaps in existing curated fields, but never clobber data that's already there.
@@ -106,60 +125,42 @@ export const POST: APIRoute = async ({ request }) => {
       console.log('Failed to patch matched registration:', (e as Error)?.message);
       return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
     }
-
+  } else {
+    // No matching registration found — don't block the submission on a match;
+    // just capture it as a lead so the data isn't lost.
     try {
-      await syncMinorRegistrationToNotion({
-        respondentName,
-        participantName,
-        participantType,
-        participantBirthday: participantBirthdayRaw || null,
-        currentSchool: answers.current_school,
+      await adminPost('/items/unmatched_questionnaire_leads', {
+        email,
+        respondent_name: respondentName,
+        participant_type: participantType,
+        participant_name: participantName,
+        participant_birthday: participantBirthdayISO,
+        current_school: answers.current_school,
+        profession: answers.profession,
         city: body.city || null,
         country: body.country || null,
-        languageProficiency: answers.language_proficiency,
+        language_proficiency: answers.language_proficiency,
+        language_proficiency_other: answers.language_proficiency_other,
         interests: answers.interests,
+        interests_other: answers.interests_other,
         relationship: answers.relationship,
-        feeAcknowledged,
+        relationship_other: answers.relationship_other,
         availability,
-        formLanguage: answers.questionnaire_language,
+        availability_other: answers.availability_other,
+        fee_acknowledged: feeAcknowledged,
+        form_language: answers.questionnaire_language,
         timezone: answers.timezone,
       });
     } catch (e) {
-      console.log('Notion sync failed for questionnaire (non-blocking):', (e as Error)?.message);
+      console.log('Failed to save unmatched questionnaire lead:', (e as Error)?.message);
+      return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
     }
-
-    return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 
-  // No matching registration found — for now, don't block the submission on a
-  // match (removed that requirement so everyone can submit); just capture it
-  // as a lead so the data isn't lost.
   try {
-    await adminPost('/items/unmatched_questionnaire_leads', {
-      email,
-      respondent_name: respondentName,
-      participant_type: participantType,
-      participant_name: participantName,
-      participant_birthday: participantBirthdayISO,
-      current_school: answers.current_school,
-      profession: answers.profession,
-      city: body.city || null,
-      country: body.country || null,
-      language_proficiency: answers.language_proficiency,
-      language_proficiency_other: answers.language_proficiency_other,
-      interests: answers.interests,
-      interests_other: answers.interests_other,
-      relationship: answers.relationship,
-      relationship_other: answers.relationship_other,
-      availability,
-      availability_other: answers.availability_other,
-      fee_acknowledged: feeAcknowledged,
-      form_language: answers.questionnaire_language,
-      timezone: answers.timezone,
-    });
+    await syncToNotion();
   } catch (e) {
-    console.log('Failed to save unmatched questionnaire lead:', (e as Error)?.message);
-    return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
+    console.log('Notion sync failed for questionnaire (non-blocking):', (e as Error)?.message);
   }
 
   return new Response(JSON.stringify({ success: true }), { status: 200 });

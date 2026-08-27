@@ -17,14 +17,31 @@ interface Row {
   participant_type: string | null;
   availability: Partial<Record<Weekday, string[]>> | null;
   timezone: string | null;
+  matched: boolean;
 }
 
 let rows: Row[] = [];
 try {
-  const res = await adminGet(
-    `/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=id,full_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
-  );
-  rows = ((res.data ?? []) as Row[]).filter((r) => r.availability && Object.keys(r.availability).length > 0);
+  const [registeredRes, leadsRes] = await Promise.all([
+    adminGet(
+      `/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=id,full_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
+    ),
+    adminGet(
+      `/items/unmatched_questionnaire_leads?fields=id,participant_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
+    ),
+  ]);
+  const registered = ((registeredRes.data ?? []) as Row[]).map((r) => ({ ...r, matched: true }));
+  const leads = ((leadsRes.data ?? []) as any[]).map((r) => ({
+    id: r.id,
+    full_name: r.participant_name,
+    email: r.email,
+    respondent_name: r.respondent_name,
+    participant_type: r.participant_type,
+    availability: r.availability,
+    timezone: r.timezone,
+    matched: false,
+  }));
+  rows = [...registered, ...leads].filter((r) => r.availability && Object.keys(r.availability).length > 0);
 } catch (e) {
   console.error('Failed to load questionnaire responses:', e);
 }
@@ -93,6 +110,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
             <th>Participant</th>
             <th>Respondent</th>
             <th>Type</th>
+            <th>Status</th>
             <th>Timezone</th>
             {WEEKDAYS.map((day) => <th>{WEEKDAY_SHORT_LABELS[day].en}</th>)}
           </tr>
@@ -103,6 +121,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
               <td>{r.full_name}<br /><span style="opacity:0.5">{r.email}</span></td>
               <td>{r.respondent_name ?? '—'}</td>
               <td>{r.participant_type ?? '—'}</td>
+              <td>{r.matched ? 'Registered' : <span title="No matching registration found for this email">Unmatched lead</span>}</td>
               <td>{timezoneLabel(r.timezone)}</td>
               {WEEKDAYS.map((day) => {
                 const slots = r.availability?.[day] ?? [];
@@ -119,7 +138,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
             </tr>
           ))}
           {rows.length === 0 && (
-            <tr><td colspan={4 + WEEKDAYS.length} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
+            <tr><td colspan={5 + WEEKDAYS.length} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
           )}
         </tbody>
       </table>

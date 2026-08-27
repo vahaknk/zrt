@@ -297,7 +297,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     timezone_label: 'Ձեր ժամային գօտին',
     availability_other: 'Այլ նշում ձեր օրերու/ժամերու մասին (եթէ կայ)',
     other_specify: 'Խնդրենք նշեցէք',
-    submit: 'Ուղարկել',
+    submit: 'Ղրկել',
     success: 'Շնորհակալութիւն։',
     error: 'Սխալ մը պատահեցաւ։ Խնդրենք կրկին փորձեցէք։',
     no_match_error: 'Ձեր տուեալներով գրանցում մը չգտանք։ Խնդրենք ստուգել ձեր իմակը, կամ նախ գրանցուիլ։',
