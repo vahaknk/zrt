@@ -245,8 +245,8 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
   hyw: {
     page_title: 'Ձեր մասնակցութեան մասին',
     participant_type_label: 'Մասնակիցը՝',
-    type_minor: 'Անչափահաս է',
-    type_adult: 'Չափահաս է',
+    type_minor: 'անչափահաս է',
+    type_adult: 'չափահաս է',
     email: 'Ձեր իմակը',
     respondent_name: 'Ձեր անունը եւ մականունը',
     participant_name: 'Մասնակիցին անունը եւ մականունը',
