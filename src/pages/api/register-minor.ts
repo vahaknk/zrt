@@ -131,8 +131,9 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ success: true }), { status: 200 });
   }
 
-  // No matching registration found — capture the submission as a lead rather than
-  // losing it, but tell the user so they can double-check their email/name.
+  // No matching registration found — for now, don't block the submission on a
+  // match (removed that requirement so everyone can submit); just capture it
+  // as a lead so the data isn't lost.
   try {
     await adminPost('/items/unmatched_questionnaire_leads', {
       email,
@@ -158,7 +159,8 @@ export const POST: APIRoute = async ({ request }) => {
     });
   } catch (e) {
     console.log('Failed to save unmatched questionnaire lead:', (e as Error)?.message);
+    return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
   }
 
-  return new Response(JSON.stringify({ error: 'no_match' }), { status: 404 });
+  return new Response(JSON.stringify({ success: true }), { status: 200 });
 };

@@ -12,6 +12,7 @@ import {
   MONTH_LABELS,
   TIMEZONE_GROUPS,
   PROFICIENCY_OPTIONS,
+  ADULT_PROFICIENCY_OPTIONS,
   INTEREST_OPTIONS,
   RELATIONSHIP_OPTIONS,
   FIELD_LABELS,
@@ -257,7 +258,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
   const [lang, setLang] = useState<Lang>(initialLang);
   const [participantType, setParticipantType] = useState<ParticipantType>('minor');
   const [form, setForm] = useState<FormState>(initialState);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'no_match'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   const [timezone, setTimezone] = useState('Europe/Paris');
   const t = FIELD_LABELS[lang];
 
@@ -294,12 +295,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
           timezone,
         }),
       });
-      if (res.ok) {
-        setStatus('success');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setStatus(data?.error === 'no_match' ? 'no_match' : 'error');
-      }
+      setStatus(res.ok ? 'success' : 'error');
     } catch {
       setStatus('error');
     }
@@ -362,29 +358,31 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
         <input style={inputStyle} type="text" value={form.respondent_name} onChange={(e) => set('respondent_name', e.target.value)} required />
       </div>
 
-      <div style={sectionStyle}>
-        <label style={labelStyle}>{t.relationship}</label>
-        {RELATIONSHIP_OPTIONS.map((opt) => (
-          <label key={opt.value} style={optionRowStyle}>
+      {participantType === 'minor' && (
+        <div style={sectionStyle}>
+          <label style={labelStyle}>{t.relationship}</label>
+          {RELATIONSHIP_OPTIONS.map((opt) => (
+            <label key={opt.value} style={optionRowStyle}>
+              <input
+                type="radio"
+                name="relationship"
+                checked={form.relationship === opt.value}
+                onChange={() => set('relationship', opt.value)}
+              />
+              {opt.label[lang]}
+            </label>
+          ))}
+          {form.relationship === 'other' && (
             <input
-              type="radio"
-              name="relationship"
-              checked={form.relationship === opt.value}
-              onChange={() => set('relationship', opt.value)}
+              style={{ ...inputStyle, marginTop: '0.5rem' }}
+              type="text"
+              placeholder={t.other_specify}
+              value={form.relationship_other}
+              onChange={(e) => set('relationship_other', e.target.value)}
             />
-            {opt.label[lang]}
-          </label>
-        ))}
-        {form.relationship === 'other' && (
-          <input
-            style={{ ...inputStyle, marginTop: '0.5rem' }}
-            type="text"
-            placeholder={t.other_specify}
-            value={form.relationship_other}
-            onChange={(e) => set('relationship_other', e.target.value)}
-          />
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {participantType === 'minor' && (
         <div style={sectionStyle}>
@@ -394,7 +392,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       )}
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>{t.participant_birthday}</label>
+        <label style={labelStyle}>{participantType === 'adult' ? t.participant_birthday_adult : t.participant_birthday}</label>
         <BirthdayPicker
           value={form.participant_birthday}
           onChange={(v) => set('participant_birthday', v)}
@@ -426,8 +424,8 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>{t.proficiency}</label>
-        {PROFICIENCY_OPTIONS.map((opt) => (
+        <label style={labelStyle}>{participantType === 'adult' ? t.proficiency_adult : t.proficiency}</label>
+        {(participantType === 'adult' ? ADULT_PROFICIENCY_OPTIONS : PROFICIENCY_OPTIONS).map((opt) => (
           <label key={opt.value} style={optionRowStyle}>
             <input
               type="checkbox"
@@ -449,7 +447,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>{t.interests}</label>
+        <label style={labelStyle}>{participantType === 'adult' ? t.interests_adult : t.interests}</label>
         {INTEREST_OPTIONS.map((opt) => (
           <label key={opt.value} style={optionRowStyle}>
             <input
@@ -472,7 +470,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       <div style={sectionStyle}>
-        <label style={labelStyle}>{t.availability_title}</label>
+        <label style={labelStyle}>{participantType === 'adult' ? t.availability_title_adult : t.availability_title}</label>
 
         <div style={{ marginBottom: '0.75rem', maxWidth: 420 }}>
           <label style={labelStyle}>{t.timezone_label}</label>
@@ -556,7 +554,6 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       {status === 'error' && <p style={{ color: '#c0392b', fontSize: '0.9rem' }}>{t.error}</p>}
-      {status === 'no_match' && <p style={{ color: '#c0392b', fontSize: '0.9rem' }}>{t.no_match_error}</p>}
 
       <button
         type="submit"

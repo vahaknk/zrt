@@ -1,4 +1,4 @@
-import { WEEKDAYS, PROFICIENCY_OPTIONS, INTEREST_OPTIONS, RELATIONSHIP_OPTIONS, type Weekday } from './minorFormContent';
+import { WEEKDAYS, PROFICIENCY_OPTIONS, ADULT_PROFICIENCY_OPTIONS, INTEREST_OPTIONS, RELATIONSHIP_OPTIONS, type Weekday } from './minorFormContent';
 
 const NOTION_VERSION = '2022-06-28';
 
@@ -151,8 +151,12 @@ export async function syncMinorRegistrationToNotion(params: MinorRegistrationSyn
   }
 
   if (params.languageProficiency.length > 0) {
+    // Adults answer in first person ("I understand") — use the matching wording
+    // so the text written to Notion reflects what was actually selected, even
+    // though both types currently sync into the same (minor-titled) database.
+    const options = params.participantType === 'adult' ? ADULT_PROFICIENCY_OPTIONS : PROFICIENCY_OPTIONS;
     const names = params.languageProficiency
-      .map((v) => PROFICIENCY_OPTIONS.find((o) => o.value === v)?.notionName)
+      .map((v) => options.find((o) => o.value === v)?.notionName)
       .filter((n): n is string => !!n);
     properties[MINOR_FORM_PROPS.proficiency] = { multi_select: names.map((name) => ({ name })) };
   }
