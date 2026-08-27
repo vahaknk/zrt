@@ -66,7 +66,9 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
         background: #9683fe;
         font-family: system-ui, sans-serif;
         color: #000;
-        padding: 2rem;
+      }
+      .page {
+        padding: 2rem clamp(1.5rem, 6vw, 5rem);
       }
       a.back { color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
       h1 { font-size: 1.6rem; font-weight: 700; margin: 1rem 0 0.25rem; }
@@ -90,6 +92,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
     </style>
   </head>
   <body>
+    <div class="page">
     <a class="back" href="/platform/admin">&larr; Back</a>
     <h1>Questionnaire availability</h1>
     <p class="hint">Times converted from each respondent's selected timezone to the timezone below.</p>
@@ -142,6 +145,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
           )}
         </tbody>
       </table>
+    </div>
     </div>
   </body>
 </html>
