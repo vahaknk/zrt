@@ -182,27 +182,27 @@ export interface FormOption {
 
 export const PROFICIENCY_OPTIONS: FormOption[] = [
   { value: 'none', notionName: 'Բնաւ չի գիտեր։ Ne connaît pas du tout. Does not know at all.',
-    label: { hyw: 'Բնաւ չի գիտեր', fr: 'Ne connaît pas du tout.', en: 'Does not know at all.' } },
+    label: { hyw: 'Բնաւ չի գիտեր', fr: 'Ne connaît pas du tout', en: 'Does not know at all.' } },
   { value: 'understands_little', notionName: 'Քիչ մը կը հասկնայ։ Comprend un peu. Understands a little.',
-    label: { hyw: 'Քիչ մը կը հասկնայ', fr: 'Comprend un peu.', en: 'Understands a little.' } },
+    label: { hyw: 'Քիչ մը կը հասկնայ', fr: 'Comprend un peu', en: 'Understands a little.' } },
   { value: 'speaks_little', notionName: 'Քիչ մը կը խօսի։ Parle un peu. Speaks a little.',
-    label: { hyw: 'Քիչ մը կը խօսի', fr: 'Parle un peu.', en: 'Speaks a little.' } },
+    label: { hyw: 'Քիչ մը կը խօսի', fr: 'Parle un peu', en: 'Speaks a little.' } },
   { value: 'reads_writes_little', notionName: 'Քիչ մը կը գրէ ու կը կարդայ։ Lit et écrit un peu. Reads and writes a little.',
-    label: { hyw: 'Քիչ մը կը գրէ ու կը կարդայ', fr: 'Lit et écrit un peu.', en: 'Reads and writes a little.' } },
+    label: { hyw: 'Քիչ մը կը գրէ ու կը կարդայ', fr: 'Lit et écrit un peu', en: 'Reads and writes a little.' } },
   { value: 'understands', notionName: 'Կը հասկնայ։ Comprend. Understands.',
-    label: { hyw: 'Կը հասկնայ', fr: 'Comprend.', en: 'Understands.' } },
+    label: { hyw: 'Կը հասկնայ', fr: 'Comprend', en: 'Understands.' } },
   { value: 'speaks', notionName: 'Կը խօսի։ Parle. Speaks.',
-    label: { hyw: 'Կը խօսի', fr: 'Parle.', en: 'Speaks.' } },
+    label: { hyw: 'Կը խօսի', fr: 'Parle', en: 'Speaks.' } },
   { value: 'reads_writes', notionName: 'Կը գրէ ու կը կարդայ։ Lit et écrit. Reads and writes.',
-    label: { hyw: 'Կը գրէ ու կը կարդայ', fr: 'Lit et écrit.', en: 'Reads and writes.' } },
+    label: { hyw: 'Կը գրէ ու կը կարդայ', fr: 'Lit et écrit', en: 'Reads and writes.' } },
   { value: 'understands_easily', notionName: 'Շատ հանգիստ կը հասկնայ։ Comprend très facilement. Understands very easily.',
-    label: { hyw: 'Շատ հանգիստ կը հասկնայ', fr: 'Comprend très facilement.', en: 'Understands very easily.' } },
+    label: { hyw: 'Շատ հանգիստ կը հասկնայ', fr: 'Comprend très facilement', en: 'Understands very easily.' } },
   { value: 'speaks_fluently', notionName: 'Շատ հանգիստ կը խօսի։ Parle très couramment. Speaks very fluently.',
-    label: { hyw: 'Շատ հանգիստ կը խօսի', fr: 'Parle très couramment.', en: 'Speaks very fluently.' } },
+    label: { hyw: 'Շատ հանգիստ կը խօսի', fr: 'Parle très couramment', en: 'Speaks very fluently.' } },
   { value: 'reads_writes_easily', notionName: 'Շատ հանգիստ կը գրէ ու կը կարդայ։ Lit et écrit très facilement. Reads and writes very easily.',
-    label: { hyw: 'Շատ հանգիստ կը գրէ ու կը կարդայ', fr: 'Lit et écrit très facilement.', en: 'Reads and writes very easily.' } },
+    label: { hyw: 'Շատ հանգիստ կը գրէ ու կը կարդայ', fr: 'Lit et écrit très facilement', en: 'Reads and writes very easily.' } },
   { value: 'other', notionName: 'Այլ։ Autre. Other.',
-    label: { hyw: 'Այլ', fr: 'Autre.', en: 'Other.' } },
+    label: { hyw: 'Այլ', fr: 'Autre', en: 'Other.' } },
 ];
 
 // Same options, first-person wording — adults answer for themselves, not a
@@ -251,7 +251,7 @@ export const INTEREST_OPTIONS: FormOption[] = [
   { value: 'cooking', notionName: 'Խոհարարութիւն / Cuisine / Cooking',
     label: { hyw: 'Խոհարարութիւն', fr: 'Cuisine', en: 'Cooking' } },
   { value: 'other', notionName: 'Այլ։ Autre. Other.',
-    label: { hyw: 'Այլ', fr: 'Autre.', en: 'Other.' } },
+    label: { hyw: 'Այլ', fr: 'Autre', en: 'Other.' } },
 ];
 
 export const RELATIONSHIP_OPTIONS: FormOption[] = [
@@ -295,7 +295,7 @@ export const FIELD_LABELS: Record<Lang, Record<string, string>> = {
     availability_title_adult: 'Ձեզի յարմար օրերն ու ժամերը',
     availability_hint: 'Ձեր ժամային գօտին ընտրելէ ետք, կը խնդրենք ժամանակացոյցին մէջ նշել ձեզի յարմար **բոլոր ժամերը**։ Միւս մասնակիցներուն հետ համադրումը դիւրացնելու համար, կը խնդրենք նշել կարելի եղածին չափ շատ ազատ ժամեր։',
     timezone_label: 'Ձեր ժամային գօտին',
-    availability_other: 'Այլ նշում ձեր օրերու/ժամերու մասին (եթէ կայ)',
+    availability_other: 'Եթէ ուրիշ յարմար ժամեր ունիք, խնդրենք նշեցէք։',
     other_specify: 'Խնդրենք նշեցէք',
     submit: 'Ղրկել',
     success: 'Շնորհակալութիւն։',
