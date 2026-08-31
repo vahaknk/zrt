@@ -1,27 +1,6 @@
 import type { APIRoute } from 'astro';
-import { adminGet, adminPatch, adminPost } from '../../lib/directusAdmin';
+import { adminPost } from '../../lib/directusAdmin';
 import { syncMinorRegistrationToNotion } from '../../lib/notion';
-
-function normalizeName(s: string): string {
-  return s
-    .trim()
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // strip accents (café -> cafe)
-    .replace(/\s+/g, ' ');
-}
-
-// Loose match: exact, one contains the other (missing middle name / different
-// name order), or they share a whole word (e.g. the first name) in common —
-// tolerates typos and formatting differences without matching unrelated names.
-function namesLikelyMatch(a: string, b: string): boolean {
-  const na = normalizeName(a);
-  const nb = normalizeName(b);
-  if (!na || !nb) return false;
-  if (na === nb || na.includes(nb) || nb.includes(na)) return true;
-  const wordsB = nb.split(' ');
-  return na.split(' ').some((w) => w.length > 1 && wordsB.includes(w));
-}
 
 // The birthday field is entered as free text in DD/MM/YYYY — convert to the
 // ISO format Directus's native `date` fields expect. Returns null (silently
@@ -52,10 +31,15 @@ export const POST: APIRoute = async ({ request }) => {
   const participantBirthdayISO = participantBirthdayRaw ? parseDDMMYYYY(participantBirthdayRaw) : null;
 
   const answers = {
+    email,
     respondent_name: respondentName,
     participant_type: participantType,
+    participant_name: participantName,
+    participant_birthday: participantBirthdayISO,
     current_school: body.current_school || null,
     profession: body.profession || null,
+    city: body.city || null,
+    country: body.country || null,
     language_proficiency: Array.isArray(body.language_proficiency) ? body.language_proficiency : [],
     language_proficiency_other: body.language_proficiency_other || null,
     interests: Array.isArray(body.interests) ? body.interests : [],
@@ -65,103 +49,47 @@ export const POST: APIRoute = async ({ request }) => {
     availability,
     availability_other: body.availability_other || null,
     fee_acknowledged: feeAcknowledged,
-    questionnaire_language: body.form_language || null,
+    form_language: body.form_language || null,
     // Availability slots are in this timezone, not Paris time — needed to make
     // sense of them later (a future admin tool converts/reports across zones).
     timezone: body.timezone || null,
   };
 
-  // Match against an existing registration_requests row by email, disambiguating by
-  // participant name only when needed — one parent can register multiple children
-  // under the same email, but if the email only has one row, a name typo/spelling
-  // difference shouldn't block the match.
-  let match: any = null;
+  // Every submission is its own permanent record — no attempt to match it
+  // against an existing registration by email/name. That matching used to
+  // merge a submission into whatever single row shared the email, which
+  // silently overwrote a different child's answers when one parent filled
+  // this out for several kids. The Directus row's own `id` is the reference
+  // staff use (visible on the admin questionnaire page) to manually link a
+  // submission to the right person.
+  let created: any = null;
   try {
-    const res = await adminGet(
-      `/items/registration_requests?filter[email][_icontains]=${encodeURIComponent(email)}&fields=id,email,full_name,city,country,birthday&limit=50`
-    );
-    const byEmail = (res.data ?? []).filter(
-      (r: any) => String(r.email).trim().toLowerCase() === email.toLowerCase()
-    );
-    if (byEmail.length === 1) {
-      match = byEmail[0];
-    } else if (byEmail.length > 1) {
-      const byName = byEmail.filter((r: any) => namesLikelyMatch(String(r.full_name ?? ''), participantName));
-      if (byName.length === 1) match = byName[0];
-    }
+    created = await adminPost('/items/unmatched_questionnaire_leads', answers);
   } catch (e) {
-    console.log('Lookup failed for questionnaire match:', (e as Error)?.message);
+    console.log('Failed to save questionnaire submission:', (e as Error)?.message);
+    return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
   }
 
-  // Every submission syncs to Notion regardless of match status.
-  const syncToNotion = () =>
-    syncMinorRegistrationToNotion({
+  try {
+    await syncMinorRegistrationToNotion({
       respondentName,
       participantName,
       participantType,
       participantBirthday: participantBirthdayRaw || null,
       currentSchool: answers.current_school,
-      city: body.city || null,
-      country: body.country || null,
+      city: answers.city,
+      country: answers.country,
       languageProficiency: answers.language_proficiency,
       interests: answers.interests,
       relationship: answers.relationship,
       feeAcknowledged,
       availability,
-      formLanguage: answers.questionnaire_language,
+      formLanguage: answers.form_language,
       timezone: answers.timezone,
     });
-
-  if (match) {
-    const patchBody: Record<string, unknown> = { ...answers };
-    // Fill gaps in existing curated fields, but never clobber data that's already there.
-    if (!match.city && body.city) patchBody.city = body.city;
-    if (!match.country && body.country) patchBody.country = body.country;
-    if (!match.birthday && participantBirthdayISO) patchBody.birthday = participantBirthdayISO;
-
-    try {
-      await adminPatch(`/items/registration_requests/${match.id}`, patchBody);
-    } catch (e) {
-      console.log('Failed to patch matched registration:', (e as Error)?.message);
-      return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
-    }
-  } else {
-    // No matching registration found — don't block the submission on a match;
-    // just capture it as a lead so the data isn't lost.
-    try {
-      await adminPost('/items/unmatched_questionnaire_leads', {
-        email,
-        respondent_name: respondentName,
-        participant_type: participantType,
-        participant_name: participantName,
-        participant_birthday: participantBirthdayISO,
-        current_school: answers.current_school,
-        profession: answers.profession,
-        city: body.city || null,
-        country: body.country || null,
-        language_proficiency: answers.language_proficiency,
-        language_proficiency_other: answers.language_proficiency_other,
-        interests: answers.interests,
-        interests_other: answers.interests_other,
-        relationship: answers.relationship,
-        relationship_other: answers.relationship_other,
-        availability,
-        availability_other: answers.availability_other,
-        fee_acknowledged: feeAcknowledged,
-        form_language: answers.questionnaire_language,
-        timezone: answers.timezone,
-      });
-    } catch (e) {
-      console.log('Failed to save unmatched questionnaire lead:', (e as Error)?.message);
-      return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
-    }
-  }
-
-  try {
-    await syncToNotion();
   } catch (e) {
     console.log('Notion sync failed for questionnaire (non-blocking):', (e as Error)?.message);
   }
 
-  return new Response(JSON.stringify({ success: true }), { status: 200 });
+  return new Response(JSON.stringify({ success: true, id: created?.data?.id ?? null }), { status: 200 });
 };

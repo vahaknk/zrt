@@ -20,19 +20,18 @@ if (!member) {
 }
 
 interface Row {
-  id: number;
-  full_name: string;
+  refId: string;
+  participant_name: string;
   email: string;
   respondent_name: string | null;
   participant_type: string | null;
   availability: Partial<Record<Weekday, string[]>> | null;
   timezone: string | null;
-  matched: boolean;
   current_school: string | null;
   profession: string | null;
   city: string | null;
   country: string | null;
-  birthday: string | null;
+  participant_birthday: string | null;
   language_proficiency: string[];
   language_proficiency_other: string | null;
   interests: string[];
@@ -41,46 +40,47 @@ interface Row {
   relationship_other: string | null;
   availability_other: string | null;
   fee_acknowledged: boolean;
-  formLanguage: string | null;
+  form_language: string | null;
 }
-
-const REG_FIELDS =
-  'id,full_name,email,respondent_name,participant_type,availability,timezone,current_school,profession,city,country,birthday,' +
-  'language_proficiency,language_proficiency_other,interests,interests_other,relationship,relationship_other,availability_other,' +
-  'fee_acknowledged,questionnaire_language';
 
 const LEAD_FIELDS =
   'id,participant_name,email,respondent_name,participant_type,availability,timezone,current_school,profession,city,country,participant_birthday,' +
   'language_proficiency,language_proficiency_other,interests,interests_other,relationship,relationship_other,availability_other,' +
   'fee_acknowledged,form_language';
 
+// Legacy: submissions from before this page moved to unmatched_questionnaire_leads
+// still live here (they were matched-and-merged into an existing registration).
+// Read-only now — nothing new gets written to registration_requests anymore.
+const LEGACY_FIELDS =
+  'id,full_name,email,respondent_name,participant_type,availability,timezone,current_school,profession,city,country,birthday,' +
+  'language_proficiency,language_proficiency_other,interests,interests_other,relationship,relationship_other,availability_other,' +
+  'fee_acknowledged,questionnaire_language';
+
 let rows: Row[] = [];
 try {
-  const [registeredRes, leadsRes] = await Promise.all([
-    adminGet(`/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=${REG_FIELDS}&limit=-1`),
-    adminGet(`/items/unmatched_questionnaire_leads?fields=${LEAD_FIELDS}&limit=-1`),
+  const [leadsRes, legacyRes] = await Promise.all([
+    adminGet(`/items/unmatched_questionnaire_leads?fields=${LEAD_FIELDS}&sort=-id&limit=-1`),
+    adminGet(`/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=${LEGACY_FIELDS}&limit=-1`),
   ]);
-  const registered = ((registeredRes.data ?? []) as any[]).map((r) => ({
+  const leads = ((leadsRes.data ?? []) as any[]).map((r) => ({
     ...r,
-    matched: true,
+    refId: `lead#${r.id}`,
     language_proficiency: r.language_proficiency ?? [],
     interests: r.interests ?? [],
-    formLanguage: r.questionnaire_language,
   }));
-  const leads = ((leadsRes.data ?? []) as any[]).map((r) => ({
-    id: r.id,
-    full_name: r.participant_name,
+  const legacy = ((legacyRes.data ?? []) as any[]).map((r) => ({
+    refId: `reg#${r.id}`,
+    participant_name: r.full_name,
     email: r.email,
     respondent_name: r.respondent_name,
     participant_type: r.participant_type,
     availability: r.availability,
     timezone: r.timezone,
-    matched: false,
     current_school: r.current_school,
     profession: r.profession,
     city: r.city,
     country: r.country,
-    birthday: r.participant_birthday,
+    participant_birthday: r.birthday,
     language_proficiency: r.language_proficiency ?? [],
     language_proficiency_other: r.language_proficiency_other,
     interests: r.interests ?? [],
@@ -89,9 +89,9 @@ try {
     relationship_other: r.relationship_other,
     availability_other: r.availability_other,
     fee_acknowledged: r.fee_acknowledged,
-    formLanguage: r.form_language,
+    form_language: r.questionnaire_language,
   }));
-  rows = [...registered, ...leads].filter((r) => r.availability && Object.keys(r.availability).length > 0);
+  rows = [...leads, ...legacy].filter((r) => r.availability && Object.keys(r.availability).length > 0);
 } catch (e) {
   console.error('Failed to load questionnaire responses:', e);
 }
@@ -109,7 +109,7 @@ function resolveLabels(values: string[], options: FormOption[]): string {
 
 const FORM_LANGUAGE_NAMES: Record<string, string> = { hyw: 'Armenian', fr: 'French', en: 'English' };
 
-const COLS = 5 + WEEKDAYS.length;
+const COLS = 6 + WEEKDAYS.length;
 ---
 
 <!doctype html>
@@ -151,6 +151,7 @@ const COLS = 5 + WEEKDAYS.length;
       tr.main-row { cursor: pointer; }
       tr.main-row:hover { background: rgba(107,92,230,0.05); }
       .chev { display: inline-block; width: 1rem; opacity: 0.5; }
+      .id-col { font-family: ui-monospace, monospace; opacity: 0.5; }
       tr.detail-row td { background: #faf9ff; border-bottom: 1px solid rgba(0,0,0,0.08); }
       .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem 1.5rem; padding: 0.5rem 0; }
       .detail-grid dt { font-size: 0.7rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 0.15rem; }
@@ -177,10 +178,10 @@ const COLS = 5 + WEEKDAYS.length;
         <thead>
           <tr>
             <th></th>
+            <th>ID</th>
             <th>Participant</th>
             <th>Respondent</th>
             <th>Type</th>
-            <th>Status</th>
             <th>Timezone</th>
             {WEEKDAYS.map((day) => <th>{WEEKDAY_SHORT_LABELS[day].en}</th>)}
           </tr>
@@ -195,10 +196,10 @@ const COLS = 5 + WEEKDAYS.length;
                   onclick="const d=this.nextElementSibling; d.hidden=!d.hidden; this.querySelector('.chev').textContent = d.hidden ? '▸' : '▾';"
                 >
                   <td><span class="chev">▸</span></td>
-                  <td>{r.full_name}<br /><span style="opacity:0.5">{r.email}</span></td>
+                  <td class="id-col">{r.refId}</td>
+                  <td>{r.participant_name}<br /><span style="opacity:0.5">{r.email}</span></td>
                   <td>{r.respondent_name ?? '—'}</td>
                   <td>{r.participant_type ?? '—'}</td>
-                  <td>{r.matched ? 'Registered' : <span title="No matching registration found for this email">Unmatched lead</span>}</td>
                   <td>{timezoneLabel(r.timezone)}</td>
                   {WEEKDAYS.map((day) => {
                     const slots = r.availability?.[day] ?? [];
@@ -216,7 +217,7 @@ const COLS = 5 + WEEKDAYS.length;
                 <tr class="detail-row" hidden>
                   <td colspan={COLS}>
                     <dl class="detail-grid">
-                      <div><dt>Birthday</dt><dd>{r.birthday ?? '—'}</dd></div>
+                      <div><dt>Birthday</dt><dd>{r.participant_birthday ?? '—'}</dd></div>
                       <div><dt>{r.participant_type === 'adult' ? 'Profession' : 'School'}</dt><dd>{(r.participant_type === 'adult' ? r.profession : r.current_school) ?? '—'}</dd></div>
                       <div><dt>City / Country</dt><dd>{[r.city, r.country].filter(Boolean).join(', ') || '—'}</dd></div>
                       <div><dt>Language proficiency</dt><dd>{resolveLabels(r.language_proficiency, proficiencyOptions)}{r.language_proficiency_other ? ` (${r.language_proficiency_other})` : ''}</dd></div>
@@ -225,7 +226,7 @@ const COLS = 5 + WEEKDAYS.length;
                         <div><dt>Relationship to participant</dt><dd>{resolveLabels(r.relationship ? [r.relationship] : [], RELATIONSHIP_OPTIONS)}{r.relationship_other ? ` (${r.relationship_other})` : ''}</dd></div>
                       )}
                       <div><dt>Other availability notes</dt><dd>{r.availability_other ?? '—'}</dd></div>
-                      <div><dt>Form language</dt><dd>{FORM_LANGUAGE_NAMES[r.formLanguage ?? ''] ?? r.formLanguage ?? '—'}</dd></div>
+                      <div><dt>Form language</dt><dd>{FORM_LANGUAGE_NAMES[r.form_language ?? ''] ?? r.form_language ?? '—'}</dd></div>
                       <div><dt>Fee acknowledged</dt><dd>{r.fee_acknowledged ? 'Yes' : 'No'}</dd></div>
                     </dl>
                   </td>
