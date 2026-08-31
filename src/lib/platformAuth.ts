@@ -43,7 +43,16 @@ interface Member {
   email: string;
   full_name: string;
   is_admin: boolean;
-  workshop: { id: number; name: string; age_group: string; schedule_note: string | null; zoom_link: string } | null;
+  workshop: {
+    id: number;
+    name: string;
+    age_group: string;
+    schedule_note: string | null;
+    zoom_link: string;
+    days_of_week: string | null;
+    start_time: string | null;
+    end_time: string | null;
+  } | null;
   clouds: Array<{
     clouds_id: {
       id: number;
@@ -51,6 +60,9 @@ interface Member {
       age_groups: string;
       schedule_note: string | null;
       bundle: { id: number; name: string; zoom_link: string };
+      day_of_week: string | null;
+      start_time: string | null;
+      end_time: string | null;
     };
   }>;
 }
@@ -78,8 +90,10 @@ export async function requireMember(request: Request): Promise<Member | null> {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
         `&fields=id,email,full_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `workshop.days_of_week,workshop.start_time,workshop.end_time,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
-        `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link&limit=1`
+        `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
+        `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time&limit=1`
     );
     return res.data?.[0] ?? null;
   } catch {

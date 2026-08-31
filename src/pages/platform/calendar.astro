@@ -1,10 +1,72 @@
 ---
 import { requireMember } from '../../lib/platformAuth';
+import { adminGet } from '../../lib/directusAdmin';
+import { getWeekDates, buildSessionBlocks, gridBounds, blockInstants, type SessionBlock } from '../../lib/calendar';
+import { CALENDAR_WEEKDAYS, MONTH_LABELS } from '../../lib/minorFormContent';
 
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
+
+const requestedWeek = Astro.url.searchParams.get('week');
+const anchor = requestedWeek && !Number.isNaN(Date.parse(requestedWeek)) ? new Date(requestedWeek) : new Date();
+const weekDates = getWeekDates(anchor);
+const weekStart = weekDates[0];
+const weekEnd = weekDates[6];
+
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+const prevWeek = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() - 7);
+const nextWeek = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7);
+
+let overrides: { date: string; note: string | null; workshop: number | null; cloud: number | null }[] = [];
+try {
+  const res = await adminGet(
+    `/items/schedule_overrides?filter[active][_eq]=true&filter[date][_between]=${ymd(weekStart)},${ymd(weekEnd)}&fields=date,note,workshop,cloud&limit=-1`
+  );
+  overrides = res.data ?? [];
+} catch (e) {
+  console.error('Failed to load schedule overrides:', e);
+}
+
+const clouds = member.clouds.map((c) => c.clouds_id);
+const blocks: SessionBlock[] = buildSessionBlocks(member.workshop, clouds, weekDates);
+const bounds = gridBounds(blocks);
+const PX_PER_MIN = 1.5;
+const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
+
+const hourMarks: number[] = [];
+for (let m = Math.ceil(bounds.startMin / 60) * 60; m <= bounds.endMin; m += 60) hourMarks.push(m);
+
+function fmtHour(min: number): string {
+  return `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
+}
+
+// Monday-first, matching getWeekDates()'s order.
+const WEEKDAY_SHORT = CALENDAR_WEEKDAYS.hyw;
+const MONTH_SHORT = MONTH_LABELS.hyw;
+
+const enrichedBlocks = blocks.map((b) => {
+  const dateStr = ymd(b.date);
+  const override = overrides.find(
+    (o) => o.date === dateStr && (b.kind === 'workshop' ? o.workshop === b.sourceId : o.cloud === b.sourceId)
+  );
+  const dayIndex = Math.round((b.date.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
+  const { start, end } = blockInstants(b);
+  return {
+    ...b,
+    dayIndex,
+    cancelled: !!override,
+    overrideNote: override?.note ?? null,
+    top: (b.startMin - bounds.startMin) * PX_PER_MIN,
+    height: Math.max(20, (b.endMin - b.startMin) * PX_PER_MIN),
+    startIso: start.toISOString(),
+    endIso: end.toISOString(),
+  };
+});
 ---
 
 <!doctype html>
@@ -17,24 +79,122 @@ if (!member) {
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
         min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
         background: #9683fe;
         font-family: system-ui, sans-serif;
         color: #000;
-        padding: 2rem;
-        text-align: center;
       }
-      a.back { position: absolute; top: 2rem; left: 2rem; color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
-      h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.5rem; }
-      p { opacity: 0.7; }
+      .page { padding: 2rem clamp(1.5rem, 6vw, 5rem); }
+      a.back { color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
+      h1 { font-size: 1.6rem; font-weight: 700; margin: 1rem 0 1.5rem; }
+      .nav { display: flex; align-items: center; justify-content: center; gap: 1.5rem; margin-bottom: 1.5rem; font-weight: 600; }
+      .nav a { color: #000; text-decoration: none; background: #fff; border-radius: 999px; padding: 0.4rem 0.9rem; font-size: 0.85rem; }
+      .nav .range { font-size: 1rem; }
+      .empty-state { background: #fff; border-radius: 12px; padding: 2rem; text-align: center; opacity: 0.7; }
+      .grid-card { background: #fff; border-radius: 12px; padding: 1.25rem; overflow-x: auto; }
+      .grid-outer { min-width: 720px; }
+      .headers { display: grid; grid-template-columns: 56px repeat(7, 1fr); margin-bottom: 0.5rem; }
+      .headers .day-head { text-align: center; font-size: 0.8rem; font-weight: 700; }
+      .headers .day-head .date-num { display: block; font-weight: 400; opacity: 0.6; font-size: 0.7rem; }
+      .grid-body { display: grid; grid-template-columns: 56px 1fr; position: relative; }
+      .hour-col { position: relative; }
+      .hour-col .mark { position: absolute; left: 0; right: 4px; text-align: right; font-size: 0.7rem; opacity: 0.5; transform: translateY(-50%); }
+      .days-area {
+        position: relative;
+        background-image: repeating-linear-gradient(to right, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent calc(100% / 7));
+        border-top: 1px solid rgba(0,0,0,0.08);
+      }
+      .hline { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.06); }
+      .block {
+        position: absolute;
+        border-radius: 6px;
+        padding: 0.25rem 0.4rem;
+        font-size: 0.72rem;
+        line-height: 1.25;
+        overflow: hidden;
+        color: #fff;
+      }
+      .block.workshop { background: #6b5ce6; }
+      .block.cloud { background: #2e9e4f; }
+      .block.cancelled { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5); text-decoration: line-through; }
+      .block .local { text-decoration: none; display: block; font-weight: 600; opacity: 0.9; }
+      .block .note { text-decoration: none; display: block; font-style: italic; }
     </style>
   </head>
   <body>
+    <div class="page">
     <a class="back" href="/platform">&larr; Back</a>
     <h1>Calendar</h1>
-    <p>Coming soon.</p>
+
+    <div class="nav">
+      <a href={`/platform/calendar?week=${ymd(prevWeek)}`}>&larr; նախորդ</a>
+      <span class="range">
+        {MONTH_SHORT[weekStart.getMonth()]} {weekStart.getDate()} – {MONTH_SHORT[weekEnd.getMonth()]} {weekEnd.getDate()}
+      </span>
+      <a href={`/platform/calendar?week=${ymd(nextWeek)}`}>յաջորդ &rarr;</a>
+    </div>
+
+    {blocks.length === 0 ? (
+      <div class="empty-state">No workshop or cloud assigned yet.</div>
+    ) : (
+      <div class="grid-card">
+        <div class="grid-outer">
+          <div class="headers">
+            <div></div>
+            {weekDates.map((d, i) => (
+              <div class="day-head">
+                {WEEKDAY_SHORT[i]}
+                <span class="date-num">{MONTH_SHORT[d.getMonth()]} {d.getDate()}</span>
+              </div>
+            ))}
+          </div>
+          <div class="grid-body" style={{ height: `${gridHeight}px` }}>
+            <div class="hour-col">
+              {hourMarks.map((m) => (
+                <div class="mark" style={{ top: `${(m - bounds.startMin) * PX_PER_MIN}px` }}>{fmtHour(m)}</div>
+              ))}
+            </div>
+            <div class="days-area">
+              {hourMarks.map((m) => (
+                <div class="hline" style={{ top: `${(m - bounds.startMin) * PX_PER_MIN}px` }}></div>
+              ))}
+              {enrichedBlocks.map((b) => (
+                <div
+                  class={`block ${b.kind} ${b.cancelled ? 'cancelled' : ''}`}
+                  style={{
+                    top: `${b.top}px`,
+                    height: `${b.height}px`,
+                    left: `calc(${b.dayIndex} * (100% / 7) + 2px)`,
+                    width: `calc(100% / 7 - 4px)`,
+                  }}
+                  data-start={b.startIso}
+                  data-end={b.endIso}
+                >
+                  <span>{b.label}</span>
+                  {b.cancelled && <span class="note">{b.overrideNote ?? 'Cancelled'}</span>}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+    </div>
+
+    <script>
+      // Show each block's time in the viewer's own timezone — only the browser
+      // knows that, so this runs after render (the block is positioned in Paris
+      // time server-side, but the label itself is local-only, no Paris shown).
+      document.querySelectorAll('.block').forEach((el) => {
+        const start = el.getAttribute('data-start');
+        const end = el.getAttribute('data-end');
+        if (!start || !end) return;
+        const fmt = (iso: string) =>
+          new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const div = document.createElement('span');
+        div.className = 'local';
+        div.textContent = `${fmt(start)}–${fmt(end)}`;
+        el.appendChild(div);
+      });
+    </script>
   </body>
 </html>

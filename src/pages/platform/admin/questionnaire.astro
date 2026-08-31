@@ -2,7 +2,17 @@
 import { requireAdmin } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 import { convertRange } from '../../../lib/timezone';
-import { WEEKDAYS, WEEKDAY_SHORT_LABELS, TIMEZONE_GROUPS, type Weekday } from '../../../lib/minorFormContent';
+import {
+  WEEKDAYS,
+  WEEKDAY_SHORT_LABELS,
+  TIMEZONE_GROUPS,
+  PROFICIENCY_OPTIONS,
+  ADULT_PROFICIENCY_OPTIONS,
+  INTEREST_OPTIONS,
+  RELATIONSHIP_OPTIONS,
+  type Weekday,
+  type FormOption,
+} from '../../../lib/minorFormContent';
 
 const member = await requireAdmin(Astro.request);
 if (!member) {
@@ -18,19 +28,45 @@ interface Row {
   availability: Partial<Record<Weekday, string[]>> | null;
   timezone: string | null;
   matched: boolean;
+  current_school: string | null;
+  profession: string | null;
+  city: string | null;
+  country: string | null;
+  birthday: string | null;
+  language_proficiency: string[];
+  language_proficiency_other: string | null;
+  interests: string[];
+  interests_other: string | null;
+  relationship: string | null;
+  relationship_other: string | null;
+  availability_other: string | null;
+  fee_acknowledged: boolean;
+  formLanguage: string | null;
 }
+
+const REG_FIELDS =
+  'id,full_name,email,respondent_name,participant_type,availability,timezone,current_school,profession,city,country,birthday,' +
+  'language_proficiency,language_proficiency_other,interests,interests_other,relationship,relationship_other,availability_other,' +
+  'fee_acknowledged,questionnaire_language';
+
+const LEAD_FIELDS =
+  'id,participant_name,email,respondent_name,participant_type,availability,timezone,current_school,profession,city,country,participant_birthday,' +
+  'language_proficiency,language_proficiency_other,interests,interests_other,relationship,relationship_other,availability_other,' +
+  'fee_acknowledged,form_language';
 
 let rows: Row[] = [];
 try {
   const [registeredRes, leadsRes] = await Promise.all([
-    adminGet(
-      `/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=id,full_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
-    ),
-    adminGet(
-      `/items/unmatched_questionnaire_leads?fields=id,participant_name,email,respondent_name,participant_type,availability,timezone&limit=-1`
-    ),
+    adminGet(`/items/registration_requests?filter[fee_acknowledged][_eq]=true&fields=${REG_FIELDS}&limit=-1`),
+    adminGet(`/items/unmatched_questionnaire_leads?fields=${LEAD_FIELDS}&limit=-1`),
   ]);
-  const registered = ((registeredRes.data ?? []) as Row[]).map((r) => ({ ...r, matched: true }));
+  const registered = ((registeredRes.data ?? []) as any[]).map((r) => ({
+    ...r,
+    matched: true,
+    language_proficiency: r.language_proficiency ?? [],
+    interests: r.interests ?? [],
+    formLanguage: r.questionnaire_language,
+  }));
   const leads = ((leadsRes.data ?? []) as any[]).map((r) => ({
     id: r.id,
     full_name: r.participant_name,
@@ -40,6 +76,20 @@ try {
     availability: r.availability,
     timezone: r.timezone,
     matched: false,
+    current_school: r.current_school,
+    profession: r.profession,
+    city: r.city,
+    country: r.country,
+    birthday: r.participant_birthday,
+    language_proficiency: r.language_proficiency ?? [],
+    language_proficiency_other: r.language_proficiency_other,
+    interests: r.interests ?? [],
+    interests_other: r.interests_other,
+    relationship: r.relationship,
+    relationship_other: r.relationship_other,
+    availability_other: r.availability_other,
+    fee_acknowledged: r.fee_acknowledged,
+    formLanguage: r.form_language,
   }));
   rows = [...registered, ...leads].filter((r) => r.availability && Object.keys(r.availability).length > 0);
 } catch (e) {
@@ -51,6 +101,15 @@ const targetTz = TIMEZONE_GROUPS.some((g) => g.tz === requestedTz) ? requestedTz
 
 const today = new Date();
 const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz === tz)?.label.en ?? tz ?? '—';
+
+function resolveLabels(values: string[], options: FormOption[]): string {
+  if (!values || values.length === 0) return '—';
+  return values.map((v) => options.find((o) => o.value === v)?.label.en ?? v).join(', ');
+}
+
+const FORM_LANGUAGE_NAMES: Record<string, string> = { hyw: 'Armenian', fr: 'French', en: 'English' };
+
+const COLS = 5 + WEEKDAYS.length;
 ---
 
 <!doctype html>
@@ -89,13 +148,20 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
       th { font-weight: 700; white-space: nowrap; }
       td.slots { white-space: nowrap; }
       .empty { opacity: 0.35; }
+      tr.main-row { cursor: pointer; }
+      tr.main-row:hover { background: rgba(107,92,230,0.05); }
+      .chev { display: inline-block; width: 1rem; opacity: 0.5; }
+      tr.detail-row td { background: #faf9ff; border-bottom: 1px solid rgba(0,0,0,0.08); }
+      .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem 1.5rem; padding: 0.5rem 0; }
+      .detail-grid dt { font-size: 0.7rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 0.15rem; }
+      .detail-grid dd { font-size: 0.85rem; }
     </style>
   </head>
   <body>
     <div class="page">
     <a class="back" href="/platform/admin">&larr; Back</a>
     <h1>Questionnaire availability</h1>
-    <p class="hint">Times converted from each respondent's selected timezone to the timezone below.</p>
+    <p class="hint">Times converted from each respondent's selected timezone to the timezone below. Click a row for the rest of their answers.</p>
 
     <form method="get" class="tz-picker">
       <label for="tz">View times in:</label>
@@ -110,6 +176,7 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
       <table>
         <thead>
           <tr>
+            <th></th>
             <th>Participant</th>
             <th>Respondent</th>
             <th>Type</th>
@@ -119,29 +186,55 @@ const timezoneLabel = (tz: string | null) => TIMEZONE_GROUPS.find((g) => g.tz ==
           </tr>
         </thead>
         <tbody>
-          {rows.map((r) => (
-            <tr>
-              <td>{r.full_name}<br /><span style="opacity:0.5">{r.email}</span></td>
-              <td>{r.respondent_name ?? '—'}</td>
-              <td>{r.participant_type ?? '—'}</td>
-              <td>{r.matched ? 'Registered' : <span title="No matching registration found for this email">Unmatched lead</span>}</td>
-              <td>{timezoneLabel(r.timezone)}</td>
-              {WEEKDAYS.map((day) => {
-                const slots = r.availability?.[day] ?? [];
-                return (
-                  <td class="slots">
-                    {slots.length === 0 || !r.timezone ? (
-                      <span class="empty">—</span>
-                    ) : (
-                      slots.map((s) => <div>{convertRange(s, r.timezone!, targetTz, today)}</div>)
-                    )}
+          {rows.map((r) => {
+            const proficiencyOptions = r.participant_type === 'adult' ? ADULT_PROFICIENCY_OPTIONS : PROFICIENCY_OPTIONS;
+            return (
+              <Fragment>
+                <tr
+                  class="main-row"
+                  onclick="const d=this.nextElementSibling; d.hidden=!d.hidden; this.querySelector('.chev').textContent = d.hidden ? '▸' : '▾';"
+                >
+                  <td><span class="chev">▸</span></td>
+                  <td>{r.full_name}<br /><span style="opacity:0.5">{r.email}</span></td>
+                  <td>{r.respondent_name ?? '—'}</td>
+                  <td>{r.participant_type ?? '—'}</td>
+                  <td>{r.matched ? 'Registered' : <span title="No matching registration found for this email">Unmatched lead</span>}</td>
+                  <td>{timezoneLabel(r.timezone)}</td>
+                  {WEEKDAYS.map((day) => {
+                    const slots = r.availability?.[day] ?? [];
+                    return (
+                      <td class="slots">
+                        {slots.length === 0 || !r.timezone ? (
+                          <span class="empty">—</span>
+                        ) : (
+                          slots.map((s) => <div>{convertRange(s, r.timezone!, targetTz, today)}</div>)
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+                <tr class="detail-row" hidden>
+                  <td colspan={COLS}>
+                    <dl class="detail-grid">
+                      <div><dt>Birthday</dt><dd>{r.birthday ?? '—'}</dd></div>
+                      <div><dt>{r.participant_type === 'adult' ? 'Profession' : 'School'}</dt><dd>{(r.participant_type === 'adult' ? r.profession : r.current_school) ?? '—'}</dd></div>
+                      <div><dt>City / Country</dt><dd>{[r.city, r.country].filter(Boolean).join(', ') || '—'}</dd></div>
+                      <div><dt>Language proficiency</dt><dd>{resolveLabels(r.language_proficiency, proficiencyOptions)}{r.language_proficiency_other ? ` (${r.language_proficiency_other})` : ''}</dd></div>
+                      <div><dt>Interests</dt><dd>{resolveLabels(r.interests, INTEREST_OPTIONS)}{r.interests_other ? ` (${r.interests_other})` : ''}</dd></div>
+                      {r.participant_type !== 'adult' && (
+                        <div><dt>Relationship to participant</dt><dd>{resolveLabels(r.relationship ? [r.relationship] : [], RELATIONSHIP_OPTIONS)}{r.relationship_other ? ` (${r.relationship_other})` : ''}</dd></div>
+                      )}
+                      <div><dt>Other availability notes</dt><dd>{r.availability_other ?? '—'}</dd></div>
+                      <div><dt>Form language</dt><dd>{FORM_LANGUAGE_NAMES[r.formLanguage ?? ''] ?? r.formLanguage ?? '—'}</dd></div>
+                      <div><dt>Fee acknowledged</dt><dd>{r.fee_acknowledged ? 'Yes' : 'No'}</dd></div>
+                    </dl>
                   </td>
-                );
-              })}
-            </tr>
-          ))}
+                </tr>
+              </Fragment>
+            );
+          })}
           {rows.length === 0 && (
-            <tr><td colspan={5 + WEEKDAYS.length} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
+            <tr><td colspan={COLS} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
           )}
         </tbody>
       </table>
