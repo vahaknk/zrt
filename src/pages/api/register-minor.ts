@@ -21,14 +21,34 @@ export const POST: APIRoute = async ({ request }) => {
   // Adults don't get a separate "participant name" question — they are the participant.
   const participantName = String(body.participant_name ?? '').trim() || respondentName;
   const feeAcknowledged = body.fee_acknowledged === true;
+  const participantBirthdayRaw = String(body.participant_birthday ?? '').trim();
+  const currentSchool = String(body.current_school ?? '').trim();
+  const profession = String(body.profession ?? '').trim();
+  const city = String(body.city ?? '').trim();
+  const country = String(body.country ?? '').trim();
+  const languageProficiency = Array.isArray(body.language_proficiency) ? body.language_proficiency : [];
+  const interests = Array.isArray(body.interests) ? body.interests : [];
+  const relationship = String(body.relationship ?? '').trim();
+  const schoolOrProfession = participantType === 'adult' ? profession : currentSchool;
 
-  if (!email || !respondentName || !participantName || !feeAcknowledged) {
+  if (
+    !email ||
+    !respondentName ||
+    !participantName ||
+    !feeAcknowledged ||
+    !participantBirthdayRaw ||
+    !schoolOrProfession ||
+    !city ||
+    !country ||
+    languageProficiency.length === 0 ||
+    interests.length === 0 ||
+    (participantType === 'minor' && !relationship)
+  ) {
     return new Response(JSON.stringify({ error: 'missing_required_fields' }), { status: 400 });
   }
 
   const availability = body.availability ?? {};
-  const participantBirthdayRaw = String(body.participant_birthday ?? '').trim();
-  const participantBirthdayISO = participantBirthdayRaw ? parseDDMMYYYY(participantBirthdayRaw) : null;
+  const participantBirthdayISO = parseDDMMYYYY(participantBirthdayRaw);
 
   const answers = {
     email,
@@ -36,15 +56,15 @@ export const POST: APIRoute = async ({ request }) => {
     participant_type: participantType,
     participant_name: participantName,
     participant_birthday: participantBirthdayISO,
-    current_school: body.current_school || null,
-    profession: body.profession || null,
-    city: body.city || null,
-    country: body.country || null,
-    language_proficiency: Array.isArray(body.language_proficiency) ? body.language_proficiency : [],
+    current_school: currentSchool || null,
+    profession: profession || null,
+    city,
+    country,
+    language_proficiency: languageProficiency,
     language_proficiency_other: body.language_proficiency_other || null,
-    interests: Array.isArray(body.interests) ? body.interests : [],
+    interests,
     interests_other: body.interests_other || null,
-    relationship: body.relationship || null,
+    relationship: relationship || null,
     relationship_other: body.relationship_other || null,
     availability,
     availability_other: body.availability_other || null,

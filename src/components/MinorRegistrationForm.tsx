@@ -62,6 +62,17 @@ const optionRowStyle: React.CSSProperties = {
   fontSize: '0.95rem',
 };
 
+// Invisible checkbox mirroring "at least one selected" for a checkbox group,
+// so the browser's native required-field validation (and its focus/tooltip)
+// applies to groups that have no single input to attach `required` to.
+const groupValidatorStyle: React.CSSProperties = {
+  width: 1,
+  height: 1,
+  opacity: 0,
+  position: 'absolute',
+  pointerEvents: 'none',
+};
+
 
 function parseDMY(v: string): { d: number; m: number; y: number } | null {
   const match = v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
@@ -87,9 +98,10 @@ interface BirthdayPickerProps {
   onChange: (v: string) => void;
   lang: Lang;
   placeholder: string;
+  required?: boolean;
 }
 
-function BirthdayPicker({ value, onChange, lang, placeholder }: BirthdayPickerProps) {
+function BirthdayPicker({ value, onChange, lang, placeholder, required }: BirthdayPickerProps) {
   const [open, setOpen] = useState(false);
   const parsed = parseDMY(value);
   const [viewYear, setViewYear] = useState(() => parsed?.y ?? new Date().getFullYear() - 10);
@@ -140,6 +152,7 @@ function BirthdayPicker({ value, onChange, lang, placeholder }: BirthdayPickerPr
           pattern="\d{1,2}/\d{1,2}/\d{4}"
           value={value}
           onChange={(e) => onChange(e.target.value)}
+          required={required}
         />
         <button
           type="button"
@@ -368,6 +381,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
                 name="relationship"
                 checked={form.relationship === opt.value}
                 onChange={() => set('relationship', opt.value)}
+                required
               />
               {opt.label[lang]}
             </label>
@@ -398,29 +412,30 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
           onChange={(v) => set('participant_birthday', v)}
           lang={lang}
           placeholder={t.birthday_format}
+          required
         />
       </div>
 
       {participantType === 'minor' ? (
         <div style={sectionStyle}>
           <label style={labelStyle}>{t.current_school}</label>
-          <input style={inputStyle} type="text" value={form.current_school} onChange={(e) => set('current_school', e.target.value)} />
+          <input style={inputStyle} type="text" value={form.current_school} onChange={(e) => set('current_school', e.target.value)} required />
         </div>
       ) : (
         <div style={sectionStyle}>
           <label style={labelStyle}>{t.profession}</label>
-          <input style={inputStyle} type="text" value={form.profession} onChange={(e) => set('profession', e.target.value)} />
+          <input style={inputStyle} type="text" value={form.profession} onChange={(e) => set('profession', e.target.value)} required />
         </div>
       )}
 
       <div style={sectionStyle}>
         <label style={labelStyle}>{t.city}</label>
-        <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} />
+        <input style={inputStyle} type="text" value={form.city} onChange={(e) => set('city', e.target.value)} required />
       </div>
 
       <div style={sectionStyle}>
         <label style={labelStyle}>{t.country}</label>
-        <input style={inputStyle} type="text" value={form.country} onChange={(e) => set('country', e.target.value)} />
+        <input style={inputStyle} type="text" value={form.country} onChange={(e) => set('country', e.target.value)} required />
       </div>
 
       <div style={sectionStyle}>
@@ -444,6 +459,15 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
             onChange={(e) => set('language_proficiency_other', e.target.value)}
           />
         )}
+        <input
+          type="checkbox"
+          checked={form.language_proficiency.length > 0}
+          onChange={() => {}}
+          required
+          tabIndex={-1}
+          aria-hidden="true"
+          style={groupValidatorStyle}
+        />
       </div>
 
       <div style={sectionStyle}>
@@ -467,6 +491,15 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
             onChange={(e) => set('interests_other', e.target.value)}
           />
         )}
+        <input
+          type="checkbox"
+          checked={form.interests.length > 0}
+          onChange={() => {}}
+          required
+          tabIndex={-1}
+          aria-hidden="true"
+          style={groupValidatorStyle}
+        />
       </div>
 
       <div style={sectionStyle}>
