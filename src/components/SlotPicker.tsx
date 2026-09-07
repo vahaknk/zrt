@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { parseParisWallTime } from '../lib/parisTime';
 
 interface Slot {
   id: string;
@@ -76,8 +77,8 @@ interface SlotTimes {
 }
 
 function slotTimes(start: string, end: string): SlotTimes {
-  const s = new Date(start);
-  const e = new Date(end);
+  const s = parseParisWallTime(start);
+  const e = parseParisWallTime(end);
   const paris = `${hhmm(s, PARIS_TZ)}–${hhmm(e, PARIS_TZ)}`;
   const local = `${hhmm(s)}–${hhmm(e)}`;
   return { paris, local, sameAsLocal: paris === local };
@@ -85,7 +86,7 @@ function slotTimes(start: string, end: string): SlotTimes {
 
 // Stable grouping key (Paris calendar date), independent of display language.
 function dateKey(start: string): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ }).format(new Date(start));
+  return new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ }).format(parseParisWallTime(start));
 }
 
 function groupByDate<T extends { start_time: string }>(slots: T[]): { key: string; slots: T[] }[] {
@@ -156,7 +157,7 @@ export default function SlotPicker({ registration, slots, token, labels, lang }:
             {groupByDate(slots).map((group) => (
               <div key={group.key}>
                 <div style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.5rem' }}>
-                  {formatDateParis(new Date(group.slots[0].start_time), lang)}
+                  {formatDateParis(parseParisWallTime(group.slots[0].start_time), lang)}
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                   {group.slots.map((slot) => (

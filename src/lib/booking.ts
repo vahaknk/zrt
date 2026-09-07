@@ -3,6 +3,8 @@
 // Measured in whole calendar days (Europe/Paris), not exact hours — a slot
 // becomes bookable as soon as its Paris calendar date is far enough out,
 // regardless of what time of day "now" is.
+import { parseParisWallTime } from './parisTime';
+
 const PARIS_TZ = 'Europe/Paris';
 const MIN_LEAD_DAYS = 3;
 
@@ -20,11 +22,11 @@ export function minBookableDateStr(now: Date = new Date()): string {
 }
 
 export function isSlotBookable(startTime: string, now: Date = new Date()): boolean {
-  return parisDateStr(new Date(startTime)) >= minBookableDateStr(now);
+  return parisDateStr(parseParisWallTime(startTime)) >= minBookableDateStr(now);
 }
 
 // Independent of the lead-time rule above — a slot that has already started
 // must never be bookable, even if MIN_LEAD_DAYS is later changed or removed.
 export function isSlotInPast(startTime: string, now: Date = new Date()): boolean {
-  return new Date(startTime).getTime() < now.getTime();
+  return parseParisWallTime(startTime).getTime() < now.getTime();
 }
