@@ -9,6 +9,16 @@ const WHATS_THERE_ID = 6;
 const ABOUT_US_ID = 12;
 const CONDITIONS_ID = 15;
 
+const INVITE_VIDEO_BY_LANG: Record<string, string> = {
+  de: '/mobile-invite-DE.mp4',
+  it: '/mobile-invite-IT.mp4',
+  tr: '/mobile-invite-TR.mp4',
+  sp: '/mobile-invite-ESP.mp4',
+  en: '/mobile-invite-ING.mp4',
+  pt: '/mobile-invite-POR.mp4',
+  fr: '/mobile-invite-FR.mp4',
+};
+
 interface Translation {
   languages_id: string;
   Header: string;
@@ -125,12 +135,40 @@ function Accordion({ header, children }: { header: string; children: React.React
 
 // ─── Section header with accent bar ──────────────────────────────────────────
 
-function SectionHeader({ title, light = false }: { title: string; light?: boolean }) {
+function SectionHeader({ title, light = false, html = false }: { title: string; light?: boolean; html?: boolean }) {
+  const headingStyle = { fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.35, margin: 0, color: light ? '#fff' : '#000' };
   return (
     <div style={{ marginBottom: '0.9rem' }}>
-      <h2 style={{ fontSize: '1.2rem', fontWeight: 700, lineHeight: 1.35, margin: 0, color: light ? '#fff' : '#000' }}>{title}</h2>
+      {html ? (
+        <h2 style={headingStyle} dangerouslySetInnerHTML={{ __html: title }} />
+      ) : (
+        <h2 style={headingStyle}>{title}</h2>
+      )}
       <div style={{ height: 3, width: 32, background: light ? 'rgba(255,255,255,0.6)' : '#9683fe', borderRadius: 2, marginTop: '0.35rem' }} />
     </div>
+  );
+}
+
+// ─── Invite video (static box at the bottom of the page) ────────────────────
+
+function InviteVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    // Relying on the autoplay attribute alone is unreliable (notably on
+    // mobile Safari) — calling .play() explicitly matches what the previous
+    // popup implementation did.
+    ref.current?.play().catch(() => {});
+  }, [src]);
+  return (
+    <video
+      ref={ref}
+      src={src}
+      muted
+      loop
+      autoPlay
+      playsInline
+      style={{ width: '100%', maxWidth: 420, borderRadius: 12, display: 'block' }}
+    />
   );
 }
 
@@ -257,7 +295,7 @@ export default function MobileLayout({ sections, directusUrl, labels, lang }: Pr
                 {col2.length > 0 && (
                   <FadeIn>
                     <div style={{ ...card, paddingBottom: '1rem' }}>
-                      <SectionHeader title={col2Header} />
+                      <SectionHeader title={col2Header} html />
                         <TextCarousel bullets={col2} />
                     </div>
                   </FadeIn>
@@ -356,6 +394,11 @@ export default function MobileLayout({ sections, directusUrl, labels, lang }: Pr
             </FadeIn>
           );
         })}
+      </div>
+
+      {/* Invite video — static box above the footer logos (was a popup) */}
+      <div style={{ ...card, display: 'flex', justifyContent: 'center' }}>
+        <InviteVideo src={INVITE_VIDEO_BY_LANG[lang] ?? '/mobile-invite.mp4'} />
       </div>
 
       {/* Footer */}

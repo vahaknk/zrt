@@ -148,47 +148,8 @@ try {
         background: #333;
       }
     </style>
-    <style>
-      #mobile-popup {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.85);
-        z-index: 99999;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        padding: 24px;
-        position: fixed;
-      }
-      #mobile-popup.visible {
-        display: flex;
-      }
-      #mobile-popup-close {
-        position: absolute;
-        top: 16px;
-        right: 16px;
-        width: 36px;
-        height: 36px;
-        background: rgba(255,255,255,0.15);
-        color: #fff;
-        border: none;
-        border-radius: 50%;
-        font-size: 1.2rem;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
-      }
-    </style>
   </head>
   <body>
-    <div id="mobile-popup">
-      <div id="mobile-popup-video-slot" style="width:100%;max-width:420px;"></div>
-      <button id="mobile-popup-close">✕</button>
-    </div>
-
     <AppShell
       sections={sections}
       directusUrl={DIRECTUS_URL}
@@ -198,41 +159,6 @@ try {
       client:only="react"
     />
   </body>
-  <script define:vars={{ lang }}>
-    if (window.innerWidth <= 899) {
-      setTimeout(() => {
-        const popup = document.getElementById('mobile-popup');
-        const slot = document.getElementById('mobile-popup-video-slot');
-        if (popup) popup.classList.add('visible');
-
-        const VIDEO_BY_LANG = {
-          de: '/mobile-invite-DE.mp4',
-          it: '/mobile-invite-IT.mp4',
-          tr: '/mobile-invite-TR.mp4',
-          sp: '/mobile-invite-ESP.mp4',
-          en: '/mobile-invite-ING.mp4',
-          pt: '/mobile-invite-POR.mp4',
-          fr: '/mobile-invite-FR.mp4',
-        };
-
-        const video = document.createElement('video');
-        video.src = VIDEO_BY_LANG[lang] ?? '/mobile-invite.mp4';
-        video.muted = true;
-        video.loop = true;
-        video.setAttribute('autoplay', '');
-        video.setAttribute('playsinline', '');
-        video.setAttribute('webkit-playsinline', '');
-        video.style.cssText = 'width:100%;border-radius:12px;display:block;';
-        slot?.appendChild(video);
-        video.play().catch(() => {});
-
-        document.getElementById('mobile-popup-close')?.addEventListener('click', () => {
-          popup?.classList.remove('visible');
-          video.pause();
-        });
-      }, 3000);
-    }
-  </script>
   <script>
     // zrt_vid is capped at 13 months (matching the privacy policy's stated
     // analytics retention, itself the CNIL's published ceiling for this kind
