@@ -143,6 +143,23 @@ export default function SlotPicker({ registration, slots, token, labels, lang }:
           {labels['booking_welcome'] ?? 'Բարեւ'}{', '}{registration.full_name}
         </h1>
 
+        {labels['booking_paris_time_note'] && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '0.6rem',
+            background: '#fff3cd',
+            border: '1px solid #ffdb70',
+            borderRadius: 10,
+            padding: '0.75rem 1rem',
+            marginBottom: '1rem',
+          }}>
+            <span style={{ fontSize: '1.25rem', lineHeight: 1, flexShrink: 0 }}>🕒</span>
+            <p style={{ fontSize: '0.95rem', fontWeight: 700, margin: 0, lineHeight: 1.45, color: '#3d2f00' }}>
+              {labels['booking_paris_time_note']}
+            </p>
+          </div>
+        )}
 
         <p style={{ fontWeight: 600, marginBottom: '0.75rem', fontSize: '1rem', lineHeight: 1.6 }}>
           {labels['booking_intro'] ?? 'Հաճեցէք ընտրել ձեզի յարմար օրը եւ ժամը։'}
@@ -189,7 +206,7 @@ export default function SlotPicker({ registration, slots, token, labels, lang }:
                           const t = slotTimes(slot.start_time, slot.end_time);
                           return (
                             <div>
-                              <span style={{ fontWeight: 600 }}>{labels['paris_time_label'] ?? 'Paris time'}: </span>{t.paris}
+                              <span style={{ fontWeight: 600 }}>{labels['paris_time_label'] ?? 'Paris time:'}</span>{' '}{t.paris}
                             </div>
                           );
                         })()}
