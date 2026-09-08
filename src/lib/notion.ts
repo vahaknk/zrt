@@ -1,4 +1,5 @@
 import { WEEKDAYS, PROFICIENCY_OPTIONS, ADULT_PROFICIENCY_OPTIONS, INTEREST_OPTIONS, RELATIONSHIP_OPTIONS, type Weekday } from './minorFormContent';
+import { convertLocalSlotToParisParts } from './parisTime';
 
 const NOTION_VERSION = '2022-06-28';
 
@@ -79,7 +80,33 @@ const MINOR_FORM_PROPS = {
   thursday: "Հինգշաբթի ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nJeudi: quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Thursday work best for the participant? Times are listed in your local time.",
   friday: "Ուրբաթ ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nVendredi: quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Friday work best for the participant? Times are listed in your local time.",
   saturday: "Շաբաթ ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nSamedi : quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Saturday work best for the participant? Times are listed in your local time.",
+  monday_paris: "Monday (Paris time)",
+  tuesday_paris: "Tuesday (Paris time)",
+  wednesday_paris: "Wednesday (Paris time)",
+  thursday_paris: "Thursday (Paris time)",
+  friday_paris: "Friday (Paris time)",
+  saturday_paris: "Saturday (Paris time)",
 } as const;
+
+const PARIS_DAY_PROP: Record<Weekday, keyof typeof MINOR_FORM_PROPS> = {
+  monday: 'monday_paris',
+  tuesday: 'tuesday_paris',
+  wednesday: 'wednesday_paris',
+  thursday: 'thursday_paris',
+  friday: 'friday_paris',
+  saturday: 'saturday_paris',
+};
+
+// Each per-day Paris-time column mirrors its source day column row-for-row —
+// same bucket as what the respondent picked locally — with the clock time
+// converted to Paris. Conversion can push the instant onto a different Paris
+// calendar day (e.g. a late Saturday slot in California lands on Sunday in
+// Paris), so that's flagged inline rather than silently mislabeled.
+function formatParisDayValue(sourceWeekday: Weekday, parts: { weekday: string; startTime: string; endTime: string }): string {
+  const sourceCap = sourceWeekday.charAt(0).toUpperCase() + sourceWeekday.slice(1);
+  const range = `${parts.startTime} - ${parts.endTime}`;
+  return parts.weekday === sourceCap ? range : `${range} (${parts.weekday.slice(0, 3)})`;
+}
 
 const FORM_LANGUAGE_LABELS: Record<string, string> = {
   hyw: 'Armenian',
@@ -177,6 +204,15 @@ export async function syncMinorRegistrationToNotion(params: MinorRegistrationSyn
     const slots = params.availability[day];
     if (slots && slots.length > 0) {
       properties[MINOR_FORM_PROPS[day]] = { multi_select: slots.map((name) => ({ name })) };
+      if (params.timezone) {
+        const parisValues = slots
+          .map((slot) => convertLocalSlotToParisParts(day, slot, params.timezone!))
+          .filter((p): p is NonNullable<typeof p> => !!p)
+          .map((p) => formatParisDayValue(day, p));
+        if (parisValues.length > 0) {
+          properties[MINOR_FORM_PROPS[PARIS_DAY_PROP[day]]] = { multi_select: parisValues.map((name) => ({ name })) };
+        }
+      }
     }
   }
 
