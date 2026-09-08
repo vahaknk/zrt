@@ -234,10 +234,21 @@ try {
     }
   </script>
   <script>
-    let visitorId = localStorage.getItem('zrt_vid');
+    // zrt_vid is capped at 13 months (matching the privacy policy's stated
+    // analytics retention, itself the CNIL's published ceiling for this kind
+    // of first-party audience-measurement identifier) — past that, a visitor
+    // is treated as new rather than tracked indefinitely.
+    const VID_MAX_AGE_MS = 13 * 30 * 24 * 60 * 60 * 1000;
+    let visitorId: string | null = null;
+    try {
+      const stored = JSON.parse(localStorage.getItem('zrt_vid') ?? 'null');
+      if (stored && Date.now() - stored.createdAt < VID_MAX_AGE_MS) {
+        visitorId = stored.id;
+      }
+    } catch {}
     if (!visitorId) {
       visitorId = crypto.randomUUID();
-      localStorage.setItem('zrt_vid', visitorId);
+      localStorage.setItem('zrt_vid', JSON.stringify({ id: visitorId, createdAt: Date.now() }));
     }
     const lang = new URLSearchParams(location.search).get('lang') ?? '';
     fetch('/api/track', {
