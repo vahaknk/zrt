@@ -214,7 +214,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
   function getSectionContent(section: Section, progress: number) {
     const id = Number(section.id);
     if (id === WHAT_IS_SECTION_ID) {
-      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;
+      return <WhatIsZartsantsSection section={section} directusUrl={directusUrl} labels={labels} layout={layout(id)} progress={progress} onNavigateToRegistration={() => scrollToSection('7')} />;
     }
     if (id === SECTION3_ID) {
       return <OurApproachSection section={section} directusUrl={directusUrl} layout={layout(id)} progress={progress} />;

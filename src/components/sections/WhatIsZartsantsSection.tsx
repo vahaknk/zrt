@@ -10,7 +10,9 @@ interface Props {
     translations: Array<{ Header: string; Content: string; languages_id: string }>;
   };
   directusUrl: string;
+  labels: Record<string, string>;
   layout: Record<string, number>;
+  onNavigateToRegistration: () => void;
   progress?: number;
 }
 
@@ -28,7 +30,7 @@ function parseBullets(html: string): string[] {
   return matches.map(m => decodeHtml(m.replace(/<[^>]+>/g, '').trim())).filter(Boolean);
 }
 
-export default function WhatIsZartsantsSection({ section, directusUrl, layout, progress = 1 }: Props) {
+export default function WhatIsZartsantsSection({ section, directusUrl, labels, layout, onNavigateToRegistration, progress = 1 }: Props) {
   const [open, setOpen] = useState(false);
   const [bubbleLoaded, setBubbleLoaded] = useState(false);
   const bubbleRef = useRef<HTMLImageElement>(null);
@@ -117,6 +119,26 @@ export default function WhatIsZartsantsSection({ section, directusUrl, layout, p
           </div>
         </div>
       )}
+
+      {/* "I am interested" button — standalone, in the open space before the bubble */}
+      <button
+        onClick={() => onNavigateToRegistration()}
+        style={{
+          position: 'absolute', top: '50%', left: 320,
+          transform: 'translate(-50%, -50%)',
+          zIndex: 4,
+          background: '#000', color: '#fff',
+          border: 'none', borderRadius: 999,
+          padding: '0.55rem 1.4rem',
+          fontWeight: 500, fontSize: 'calc(20px * var(--font-scale, 1))',
+          cursor: 'pointer', whiteSpace: 'nowrap',
+          fontFamily: 'inherit',
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = '#333')}
+        onMouseLeave={e => (e.currentTarget.style.background = '#000')}
+      >
+        {labels['interested_button'] ?? ''}
+      </button>
 
       {/* Characters illustration */}
       {section.main_image && (
