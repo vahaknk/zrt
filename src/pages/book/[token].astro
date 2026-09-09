@@ -47,7 +47,7 @@ let slots: any[] = [];
 if (!expired) {
   try {
     const res = await adminGet(
-      `/items/intervew_slots?filter[status][_eq]=available&sort[]=start_time&fields=id,start_time,end_time,capacity,notes`
+      `/items/intervew_slots?filter[status][_eq]=available&sort[]=start_time&fields=id,start_time,end_time,capacity,notes&limit=-1`
     );
     slots = (res.data ?? []).filter((s: any) => !isSlotInPast(s.start_time) && isSlotBookable(s.start_time));
   } catch (e) {
