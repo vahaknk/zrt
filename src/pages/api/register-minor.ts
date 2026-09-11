@@ -96,7 +96,9 @@ export const POST: APIRoute = async ({ request }) => {
       participantName,
       participantType,
       participantBirthday: participantBirthdayRaw || null,
-      currentSchool: answers.current_school,
+      // Notion has one shared property for this — school for minors,
+      // profession for adults — matching schoolOrProfession above.
+      currentSchool: schoolOrProfession || null,
       city: answers.city,
       country: answers.country,
       languageProficiency: answers.language_proficiency,

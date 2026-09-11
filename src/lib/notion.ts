@@ -80,12 +80,17 @@ const MINOR_FORM_PROPS = {
   thursday: "Հինգշաբթի ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nJeudi: quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Thursday work best for the participant? Times are listed in your local time.",
   friday: "Ուրբաթ ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nVendredi: quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Friday work best for the participant? Times are listed in your local time.",
   saturday: "Շաբաթ ո՞ր ժամերը յարմար են մասնակիցին համար։ Ժամերը ձեր տեղական ժամով դրուած են։\nSamedi : quand est disponible le/la participant.e? Les heures sont exprimées dans votre fuseau horaire. \nWhich times on Saturday work best for the participant? Times are listed in your local time.",
-  monday_paris: "Monday (Paris time)",
-  tuesday_paris: "Tuesday (Paris time)",
-  wednesday_paris: "Wednesday (Paris time)",
-  thursday_paris: "Thursday (Paris time)",
-  friday_paris: "Friday (Paris time)",
-  saturday_paris: "Saturday (Paris time)",
+  // Renamed in Notion (by a teammate, to match the database's Armenian-first
+  // naming) after these were first created — the property names here must
+  // track whatever they're actually called in Notion right now, or every
+  // write to them fails with a "not a property that exists" error that the
+  // best-effort sync silently swallows.
+  monday_paris: "Երկուշաբթի Ֆր. ժամով՝",
+  tuesday_paris: "Երեքշաբթի Ֆր. ժամով՝",
+  wednesday_paris: "Չորեքշաբթի Ֆր. ժամով՝",
+  thursday_paris: "Հինգշաբթի Ֆր. ժամով՝",
+  friday_paris: "Ուրբաթ Ֆր. ժամով՝",
+  saturday_paris: "Շաբաթ Ֆր. ժամով՝",
 } as const;
 
 const PARIS_DAY_PROP: Record<Weekday, keyof typeof MINOR_FORM_PROPS> = {
