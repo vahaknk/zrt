@@ -1,4 +1,5 @@
 ---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireAdmin } from '../../../lib/platformAuth';
 
 const member = await requireAdmin(Astro.request);
@@ -7,65 +8,52 @@ if (!member) {
 }
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zartsants Platform — Admin</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        background: #9683fe;
-        font-family: system-ui, sans-serif;
-        color: #000;
-        padding: 2rem;
-      }
-      a.back { position: absolute; top: 2rem; left: 2rem; color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
-      h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 2rem; }
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        width: 100%;
-        max-width: 420px;
-      }
-      .btn {
-        display: block;
-        text-align: center;
-        padding: 1.75rem 1rem;
-        background: #fff;
-        border-radius: 12px;
-        text-decoration: none;
-        color: #000;
-        font-weight: 700;
-        font-size: 1.1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-        transition: transform 0.15s;
-      }
-      a.btn:hover { transform: scale(1.03); }
-      .btn .sub {
-        display: block;
-        font-weight: 400;
-        font-size: 0.75rem;
-        margin-top: 0.35rem;
-        opacity: 0.65;
-      }
-    </style>
-  </head>
-  <body>
-    <a class="back" href="/platform">&larr; Back</a>
+<PlatformLayout title="Zartsants Platform — Admin" member={member}>
+  <style>
+    .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .course {
+      display: block;
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    a.course:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
+    .course-banner {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--banner, #f1f0ea);
+    }
+    .course-banner svg { width: 40px; height: 40px; color: #4a3fcf; }
+    .course-body { padding: 0.85rem 1rem 1rem; }
+    .course-title { font-weight: 700; font-size: 0.95rem; }
+    .course-sub { font-size: 0.78rem; color: #797970; margin-top: 0.2rem; }
+
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <div class="container">
     <h1>Admin</h1>
     <div class="grid">
-      <a class="btn" href="/platform/admin/questionnaire">
-        Questionnaire
-        <span class="sub">Availability by timezone</span>
+      <a class="course" href="/platform/admin/questionnaire">
+        <div class="course-banner" style="--banner:#efeaff">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 3v2h6V3M8 10h8M8 14h8M8 18h5"/></svg>
+        </div>
+        <div class="course-body">
+          <div class="course-title">Questionnaire</div>
+          <div class="course-sub">Availability by timezone</div>
+        </div>
       </a>
     </div>
-  </body>
-</html>
+  </div>
+</PlatformLayout>

@@ -1,0 +1,151 @@
+---
+import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
+import { requireMember } from '../../../../lib/platformAuth';
+import { adminGet } from '../../../../lib/directusAdmin';
+import { formatScheduleLabel } from '../../../../lib/calendar';
+import { MONTH_LABELS } from '../../../../lib/minorFormContent';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login');
+}
+
+const id = Number(Astro.params.id);
+const workshop = member.workshop?.id === id ? member.workshop : null;
+if (!workshop) {
+  return Astro.redirect('/platform/library');
+}
+
+const schedule = formatScheduleLabel(workshop.days_of_week, workshop.start_time, workshop.end_time);
+
+interface Material {
+  id: number;
+  type: 'video' | 'audio' | 'reading';
+  label: string;
+  url: string;
+  week_start: string;
+}
+
+let materials: Material[] = [];
+try {
+  const res = await adminGet(
+    `/items/materials?filter[workshop][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,week_start&limit=-1`
+  );
+  materials = res.data ?? [];
+} catch (e) {
+  console.error('Failed to load workshop materials:', e);
+}
+
+const weekGroups = new Map<string, Material[]>();
+for (const m of materials) {
+  const list = weekGroups.get(m.week_start) ?? [];
+  list.push(m);
+  weekGroups.set(m.week_start, list);
+}
+
+const MONTH_SHORT = MONTH_LABELS.hyw;
+function formatWeek(weekStart: string): string {
+  const d = new Date(`${weekStart}T00:00:00`);
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6);
+  return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()} – ${MONTH_SHORT[end.getMonth()]} ${end.getDate()}`;
+}
+
+const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'Audio', reading: 'Reading' };
+---
+
+<PlatformLayout title={`Zartsants Platform — ${workshop.name}`} member={member}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+
+    .hero {
+      background: #efeaff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .hero img { height: 76px; width: auto; flex-shrink: 0; }
+    .hero h1 { font-size: 1.3rem; font-weight: 700; }
+    .hero .schedule { font-size: 0.85rem; color: #4a4460; margin-top: 0.3rem; }
+    .hero .zoom {
+      display: inline-block;
+      margin-top: 0.7rem;
+      background: #fff;
+      color: #4a3fcf;
+      font-weight: 700;
+      font-size: 0.8rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      text-decoration: none;
+    }
+    .hero .zoom:hover { opacity: 0.85; }
+
+    .week { margin-bottom: 1.75rem; }
+    .week-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9a9a94;
+      margin-bottom: 0.75rem;
+    }
+    .sections { display: flex; flex-direction: column; gap: 1rem; }
+    .section { background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 1rem 1.25rem; }
+    .section h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .section ul { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+    .section a { color: #4a3fcf; text-decoration: none; font-size: 0.9rem; }
+    .section a:hover { text-decoration: underline; }
+
+    .empty-state {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      color: #888;
+    }
+  </style>
+
+  <div class="container">
+    <a class="back" href="/platform/library">&larr; Library</a>
+
+    <div class="hero">
+      <img src="/whats_there_pic_2.webp" alt="" />
+      <div>
+        <h1>{workshop.name}</h1>
+        {schedule && <div class="schedule">{schedule}</div>}
+        <a class="zoom" href={workshop.zoom_link} target="_blank" rel="noopener">Join Zoom</a>
+      </div>
+    </div>
+
+    {materials.length === 0 ? (
+      <div class="empty-state">No materials shared yet.</div>
+    ) : (
+      [...weekGroups.entries()].map(([weekStart, items]) => (
+        <div class="week">
+          <div class="week-label">{formatWeek(weekStart)}</div>
+          <div class="sections">
+            {(['video', 'audio', 'reading'] as const).map((type) => {
+              const typeItems = items.filter((m) => m.type === type);
+              if (typeItems.length === 0) return null;
+              return (
+                <div class="section">
+                  <h2>{TYPE_LABEL[type]}</h2>
+                  <ul>
+                    {typeItems.map((m) => (
+                      <li><a href={m.url} target="_blank" rel="noopener">{m.label}</a></li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))
+    )}
+  </div>
+</PlatformLayout>

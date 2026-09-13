@@ -1,4 +1,5 @@
 ---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireAdmin } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 import { convertRange } from '../../../lib/timezone';
@@ -112,55 +113,41 @@ const FORM_LANGUAGE_NAMES: Record<string, string> = { hyw: 'Armenian', fr: 'Fren
 const COLS = 6 + WEEKDAYS.length;
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Zartsants Platform — Questionnaire</title>
-    <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-        min-height: 100vh;
-        background: #9683fe;
-        font-family: system-ui, sans-serif;
-        color: #000;
-      }
-      .page {
-        padding: 2rem clamp(1.5rem, 6vw, 5rem);
-      }
-      a.back { color: #000; text-decoration: none; opacity: 0.7; font-size: 0.9rem; }
-      h1 { font-size: 1.6rem; font-weight: 700; margin: 1rem 0 0.25rem; }
-      p.hint { opacity: 0.7; font-size: 0.9rem; margin-bottom: 1rem; }
-      .tz-picker { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
-      .tz-picker select {
-        padding: 0.4rem 0.6rem;
-        border-radius: 8px;
-        border: 1px solid rgba(0,0,0,0.15);
-        background: #fff;
-        color: #000;
-        font-size: 0.9rem;
-        max-width: 360px;
-      }
-      .table-wrap { overflow-x: auto; background: #fff; border-radius: 12px; padding: 1rem; }
-      table { border-collapse: collapse; width: 100%; min-width: 900px; }
-      th, td { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.85rem; vertical-align: top; border-bottom: 1px solid rgba(0,0,0,0.08); }
-      th { font-weight: 700; white-space: nowrap; }
-      td.slots { white-space: nowrap; }
-      .empty { opacity: 0.35; }
-      tr.main-row { cursor: pointer; }
-      tr.main-row:hover { background: rgba(107,92,230,0.05); }
-      .chev { display: inline-block; width: 1rem; opacity: 0.5; }
-      .id-col { font-family: ui-monospace, monospace; opacity: 0.5; }
-      tr.detail-row td { background: #faf9ff; border-bottom: 1px solid rgba(0,0,0,0.08); }
-      .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem 1.5rem; padding: 0.5rem 0; }
-      .detail-grid dt { font-size: 0.7rem; text-transform: uppercase; opacity: 0.5; margin-bottom: 0.15rem; }
-      .detail-grid dd { font-size: 0.85rem; }
-    </style>
-  </head>
-  <body>
-    <div class="page">
-    <a class="back" href="/platform/admin">&larr; Back</a>
+<PlatformLayout title="Zartsants Platform — Questionnaire" member={member}>
+  <style>
+    .container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin: 0 0 0.25rem; }
+    p.hint { color: #797970; font-size: 0.85rem; margin-bottom: 1.25rem; }
+    .tz-picker { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.5rem; font-size: 0.9rem; }
+    .tz-picker select {
+      padding: 0.4rem 0.6rem;
+      border-radius: 8px;
+      border: 1px solid #e9e9e4;
+      background: #fff;
+      color: #1a1a1a;
+      font-size: 0.9rem;
+      max-width: 360px;
+    }
+    .table-wrap { overflow-x: auto; background: #fff; border: 1px solid #e9e9e4; border-radius: 14px; padding: 1rem; }
+    table { border-collapse: collapse; width: 100%; min-width: 900px; }
+    th, td { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.85rem; vertical-align: top; border-bottom: 1px solid #ececea; }
+    th { font-weight: 700; white-space: nowrap; }
+    td.slots { white-space: nowrap; }
+    .empty { color: #b8b8b0; }
+    tr.main-row { cursor: pointer; }
+    tr.main-row:hover { background: #faf9ff; }
+    .chev { display: inline-block; width: 1rem; color: #999; }
+    .id-col { font-family: ui-monospace, monospace; color: #999; }
+    tr.detail-row td { background: #faf9ff; border-bottom: 1px solid #ececea; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem 1.5rem; padding: 0.5rem 0; }
+    .detail-grid dt { font-size: 0.7rem; text-transform: uppercase; color: #9a9a94; margin-bottom: 0.15rem; }
+    .detail-grid dd { font-size: 0.85rem; }
+  </style>
+
+  <div class="container">
+    <a class="back" href="/platform/admin">&larr; Admin</a>
     <h1>Questionnaire availability</h1>
     <p class="hint">Times converted from each respondent's selected timezone to the timezone below. Click a row for the rest of their answers.</p>
 
@@ -197,7 +184,7 @@ const COLS = 6 + WEEKDAYS.length;
                 >
                   <td><span class="chev">▸</span></td>
                   <td class="id-col">{r.refId}</td>
-                  <td>{r.participant_name}<br /><span style="opacity:0.5">{r.email}</span></td>
+                  <td>{r.participant_name}<br /><span style="color:#999">{r.email}</span></td>
                   <td>{r.respondent_name ?? '—'}</td>
                   <td>{r.participant_type ?? '—'}</td>
                   <td>{timezoneLabel(r.timezone)}</td>
@@ -235,11 +222,10 @@ const COLS = 6 + WEEKDAYS.length;
             );
           })}
           {rows.length === 0 && (
-            <tr><td colspan={COLS} style="opacity:0.5">No questionnaire responses with availability yet.</td></tr>
+            <tr><td colspan={COLS} style="color:#999">No questionnaire responses with availability yet.</td></tr>
           )}
         </tbody>
       </table>
     </div>
-    </div>
-  </body>
-</html>
+  </div>
+</PlatformLayout>

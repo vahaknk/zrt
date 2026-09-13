@@ -1,0 +1,81 @@
+---
+export interface Props {
+  title: string;
+  member: { full_name: string; is_admin: boolean };
+}
+
+const { title, member } = Astro.props;
+const pathname = Astro.url.pathname;
+const isActive = (path: string, exact = false) => (exact ? pathname === path : pathname.startsWith(path));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        min-height: 100vh;
+        background: #f6f6f4;
+        font-family: system-ui, sans-serif;
+        color: #1a1a1a;
+      }
+      .topbar {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 0.5rem 1.5rem;
+        background: #fff;
+        border-bottom: 1px solid #eaeae6;
+        flex-wrap: wrap;
+      }
+      .brand { display: flex; align-items: center; flex-shrink: 0; }
+      .brand img { height: 100px; width: auto; display: block; }
+      .nav { display: flex; align-items: center; gap: 1.25rem; flex: 1; min-width: 0; overflow-x: auto; }
+      .nav a {
+        color: #666;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem;
+        white-space: nowrap;
+        padding: 0.35rem 0;
+        border-bottom: 2px solid transparent;
+      }
+      .nav a:hover { color: #1a1a1a; }
+      .nav a.active { color: #1a1a1a; border-bottom-color: #9683fe; }
+      .who { display: flex; align-items: center; gap: 1rem; font-size: 0.85rem; color: #555; flex-shrink: 0; }
+      .who .name { white-space: nowrap; }
+      .who .logout { color: #555; text-decoration: none; white-space: nowrap; }
+      .who .logout:hover { text-decoration: underline; }
+
+      @media (max-width: 640px) {
+        .brand img { height: 64px; }
+        .who .name { display: none; }
+        .nav { order: 3; flex-basis: 100%; gap: 1rem; padding-top: 0.15rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="/platform">
+        <img src="/zartsants-logo.svg" alt="Zartsants" />
+      </a>
+      <nav class="nav">
+        <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>Բուն էջ</a>
+        <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>Օրացոյց</a>
+        <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>Գրադարան</a>
+        {member.is_admin && (
+          <a href="/platform/admin" class={isActive('/platform/admin') ? 'active' : undefined}>Փեթակ</a>
+        )}
+      </nav>
+      <div class="who">
+        <span class="name">{member.full_name}</span>
+        <a class="logout" href="/api/platform/logout">Log out</a>
+      </div>
+    </header>
+    <slot />
+  </body>
+</html>

@@ -1,0 +1,95 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import { requireMember } from '../../../lib/platformAuth';
+import { formatScheduleLabel } from '../../../lib/calendar';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login');
+}
+
+const workshop = member.workshop;
+const workshopSchedule = workshop ? formatScheduleLabel(workshop.days_of_week, workshop.start_time, workshop.end_time) : null;
+
+const clouds = member.clouds.map((c) => c.clouds_id);
+---
+
+<PlatformLayout title="Zartsants Platform — Library" member={member}>
+  <style>
+    .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .course {
+      display: block;
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    a.course:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
+    .course-banner {
+      height: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--banner, #f1f0ea);
+    }
+    .course-banner img { height: 62px; width: auto; display: block; }
+    .course-body { padding: 0.85rem 1rem 1rem; }
+    .course-title { font-weight: 700; font-size: 0.95rem; }
+    .course-sub { font-size: 0.78rem; color: #797970; margin-top: 0.2rem; }
+
+    .empty-state {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      color: #888;
+    }
+
+    @media (max-width: 480px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <div class="container">
+    <h1>Library</h1>
+
+    {!workshop && clouds.length === 0 ? (
+      <div class="empty-state">No workshop or cloud assigned yet.</div>
+    ) : (
+      <div class="grid">
+        {workshop && (
+          <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
+            <div class="course-banner" style="--banner:#efeaff">
+              <img src="/whats_there_pic_2.webp" alt="" />
+            </div>
+            <div class="course-body">
+              <div class="course-title">{workshop.name}</div>
+              <div class="course-sub">{workshopSchedule ?? 'Workshop'}</div>
+            </div>
+          </a>
+        )}
+        {clouds.map((cloud) => {
+          const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
+          return (
+            <a class="course" href={`/platform/library/cloud/${cloud.id}`}>
+              <div class="course-banner" style="--banner:#fff6d6">
+                <img src="/bird.png" alt="" />
+              </div>
+              <div class="course-body">
+                <div class="course-title">{cloud.name}</div>
+                <div class="course-sub">{schedule ?? 'Cloud'}</div>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</PlatformLayout>

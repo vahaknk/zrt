@@ -14,6 +14,25 @@ export function parseDays(csv: string | null): Weekday[] {
     .filter((s): s is Weekday => (WEEKDAY_ORDER as readonly string[]).includes(s));
 }
 
+const WEEKDAY_LABEL: Record<Weekday, string> = {
+  monday: 'Monday',
+  tuesday: 'Tuesday',
+  wednesday: 'Wednesday',
+  thursday: 'Thursday',
+  friday: 'Friday',
+  saturday: 'Saturday',
+  sunday: 'Sunday',
+};
+
+// Days/time as stored in Directus are Paris time — surfaced as-is with a
+// label rather than converted, matching how the booking page shows Paris time.
+export function formatScheduleLabel(csv: string | null, startTime: string | null, endTime: string | null): string | null {
+  const days = parseDays(csv);
+  if (days.length === 0 || !startTime || !endTime) return null;
+  const dayLabel = days.map((d) => WEEKDAY_LABEL[d]).join(' & ');
+  return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} (Paris time)`;
+}
+
 export function timeToMinutes(time: string | null): number | null {
   if (!time) return null;
   const [h, m] = time.split(':').map(Number);
