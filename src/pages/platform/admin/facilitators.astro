@@ -1,0 +1,200 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import { requireAdmin } from '../../../lib/platformAuth';
+import { adminGet } from '../../../lib/directusAdmin';
+
+const member = await requireAdmin(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform');
+}
+
+let workshops: { id: number; name: string }[] = [];
+let clouds: { id: number; name: string }[] = [];
+let facilitators: { id: number; full_name: string; email: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
+
+try {
+  const [workshopsRes, cloudsRes, facilitatorsRes] = await Promise.all([
+    adminGet(`/items/workshops?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
+    adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
+    adminGet(
+      `/items/platform_members?filter[_or][0][facilitates_workshop][_nnull]=true&filter[_or][1][facilitates_cloud][_nnull]=true` +
+        `&fields=id,full_name,email,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
+    ),
+  ]);
+  workshops = workshopsRes.data ?? [];
+  clouds = cloudsRes.data ?? [];
+  facilitators = facilitatorsRes.data ?? [];
+} catch (e) {
+  console.error('Failed to load facilitators admin data:', e);
+}
+---
+
+<PlatformLayout title="Zartsants Platform — Admin: Facilitators" member={member}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
+    form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
+    form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
+    form input, form select {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #e0e0da;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    form select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 11px;
+      padding-right: 2rem;
+    }
+    form .full { grid-column: 1 / -1; }
+    form button {
+      grid-column: 1 / -1;
+      padding: 0.6rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    form button:disabled { opacity: 0.6; cursor: default; }
+    .msg { grid-column: 1 / -1; font-size: 0.85rem; }
+    .msg.error { color: #c00; }
+    .msg.success { color: #00691e; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 0.5rem 0.5rem; font-size: 0.85rem; border-bottom: 1px solid #ececea; }
+    th { color: #9a9a94; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em; }
+
+    @media (max-width: 480px) {
+      form { grid-template-columns: 1fr; }
+    }
+  </style>
+
+  <div class="container">
+    <a class="back" href="/platform/admin">&larr; Admin</a>
+    <h1>Facilitators</h1>
+
+    <div class="card">
+      <h2>Create facilitator account</h2>
+      <form id="create-form">
+        <div>
+          <label>Full name</label>
+          <input type="text" name="full_name" required />
+        </div>
+        <div>
+          <label>Email</label>
+          <input type="email" name="email" required />
+        </div>
+        <div>
+          <label>Initial password</label>
+          <input type="text" name="password" required />
+        </div>
+        <div>
+          <label>Assign to</label>
+          <select name="target" required>
+            <option value="" disabled selected>Select a workshop or cloud…</option>
+            {workshops.length > 0 && (
+              <optgroup label="Workshops">
+                {workshops.map((w) => <option value={`workshop:${w.id}`}>{w.name}</option>)}
+              </optgroup>
+            )}
+            {clouds.length > 0 && (
+              <optgroup label="Clouds">
+                {clouds.map((c) => <option value={`cloud:${c.id}`}>{c.name}</option>)}
+              </optgroup>
+            )}
+          </select>
+        </div>
+        <p class="msg" hidden></p>
+        <button type="submit">Create facilitator</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Current facilitators</h2>
+      {facilitators.length === 0 ? (
+        <p style="color:#888;font-size:0.9rem;">None yet.</p>
+      ) : (
+        <table>
+          <thead><tr><th>Name</th><th>Email</th><th>Assigned to</th></tr></thead>
+          <tbody>
+            {facilitators.map((f) => (
+              <tr>
+                <td>{f.full_name}</td>
+                <td>{f.email}</td>
+                <td>{f.facilitates_workshop?.name ?? f.facilitates_cloud?.name ?? '—'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('create-form') as HTMLFormElement;
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = form.querySelector<HTMLParagraphElement>('.msg')!;
+      msg.hidden = true;
+      msg.className = 'msg';
+      const submitBtn = form.querySelector<HTMLButtonElement>('button')!;
+      submitBtn.disabled = true;
+
+      const fd = new FormData(form);
+      const [kind, id] = String(fd.get('target')).split(':');
+      const payload: Record<string, unknown> = {
+        full_name: fd.get('full_name'),
+        email: fd.get('email'),
+        password: fd.get('password'),
+      };
+      if (kind === 'workshop') payload.workshop_id = Number(id);
+      else if (kind === 'cloud') payload.cloud_id = Number(id);
+
+      try {
+        const res = await fetch('/api/platform/create-facilitator', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.textContent = `Created — ${data.email} / ${data.password} (relay this, it won't be shown again)`;
+          msg.classList.add('success');
+          msg.hidden = false;
+          form.reset();
+        } else {
+          msg.textContent = data.error ?? 'Failed to create facilitator';
+          msg.classList.add('error');
+          msg.hidden = false;
+        }
+      } catch {
+        msg.textContent = 'Failed to create facilitator';
+        msg.classList.add('error');
+        msg.hidden = false;
+      }
+      submitBtn.disabled = false;
+    });
+  </script>
+</PlatformLayout>

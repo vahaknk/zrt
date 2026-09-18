@@ -38,7 +38,7 @@ export function sessionCookieOptions() {
 
 export { SESSION_COOKIE };
 
-interface Member {
+export interface Member {
   id: number;
   email: string;
   full_name: string;
@@ -65,6 +65,29 @@ interface Member {
       end_time: string | null;
     };
   }>;
+  facilitates_workshop: { id: number; name: string } | null;
+  facilitates_cloud: { id: number; name: string } | null;
+}
+
+// A facilitator is any member assigned to run a workshop or cloud —
+// derived from the assignment itself rather than a separate flag, so the
+// two can never drift out of sync.
+export function isFacilitator(member: Pick<Member, 'facilitates_workshop' | 'facilitates_cloud'>): boolean {
+  return !!(member.facilitates_workshop || member.facilitates_cloud);
+}
+
+// Shared by the materials and schedule-override endpoints: only an admin,
+// or the facilitator actually assigned to the workshop/cloud in question,
+// may manage it.
+export function canManageWorkshopOrCloud(
+  member: Pick<Member, 'is_admin' | 'facilitates_workshop' | 'facilitates_cloud'>,
+  workshop: number | null,
+  cloud: number | null
+): boolean {
+  if (member.is_admin) return true;
+  if (workshop && member.facilitates_workshop?.id === workshop) return true;
+  if (cloud && member.facilitates_cloud?.id === cloud) return true;
+  return false;
 }
 
 function getCookie(request: Request, name: string): string | null {
@@ -93,7 +116,8 @@ export async function requireMember(request: Request): Promise<Member | null> {
         `workshop.days_of_week,workshop.start_time,workshop.end_time,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
-        `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time&limit=1`
+        `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +
+        `facilitates_workshop.id,facilitates_workshop.name,facilitates_cloud.id,facilitates_cloud.name&limit=1`
     );
     return res.data?.[0] ?? null;
   } catch {

@@ -42,3 +42,14 @@ export async function adminPost(path: string, body: object) {
   }
   return res.json();
 }
+
+export async function adminDelete(path: string) {
+  const res = await fetch(`${DIRECTUS_URL}${path}`, {
+    method: 'DELETE',
+    headers: headers(),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Directus DELETE ${path} → ${res.status}: ${text}`);
+  }
+}

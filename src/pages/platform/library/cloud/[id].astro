@@ -37,6 +37,19 @@ try {
   console.error('Failed to load cloud materials:', e);
 }
 
+let facilitators: { full_name: string }[] = [];
+let participants: { full_name: string }[] = [];
+try {
+  const [facilitatorsRes, participantsRes] = await Promise.all([
+    adminGet(`/items/platform_members?filter[facilitates_cloud][_eq]=${id}&sort=full_name&fields=full_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name&limit=-1`),
+  ]);
+  facilitators = facilitatorsRes.data ?? [];
+  participants = participantsRes.data ?? [];
+} catch (e) {
+  console.error('Failed to load cloud roster:', e);
+}
+
 const weekGroups = new Map<string, Material[]>();
 for (const m of materials) {
   const list = weekGroups.get(m.week_start) ?? [];
@@ -109,6 +122,17 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
       text-align: center;
       color: #888;
     }
+
+    .roster { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.75rem; }
+    .roster .section h2 { display: flex; align-items: center; justify-content: space-between; }
+    .roster .count { font-weight: 400; color: #9a9a94; font-size: 0.8rem; }
+    .roster .names { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .roster .names span {
+      background: #f6f6f4;
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.85rem;
+    }
   </style>
 
   <div class="container">
@@ -120,6 +144,25 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
         <h1>{cloud.name}</h1>
         {schedule && <div class="schedule">{schedule}</div>}
         <a class="zoom" href={cloud.bundle.zoom_link} target="_blank" rel="noopener">Join Zoom</a>
+      </div>
+    </div>
+
+    <div class="roster">
+      <div class="section">
+        <h2>Ուղեկից <span class="count">{facilitators.length}</span></h2>
+        {facilitators.length === 0 ? (
+          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">Not assigned yet.</p>
+        ) : (
+          <div class="names">{facilitators.map((f) => <span>{f.full_name}</span>)}</div>
+        )}
+      </div>
+      <div class="section">
+        <h2>Մասնակիցներ <span class="count">{participants.length}</span></h2>
+        {participants.length === 0 ? (
+          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">No one enrolled yet.</p>
+        ) : (
+          <div class="names">{participants.map((p) => <span>{p.full_name}</span>)}</div>
+        )}
       </div>
     </div>
 

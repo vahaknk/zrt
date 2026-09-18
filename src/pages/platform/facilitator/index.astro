@@ -1,0 +1,397 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import { requireMember } from '../../../lib/platformAuth';
+import { adminGet } from '../../../lib/directusAdmin';
+import { MONTH_LABELS } from '../../../lib/minorFormContent';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login');
+}
+if (!member.facilitates_workshop && !member.facilitates_cloud) {
+  return Astro.redirect('/platform');
+}
+
+interface Material {
+  id: number;
+  type: 'video' | 'audio' | 'reading';
+  label: string;
+  url: string;
+  week_start: string;
+}
+
+interface Override {
+  id: number;
+  date: string;
+  note: string | null;
+}
+
+interface Assignment {
+  kind: 'workshop' | 'cloud';
+  id: number;
+  name: string;
+  materials: Material[];
+  weekGroups: Map<string, Material[]>;
+  overrides: Override[];
+}
+
+const assignments: Assignment[] = [];
+
+for (const [kind, target] of [
+  ['workshop', member.facilitates_workshop] as const,
+  ['cloud', member.facilitates_cloud] as const,
+]) {
+  if (!target) continue;
+  let materials: Material[] = [];
+  let overrides: Override[] = [];
+  try {
+    const [materialsRes, overridesRes] = await Promise.all([
+      adminGet(
+        `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,week_start&limit=-1`
+      ),
+      adminGet(
+        `/items/schedule_overrides?filter[${kind}][_eq]=${target.id}&filter[active][_eq]=true&sort=-date&fields=id,date,note&limit=-1`
+      ),
+    ]);
+    materials = materialsRes.data ?? [];
+    overrides = overridesRes.data ?? [];
+  } catch (e) {
+    console.error(`Failed to load ${kind} data:`, e);
+  }
+  const weekGroups = new Map<string, Material[]>();
+  for (const m of materials) {
+    const list = weekGroups.get(m.week_start) ?? [];
+    list.push(m);
+    weekGroups.set(m.week_start, list);
+  }
+  assignments.push({ kind, id: target.id, name: target.name, materials, weekGroups, overrides });
+}
+
+const MONTH_SHORT = MONTH_LABELS.hyw;
+function formatWeek(weekStart: string): string {
+  const d = new Date(`${weekStart}T00:00:00`);
+  const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 6);
+  return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()} – ${MONTH_SHORT[end.getMonth()]} ${end.getDate()}`;
+}
+
+const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'Audio', reading: 'Reading' };
+---
+
+<PlatformLayout title="Zartsants Platform — Ուղեկից" member={member}>
+  <style>
+    .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.75rem; }
+
+    .assignment { margin-bottom: 2.5rem; }
+    .assignment-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+
+    .add-form {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+    .add-form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
+    .add-form input, .add-form select {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #e0e0da;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: #fff;
+    }
+    .add-form select {
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.75rem center;
+      background-size: 11px;
+      padding-right: 2rem;
+    }
+    .add-form .full { grid-column: 1 / -1; }
+    .add-form button {
+      grid-column: 1 / -1;
+      padding: 0.6rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .add-form button:disabled { opacity: 0.6; cursor: default; }
+    .add-form .error { grid-column: 1 / -1; color: #c00; font-size: 0.85rem; }
+
+    .week { margin-bottom: 1.5rem; }
+    .week-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #9a9a94;
+      margin-bottom: 0.75rem;
+    }
+    .sections { display: flex; flex-direction: column; gap: 1rem; }
+    .section { background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 1rem 1.25rem; }
+    .section h2 { font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem; }
+    .section ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .section li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+    .section a { color: #4a3fcf; text-decoration: none; font-size: 0.9rem; }
+    .section a:hover { text-decoration: underline; }
+    .section .remove { color: #b8b8b0; background: none; border: none; cursor: pointer; font-size: 0.85rem; font-family: inherit; padding: 0; }
+    .section .remove:hover { color: #c00; }
+
+    .empty-state { color: #888; font-size: 0.9rem; }
+
+    .sub-heading { font-size: 0.95rem; font-weight: 700; margin: 1.75rem 0 0.75rem; }
+    .override-form {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 0.75rem;
+    }
+    .override-form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
+    .override-form input {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid #e0e0da;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+    .override-form .full { grid-column: 1 / -1; }
+    .override-form button {
+      grid-column: 1 / -1;
+      padding: 0.6rem;
+      background: #1a1a1a;
+      color: #fff;
+      border: none;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .override-form button:disabled { opacity: 0.6; cursor: default; }
+    .override-form .error { grid-column: 1 / -1; color: #c00; font-size: 0.85rem; }
+
+    .overrides-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .override-row {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.9rem;
+    }
+    .override-row .note { color: #797970; font-size: 0.8rem; margin-left: 0.5rem; }
+  </style>
+
+  <div class="container">
+    <h1>Ուղեկից</h1>
+
+    {assignments.map((a) => (
+      <div class="assignment" data-kind={a.kind} data-id={a.id}>
+        <div class="assignment-title">{a.name}</div>
+
+        <form class="add-form" data-kind={a.kind} data-id={a.id}>
+          <div>
+            <label>Week starting</label>
+            <input type="date" name="week_start" required />
+          </div>
+          <div>
+            <label>Type</label>
+            <select name="type" required>
+              <option value="video">Video</option>
+              <option value="audio">Audio</option>
+              <option value="reading">Reading</option>
+            </select>
+          </div>
+          <div class="full">
+            <label>Label</label>
+            <input type="text" name="label" placeholder="e.g. Week 1 recording" required />
+          </div>
+          <div class="full">
+            <label>URL</label>
+            <input type="url" name="url" placeholder="https://…" required />
+          </div>
+          <p class="error" hidden></p>
+          <button type="submit">Add material</button>
+        </form>
+
+        {a.materials.length === 0 ? (
+          <p class="empty-state">No materials shared yet.</p>
+        ) : (
+          <div class="weeks">
+            {[...a.weekGroups.entries()].map(([weekStart, items]) => (
+              <div class="week">
+                <div class="week-label">{formatWeek(weekStart)}</div>
+                <div class="sections">
+                  {(['video', 'audio', 'reading'] as const).map((type) => {
+                    const typeItems = items.filter((m) => m.type === type);
+                    if (typeItems.length === 0) return null;
+                    return (
+                      <div class="section">
+                        <h2>{TYPE_LABEL[type]}</h2>
+                        <ul>
+                          {typeItems.map((m) => (
+                            <li>
+                              <a href={m.url} target="_blank" rel="noopener">{m.label}</a>
+                              <button class="remove" data-id={m.id} type="button">Remove</button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div class="sub-heading">Cancel a session</div>
+        <form class="override-form" data-kind={a.kind} data-id={a.id}>
+          <div>
+            <label>Date</label>
+            <input type="date" name="date" required />
+          </div>
+          <div>
+            <label>Note (optional)</label>
+            <input type="text" name="note" placeholder="e.g. I'm unavailable" />
+          </div>
+          <p class="error" hidden></p>
+          <button type="submit">Cancel this session</button>
+        </form>
+
+        {a.overrides.length > 0 && (
+          <div class="overrides-list">
+            {a.overrides.map((o) => (
+              <div class="override-row">
+                <span>{o.date}{o.note && <span class="note">{o.note}</span>}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+
+  <script>
+    document.querySelectorAll<HTMLFormElement>('.add-form').forEach((form) => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = form.querySelector<HTMLParagraphElement>('.error')!;
+        errorEl.hidden = true;
+        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+        submitBtn.disabled = true;
+
+        const kind = form.dataset.kind;
+        const id = Number(form.dataset.id);
+        const fd = new FormData(form);
+        const payload: Record<string, unknown> = {
+          week_start: fd.get('week_start'),
+          type: fd.get('type'),
+          label: fd.get('label'),
+          url: fd.get('url'),
+        };
+        if (kind === 'workshop') payload.workshop = id;
+        else payload.cloud = id;
+
+        try {
+          const res = await fetch('/api/platform/materials', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            const data = await res.json().catch(() => ({}));
+            errorEl.textContent = data.error ?? 'Failed to add material';
+            errorEl.hidden = false;
+          }
+        } catch {
+          errorEl.textContent = 'Failed to add material';
+          errorEl.hidden = false;
+        }
+        submitBtn.disabled = false;
+      });
+    });
+
+    document.querySelectorAll<HTMLFormElement>('.override-form').forEach((form) => {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = form.querySelector<HTMLParagraphElement>('.error')!;
+        errorEl.hidden = true;
+        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+        submitBtn.disabled = true;
+
+        const kind = form.dataset.kind;
+        const id = Number(form.dataset.id);
+        const fd = new FormData(form);
+        const payload: Record<string, unknown> = {
+          date: fd.get('date'),
+          note: fd.get('note') || null,
+        };
+        if (kind === 'workshop') payload.workshop_id = id;
+        else payload.cloud_id = id;
+
+        try {
+          const res = await fetch('/api/platform/schedule-override', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            const data = await res.json().catch(() => ({}));
+            errorEl.textContent = data.error ?? 'Failed to cancel session';
+            errorEl.hidden = false;
+          }
+        } catch {
+          errorEl.textContent = 'Failed to cancel session';
+          errorEl.hidden = false;
+        }
+        submitBtn.disabled = false;
+      });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('.remove').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        if (!confirm('Remove this material?')) return;
+        const id = Number(btn.dataset.id);
+        btn.disabled = true;
+        try {
+          const res = await fetch('/api/platform/materials', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+          });
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            btn.disabled = false;
+          }
+        } catch {
+          btn.disabled = false;
+        }
+      });
+    });
+  </script>
+</PlatformLayout>
