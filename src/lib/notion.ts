@@ -31,7 +31,11 @@ export async function syncBookingToNotion(params: BookingSyncParams): Promise<vo
   };
 
   if (params.city) {
-    properties['Քաղաք'] = { select: { name: params.city } };
+    // Notion select options can't contain a comma — a free-text city like
+    // "Canton, MI, USA" fails the whole page-creation request, which the
+    // best-effort catch below then silently swallows. Matches the same fix
+    // already applied to TIMEZONE_LABELS.
+    properties['Քաղաք'] = { select: { name: params.city.replace(/,\s*/g, ' / ') } };
   }
   if (params.interviewLanguage) {
     const label = LANGUAGE_LABELS[params.interviewLanguage] ?? params.interviewLanguage;
