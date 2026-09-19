@@ -9,10 +9,17 @@ interface Registration {
 interface Member {
   id: number;
   full_name: string;
+  armenian_name: string | null;
   email: string;
   registration_request: number;
   workshop: { id: number; name: string } | null;
   clouds: Array<{ clouds_id: { id: number; name: string } }>;
+}
+
+// Kept local (not imported from lib/platformAuth) so this client-hydrated
+// component never pulls in that module's Node-only crypto imports.
+function displayName(person: { full_name: string; armenian_name?: string | null }): string {
+  return person.armenian_name?.trim() || person.full_name;
 }
 
 interface Workshop {
@@ -95,7 +102,7 @@ export default function PlatformAdminPanel({ pw, enrolledRegistrations, members:
         setCreateResult({ username: data.username, password: data.password });
         const reg = enrolledRegistrations.find((r) => r.id === Number(regId));
         if (reg) {
-          const newMember: Member = { id: data.id, full_name: reg.full_name, email: reg.email, registration_request: reg.id, workshop: null, clouds: [] };
+          const newMember: Member = { id: data.id, full_name: reg.full_name, armenian_name: null, email: reg.email, registration_request: reg.id, workshop: null, clouds: [] };
           setMembers((m) => [...m, newMember]);
           setAssignState((s) => ({ ...s, [data.id]: { workshop: '', clouds: new Set() } }));
         }
@@ -193,7 +200,7 @@ export default function PlatformAdminPanel({ pw, enrolledRegistrations, members:
             const state = assignState[m.id] ?? { workshop: '', clouds: new Set<number>() };
             return (
               <div key={m.id} style={{ borderTop: '1px solid #eee', padding: '1rem 0' }}>
-                <div style={{ fontWeight: 600 }}>{m.full_name} <span style={{ fontWeight: 400, color: '#888' }}>({m.email})</span></div>
+                <div style={{ fontWeight: 600 }}>{displayName(m)} <span style={{ fontWeight: 400, color: '#888' }}>({m.email})</span></div>
                 <div style={{ marginTop: '0.6rem', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', alignItems: 'flex-start' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '0.8rem', color: '#666', marginBottom: '0.25rem' }}>Workshop</label>

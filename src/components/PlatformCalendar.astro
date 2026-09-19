@@ -44,7 +44,7 @@ try {
 
 const blocks: SessionBlock[] = buildSessionBlocks(workshop, clouds, weekDates);
 const bounds = gridBounds(blocks);
-const PX_PER_MIN = 1.5;
+const PX_PER_MIN = 1;
 const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
 
 const hourMarks: number[] = [];
@@ -166,13 +166,11 @@ const enrichedBlocks = blocks.map((b) => {
   .headers .day-head .date-num { display: block; font-weight: 700; color: inherit; font-size: 1.1rem; margin-top: 0.2rem; }
   .grid-body { display: grid; grid-template-columns: 56px 1fr; position: relative; }
   .hour-col { position: relative; }
-  .hour-col .mark { position: absolute; left: 0; right: 4px; text-align: right; font-size: 0.7rem; color: #999; transform: translateY(-50%); }
   .days-area {
     position: relative;
     background-image: repeating-linear-gradient(to right, rgba(0,0,0,0.06) 0, rgba(0,0,0,0.06) 1px, transparent 1px, transparent calc(100% / 7));
     border-top: 1px solid rgba(0,0,0,0.08);
   }
-  .hline { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.06); }
   .block {
     position: absolute;
     display: block;
@@ -190,8 +188,19 @@ const enrichedBlocks = blocks.map((b) => {
   .block.workshop { background: #6b5ce6; }
   .block.cloud { background: #2e9e4f; }
   .block.cancelled { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5); text-decoration: line-through; }
-  .block .local { text-decoration: none; display: block; font-weight: 600; opacity: 0.9; }
   .block .note { text-decoration: none; display: block; font-style: italic; }
+</style>
+
+<style is:global>
+  /* Astro's default scoped CSS only applies to server-rendered markup — it
+     can't tag elements created later by client-side JS with the scoping
+     attribute. The hour marks, gridlines, and per-block local-time label are
+     all built in the <script> below, so their rules live here instead,
+     namespaced under .pcal (unique to this component) to avoid bleeding
+     into other pages' unrelated classes of the same name. */
+  .pcal .hour-col .mark { position: absolute; left: 0; right: 4px; text-align: right; font-size: 0.7rem; color: #999; transform: translateY(-50%); }
+  .pcal .hline { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.06); }
+  .pcal .block .local { text-decoration: none; display: block; font-weight: 600; opacity: 0.9; }
 </style>
 
 <script>
@@ -205,7 +214,7 @@ const enrichedBlocks = blocks.map((b) => {
   // outside typical daytime hours in Paris, a viewer many hours ahead or
   // behind could see a session's local time cross midnight into the next/
   // previous day while it stays drawn under its original day column.)
-  const PX_PER_MIN = 1.5;
+  const PX_PER_MIN = 1;
 
   function fmtHour(min: number): string {
     const wrapped = ((min % (24 * 60)) + 24 * 60) % (24 * 60);

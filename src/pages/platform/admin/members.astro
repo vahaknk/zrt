@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireAdmin } from '../../../lib/platformAuth';
+import { requireAdmin, displayName } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 
 const member = await requireAdmin(Astro.request);
@@ -11,6 +11,7 @@ if (!member) {
 interface Roster {
   id: number;
   full_name: string;
+  armenian_name: string | null;
   email: string;
   workshop: { id: number } | null;
   clouds: Array<{ clouds_id: { id: number } }>;
@@ -25,7 +26,7 @@ try {
   const [regsRes, membersRes, workshopsRes, cloudsRes] = await Promise.all([
     adminGet(`/items/registration_requests?filter[status][_eq]=enrolled&fields=id,full_name,email&limit=-1`),
     adminGet(
-      `/items/platform_members?fields=id,full_name,email,registration_request,workshop.id,clouds.clouds_id.id&sort=full_name&limit=-1`
+      `/items/platform_members?fields=id,full_name,armenian_name,email,registration_request,workshop.id,clouds.clouds_id.id&sort=full_name&limit=-1`
     ),
     adminGet(`/items/workshops?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
     adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name,bundle.name&sort=name&limit=-1`),
@@ -194,9 +195,9 @@ try {
           {roster.map((m) => {
           const memberCloudIds = new Set(m.clouds.map((c) => c.clouds_id.id));
           return (
-            <div class="roster-row" data-member-id={m.id} data-search={`${m.full_name} ${m.email}`.toLowerCase()}>
+            <div class="roster-row" data-member-id={m.id} data-search={`${m.full_name} ${m.armenian_name ?? ''} ${m.email}`.toLowerCase()}>
               <div>
-                <span class="roster-name">{m.full_name}</span>{' '}
+                <span class="roster-name">{displayName(m)}</span>{' '}
                 <span class="roster-email">({m.email})</span>
               </div>
               <div class="roster-fields">

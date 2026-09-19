@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
-import { requireMember } from '../../../../lib/platformAuth';
+import { requireMember, displayName } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
@@ -43,12 +43,12 @@ try {
   console.error('Failed to load workshop materials:', e);
 }
 
-let facilitators: { full_name: string }[] = [];
-let participants: { full_name: string }[] = [];
+let facilitators: { full_name: string; armenian_name: string | null }[] = [];
+let participants: { full_name: string; armenian_name: string | null }[] = [];
 try {
   const [facilitatorsRes, participantsRes] = await Promise.all([
-    adminGet(`/items/platform_members?filter[facilitates_workshop][_eq]=${id}&sort=full_name&fields=full_name&limit=-1`),
-    adminGet(`/items/platform_members?filter[workshop][_eq]=${id}&sort=full_name&fields=full_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[facilitates_workshop][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[workshop][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
   ]);
   facilitators = facilitatorsRes.data ?? [];
   participants = participantsRes.data ?? [];
@@ -161,7 +161,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
         {facilitators.length === 0 ? (
           <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">Not assigned yet.</p>
         ) : (
-          <div class="names">{facilitators.map((f) => <span>{f.full_name}</span>)}</div>
+          <div class="names">{facilitators.map((f) => <span>{displayName(f)}</span>)}</div>
         )}
       </div>
       <div class="section">
@@ -169,7 +169,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
         {participants.length === 0 ? (
           <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">No one enrolled yet.</p>
         ) : (
-          <div class="names">{participants.map((p) => <span>{p.full_name}</span>)}</div>
+          <div class="names">{participants.map((p) => <span>{displayName(p)}</span>)}</div>
         )}
       </div>
     </div>

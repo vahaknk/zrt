@@ -135,6 +135,7 @@ export function buildSessionBlocks(
 
   if (workshop) {
     for (const entry of workshop.schedule ?? []) {
+      if (!entry) continue;
       const startMin = timeToMinutes(entry.start_time);
       const endMin = timeToMinutes(entry.end_time);
       const wd = entry.day?.trim().toLowerCase() as Weekday | undefined;
@@ -146,6 +147,7 @@ export function buildSessionBlocks(
   }
 
   for (const cloud of clouds) {
+    if (!cloud) continue;
     const startMin = timeToMinutes(cloud.start_time);
     const endMin = timeToMinutes(cloud.end_time);
     const wd = cloud.day_of_week?.trim().toLowerCase() as Weekday | undefined;

@@ -1,7 +1,7 @@
 ---
 import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import PlatformCalendar from '../../components/PlatformCalendar.astro';
-import { requireMember } from '../../lib/platformAuth';
+import { requireMember, displayName } from '../../lib/platformAuth';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -9,7 +9,7 @@ if (!member) {
 }
 
 const workshop = member.workshop;
-const clouds = member.clouds.map((c) => c.clouds_id);
+const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
 ---
 
 <PlatformLayout title="Zartsants Platform" member={member}>
@@ -70,7 +70,7 @@ const clouds = member.clouds.map((c) => c.clouds_id);
   </style>
 
   <div class="container">
-    <h1>Բարեւ, {member.full_name}</h1>
+    <h1>Բարեւ, {displayName(member)}</h1>
 
     <div class="image-row">
       <a class="tile-image" href="/platform/parev">

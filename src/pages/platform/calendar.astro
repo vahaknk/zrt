@@ -8,7 +8,7 @@ if (!member) {
   return Astro.redirect('/platform/login');
 }
 
-const clouds = member.clouds.map((c) => c.clouds_id);
+const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
 ---
 
 <PlatformLayout title="Zartsants Platform — Calendar" member={member}>

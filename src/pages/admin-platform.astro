@@ -15,7 +15,7 @@ if (authed) {
   try {
     const [regsRes, membersRes, workshopsRes, cloudsRes] = await Promise.all([
       adminGet(`/items/registration_requests?filter[status][_eq]=enrolled&fields=id,full_name,email&limit=-1`),
-      adminGet(`/items/platform_members?fields=id,full_name,email,registration_request,workshop.id,workshop.name,clouds.clouds_id.id,clouds.clouds_id.name&limit=-1`),
+      adminGet(`/items/platform_members?fields=id,full_name,armenian_name,email,registration_request,workshop.id,workshop.name,clouds.clouds_id.id,clouds.clouds_id.name&limit=-1`),
       adminGet(`/items/workshops?filter[active][_eq]=true&fields=id,name&sort[]=name&limit=-1`),
       adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name,bundle.name&sort[]=name&limit=-1`),
     ]);

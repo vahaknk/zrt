@@ -71,6 +71,7 @@ export interface Member {
   id: number;
   email: string;
   full_name: string;
+  armenian_name: string | null;
   is_admin: boolean;
   workshop: {
     id: number;
@@ -94,6 +95,14 @@ export interface Member {
   }>;
   facilitates_workshop: { id: number; name: string } | null;
   facilitates_cloud: { id: number; name: string } | null;
+}
+
+// The name to show on the platform — the admin-filled Armenian name when
+// there is one, otherwise whatever name the person registered/was created
+// with (which is already Armenian script for members who don't have a
+// separate Latin registration on file).
+export function displayName(person: { full_name: string; armenian_name?: string | null }): string {
+  return person.armenian_name?.trim() || person.full_name;
 }
 
 // A facilitator is any member assigned to run a workshop or cloud —
@@ -139,7 +148,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,armenian_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +

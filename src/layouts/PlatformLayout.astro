@@ -1,8 +1,11 @@
 ---
+import { displayName } from '../lib/platformAuth';
+
 export interface Props {
   title: string;
   member: {
     full_name: string;
+    armenian_name?: string | null;
     is_admin: boolean;
     facilitates_workshop?: { id: number; name: string } | null;
     facilitates_cloud?: { id: number; name: string } | null;
@@ -80,7 +83,7 @@ const isActive = (path: string, exact = false) => (exact ? pathname === path : p
         )}
       </nav>
       <div class="who">
-        <span class="name">{member.full_name}</span>
+        <span class="name">{displayName(member)}</span>
         <a class="logout" href="/api/platform/logout">Log out</a>
       </div>
     </header>

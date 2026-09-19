@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireAdmin } from '../../../lib/platformAuth';
+import { requireAdmin, displayName } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 
 const member = await requireAdmin(Astro.request);
@@ -10,7 +10,7 @@ if (!member) {
 
 let workshops: { id: number; name: string }[] = [];
 let clouds: { id: number; name: string }[] = [];
-let facilitators: { id: number; full_name: string; username: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
+let facilitators: { id: number; full_name: string; armenian_name: string | null; username: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
 
 try {
   const [workshopsRes, cloudsRes, facilitatorsRes] = await Promise.all([
@@ -18,7 +18,7 @@ try {
     adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
     adminGet(
       `/items/platform_members?filter[_or][0][facilitates_workshop][_nnull]=true&filter[_or][1][facilitates_cloud][_nnull]=true` +
-        `&fields=id,full_name,username,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
+        `&fields=id,full_name,armenian_name,username,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
     ),
   ]);
   workshops = workshopsRes.data ?? [];
@@ -181,7 +181,7 @@ try {
           <tbody>
             {facilitators.map((f) => (
               <tr>
-                <td>{f.full_name}</td>
+                <td>{displayName(f)}</td>
                 <td>{f.username}</td>
                 <td>{f.facilitates_workshop?.name ?? f.facilitates_cloud?.name ?? '—'}</td>
               </tr>

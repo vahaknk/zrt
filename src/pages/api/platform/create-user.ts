@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   let registration: any = null;
   try {
-    const res = await adminGet(`/items/registration_requests/${registration_id}?fields=id,full_name,email`);
+    const res = await adminGet(`/items/registration_requests/${registration_id}?fields=id,full_name,email,armenian_name`);
     registration = res.data;
   } catch {
     return new Response(JSON.stringify({ error: 'Failed to look up registration' }), { status: 500 });
@@ -47,6 +47,7 @@ export const POST: APIRoute = async ({ request }) => {
       registration_request: registration.id,
       email,
       full_name: registration.full_name,
+      armenian_name: registration.armenian_name ?? null,
       username,
       password_hash: passwordHash,
       status: 'active',
