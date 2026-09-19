@@ -3,12 +3,12 @@ import { adminGet, adminPatch } from '../../../lib/directusAdmin';
 import { verifyPassword, generateSessionToken, sessionCookieOptions, SESSION_COOKIE } from '../../../lib/platformAuth';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const { email, password } = await request.json();
+  const { username, password } = await request.json();
 
   let member: any = null;
   try {
     const res = await adminGet(
-      `/items/platform_members?filter[email][_eq]=${encodeURIComponent(String(email ?? '').trim())}&fields=id,email,password_hash,status&limit=1`
+      `/items/platform_members?filter[username][_eq]=${encodeURIComponent(String(username ?? '').trim().toLowerCase())}&fields=id,username,password_hash,status&limit=1`
     );
     member = res.data?.[0] ?? null;
   } catch {
@@ -18,7 +18,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   const validPassword = member ? await verifyPassword(String(password ?? ''), member.password_hash) : false;
 
   if (!member || !validPassword || member.status !== 'active') {
-    return new Response(JSON.stringify({ error: 'Invalid email or password.' }), { status: 401 });
+    return new Response(JSON.stringify({ error: 'Invalid username or password.' }), { status: 401 });
   }
 
   const token = generateSessionToken();

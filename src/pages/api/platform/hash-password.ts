@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { randomBytes } from 'crypto';
-import { hashPassword } from '../../../lib/platformAuth';
+import { hashPassword, generateUniqueUsername } from '../../../lib/platformAuth';
 
 // Internal endpoint for the Directus Flow that auto-creates platform_members
 // on enrollment. Directus's sandboxed "Run Script" operation can't reliably
@@ -10,7 +10,7 @@ import { hashPassword } from '../../../lib/platformAuth';
 // unrestricted Node runtime. If a password is provided, it's hashed as-is
 // (used by the admin-tool create-member flow); otherwise one is generated.
 export const POST: APIRoute = async ({ request }) => {
-  const { pw, password: providedPassword } = await request.json();
+  const { pw, password: providedPassword, full_name } = await request.json();
 
   const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD ?? '';
   if (!ADMIN_PASSWORD || pw !== ADMIN_PASSWORD) {
@@ -20,5 +20,6 @@ export const POST: APIRoute = async ({ request }) => {
   const password = providedPassword || randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
 
   const hash = await hashPassword(password);
-  return new Response(JSON.stringify({ password, hash }), { status: 200 });
+  const username = full_name ? await generateUniqueUsername(full_name) : undefined;
+  return new Response(JSON.stringify({ password, hash, username }), { status: 200 });
 };

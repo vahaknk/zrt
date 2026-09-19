@@ -2,7 +2,7 @@
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
-import { formatScheduleLabel } from '../../../../lib/calendar';
+import { formatWorkshopScheduleLabel } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
 
 const member = await requireMember(Astro.request);
@@ -16,7 +16,7 @@ if (!workshop) {
   return Astro.redirect('/platform/library');
 }
 
-const schedule = formatScheduleLabel(workshop.days_of_week, workshop.start_time, workshop.end_time);
+const schedule = formatWorkshopScheduleLabel(workshop.schedule);
 
 interface Material {
   id: number;
@@ -138,7 +138,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
     <a class="back" href="/platform/library">&larr; Library</a>
 
     <div class="hero">
-      <img src="/whats_there_pic_2.webp" alt="" />
+      <img src="/lamp.png" alt="" />
       <div>
         <h1>{workshop.name}</h1>
         {schedule && <div class="schedule">{schedule}</div>}

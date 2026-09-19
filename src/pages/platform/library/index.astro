@@ -1,7 +1,7 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../lib/platformAuth';
-import { formatScheduleLabel } from '../../../lib/calendar';
+import { formatScheduleLabel, formatWorkshopScheduleLabel } from '../../../lib/calendar';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -9,7 +9,7 @@ if (!member) {
 }
 
 const workshop = member.workshop;
-const workshopSchedule = workshop ? formatScheduleLabel(workshop.days_of_week, workshop.start_time, workshop.end_time) : null;
+const workshopSchedule = workshop ? formatWorkshopScheduleLabel(workshop.schedule) : null;
 
 const clouds = member.clouds.map((c) => c.clouds_id);
 ---
@@ -19,7 +19,8 @@ const clouds = member.clouds.map((c) => c.clouds_id);
     .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
     h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
 
-    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .workshop-row { margin-bottom: 1rem; }
+    .clouds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
     .course {
       display: block;
       background: #fff;
@@ -32,13 +33,13 @@ const clouds = member.clouds.map((c) => c.clouds_id);
     }
     a.course:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); transform: translateY(-1px); }
     .course-banner {
-      height: 100px;
+      height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--banner, #f1f0ea);
     }
-    .course-banner img { height: 62px; width: auto; display: block; }
+    .course-banner img { height: 110px; width: auto; display: block; }
     .course-body { padding: 0.85rem 1rem 1rem; }
     .course-title { font-weight: 700; font-size: 0.95rem; }
     .course-sub { font-size: 0.78rem; color: #797970; margin-top: 0.2rem; }
@@ -52,8 +53,11 @@ const clouds = member.clouds.map((c) => c.clouds_id);
       color: #888;
     }
 
+    @media (max-width: 640px) {
+      .clouds-grid { grid-template-columns: repeat(2, 1fr); }
+    }
     @media (max-width: 480px) {
-      .grid { grid-template-columns: 1fr; }
+      .clouds-grid { grid-template-columns: 1fr; }
     }
   </style>
 
@@ -63,33 +67,39 @@ const clouds = member.clouds.map((c) => c.clouds_id);
     {!workshop && clouds.length === 0 ? (
       <div class="empty-state">No workshop or cloud assigned yet.</div>
     ) : (
-      <div class="grid">
+      <>
         {workshop && (
-          <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
-            <div class="course-banner" style="--banner:#efeaff">
-              <img src="/whats_there_pic_2.webp" alt="" />
-            </div>
-            <div class="course-body">
-              <div class="course-title">{workshop.name}</div>
-              <div class="course-sub">{workshopSchedule ?? 'Workshop'}</div>
-            </div>
-          </a>
-        )}
-        {clouds.map((cloud) => {
-          const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
-          return (
-            <a class="course" href={`/platform/library/cloud/${cloud.id}`}>
-              <div class="course-banner" style="--banner:#fff6d6">
-                <img src="/bird.png" alt="" />
+          <div class="workshop-row">
+            <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
+              <div class="course-banner" style="--banner:#efeaff">
+                <img src="/lamp.png" alt="" />
               </div>
               <div class="course-body">
-                <div class="course-title">{cloud.name}</div>
-                <div class="course-sub">{schedule ?? 'Cloud'}</div>
+                <div class="course-title">{workshop.name}</div>
+                <div class="course-sub">{workshopSchedule ?? 'Workshop'}</div>
               </div>
             </a>
-          );
-        })}
-      </div>
+          </div>
+        )}
+        {clouds.length > 0 && (
+          <div class="clouds-grid">
+            {clouds.map((cloud) => {
+              const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
+              return (
+                <a class="course" href={`/platform/library/cloud/${cloud.id}`}>
+                  <div class="course-banner" style="--banner:#fff6d6">
+                    <img src="/cloud.png" alt="" />
+                  </div>
+                  <div class="course-body">
+                    <div class="course-title">{cloud.name}</div>
+                    <div class="course-sub">{schedule ?? 'Cloud'}</div>
+                  </div>
+                </a>
+              );
+            })}
+          </div>
+        )}
+      </>
     )}
   </div>
 </PlatformLayout>

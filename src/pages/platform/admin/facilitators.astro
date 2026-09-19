@@ -10,7 +10,7 @@ if (!member) {
 
 let workshops: { id: number; name: string }[] = [];
 let clouds: { id: number; name: string }[] = [];
-let facilitators: { id: number; full_name: string; email: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
+let facilitators: { id: number; full_name: string; username: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
 
 try {
   const [workshopsRes, cloudsRes, facilitatorsRes] = await Promise.all([
@@ -18,7 +18,7 @@ try {
     adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
     adminGet(
       `/items/platform_members?filter[_or][0][facilitates_workshop][_nnull]=true&filter[_or][1][facilitates_cloud][_nnull]=true` +
-        `&fields=id,full_name,email,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
+        `&fields=id,full_name,username,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
     ),
   ]);
   workshops = workshopsRes.data ?? [];
@@ -137,12 +137,12 @@ try {
         <p style="color:#888;font-size:0.9rem;">None yet.</p>
       ) : (
         <table>
-          <thead><tr><th>Name</th><th>Email</th><th>Assigned to</th></tr></thead>
+          <thead><tr><th>Name</th><th>Username</th><th>Assigned to</th></tr></thead>
           <tbody>
             {facilitators.map((f) => (
               <tr>
                 <td>{f.full_name}</td>
-                <td>{f.email}</td>
+                <td>{f.username}</td>
                 <td>{f.facilitates_workshop?.name ?? f.facilitates_cloud?.name ?? '—'}</td>
               </tr>
             ))}
@@ -180,7 +180,7 @@ try {
         });
         const data = await res.json();
         if (res.ok) {
-          msg.textContent = `Created — ${data.email} / ${data.password} (relay this, it won't be shown again)`;
+          msg.textContent = `Created — ${data.username} / ${data.password} (relay this, it won't be shown again)`;
           msg.classList.add('success');
           msg.hidden = false;
           form.reset();

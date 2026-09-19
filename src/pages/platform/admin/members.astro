@@ -253,7 +253,7 @@ try {
         });
         const data = await res.json();
         if (res.ok) {
-          msg.textContent = `Created — ${data.email} / ${data.password} (relay this, it won't be shown again)`;
+          msg.textContent = `Created — ${data.username} / ${data.password} (relay this, it won't be shown again)`;
           msg.classList.add('success');
           msg.hidden = false;
           form.reset();

@@ -67,7 +67,7 @@ export default function PlatformAdminPanel({ pw, enrolledRegistrations, members:
   const [regId, setRegId] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [creating, setCreating] = useState(false);
-  const [createResult, setCreateResult] = useState<{ email: string; password: string } | null>(null);
+  const [createResult, setCreateResult] = useState<{ username: string; password: string } | null>(null);
   const [createError, setCreateError] = useState('');
 
   const [assignState, setAssignState] = useState<Record<number, { workshop: string; clouds: Set<number> }>>(
@@ -92,7 +92,7 @@ export default function PlatformAdminPanel({ pw, enrolledRegistrations, members:
       });
       const data = await res.json();
       if (res.ok) {
-        setCreateResult({ email: data.email, password: data.password });
+        setCreateResult({ username: data.username, password: data.password });
         const reg = enrolledRegistrations.find((r) => r.id === Number(regId));
         if (reg) {
           const newMember: Member = { id: data.id, full_name: reg.full_name, email: reg.email, registration_request: reg.id, workshop: null, clouds: [] };
@@ -178,7 +178,7 @@ export default function PlatformAdminPanel({ pw, enrolledRegistrations, members:
         )}
         {createResult && (
           <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#00691e' }}>
-            ✓ Created — {createResult.email} / <strong>{createResult.password}</strong> (relay this to the family, it won't be shown again)
+            ✓ Created — {createResult.username} / <strong>{createResult.password}</strong> (relay this to the family, it won't be shown again)
           </p>
         )}
         {createError && <p style={{ marginTop: '0.75rem', fontSize: '0.9rem', color: '#c00' }}>{createError}</p>}

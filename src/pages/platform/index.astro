@@ -54,14 +54,12 @@ const clouds = member.clouds.map((c) => c.clouds_id);
       transition: transform 0.2s ease;
     }
     .tile-image:hover .tile-image-figure img { transform: translateY(-32px) scale(1.08); }
-    .tile-image-figure svg {
-      width: 70px;
-      height: 70px;
-      color: #4a3fcf;
-      transform: translateY(-8px);
-      transition: transform 0.2s ease;
+    .tile-image-figure img.icon-sm {
+      max-width: 60%;
+      max-height: 60%;
+      transform: translateY(-14px);
     }
-    .tile-image:hover .tile-image-figure svg { transform: translateY(-12px) scale(1.08); }
+    .tile-image:hover .tile-image-figure img.icon-sm { transform: translateY(-18px) scale(1.08); }
     .tile-image-title { padding: 0.85rem 1rem 1rem; font-weight: 700; font-size: 0.95rem; }
 
     @media (max-width: 480px) {
@@ -84,13 +82,7 @@ const clouds = member.clouds.map((c) => c.clouds_id);
         <div class="tile-image-title">Գրադարան</div>
       </a>
       <a class="tile-image" href="/platform/lratu">
-        <div class="tile-image-figure">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
-            <rect x="3" y="4" width="14" height="16" rx="1" />
-            <path d="M7 8h6M7 12h6M7 16h4" />
-            <path d="M17 8h3a1 1 0 0 1 1 1v9a2 2 0 0 1-2 2H7" />
-          </svg>
-        </div>
+        <div class="tile-image-figure"><img class="icon-sm" src="/megaphone.png" alt="" /></div>
         <div class="tile-image-title">Լրատու</div>
       </a>
     </div>

@@ -12,6 +12,31 @@ export async function hashPassword(plain: string): Promise<string> {
   return `scrypt:${salt.toString('hex')}:${derived.toString('hex')}`;
 }
 
+// First name + first letter of last name, e.g. "Ani Petrosyan" -> "anip".
+// No transliteration — a non-Latin name just produces a non-Latin username,
+// which the member can still type fine on their own keyboard/layout.
+export function baseUsername(fullName: string): string {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return 'user';
+  const first = parts[0];
+  const lastInitial = parts.length > 1 ? parts[parts.length - 1][0] : '';
+  const raw = (first + lastInitial).toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  return raw || 'user';
+}
+
+// Appends 2, 3, ... to the base until it finds one nobody else has yet.
+export async function generateUniqueUsername(fullName: string): Promise<string> {
+  const base = baseUsername(fullName);
+  const existing = await adminGet(
+    `/items/platform_members?filter[username][_starts_with]=${encodeURIComponent(base)}&fields=username&limit=-1`
+  );
+  const taken = new Set(((existing.data ?? []) as Array<{ username: string | null }>).map((m) => (m.username ?? '').toLowerCase()));
+  if (!taken.has(base)) return base;
+  let i = 2;
+  while (taken.has(`${base}${i}`)) i++;
+  return `${base}${i}`;
+}
+
 export async function verifyPassword(plain: string, encoded: string): Promise<boolean> {
   const parts = encoded.split(':');
   if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
@@ -49,9 +74,7 @@ export interface Member {
     age_group: string;
     schedule_note: string | null;
     zoom_link: string;
-    days_of_week: string | null;
-    start_time: string | null;
-    end_time: string | null;
+    schedule: Array<{ day: string; start_time: string; end_time: string }> | null;
   } | null;
   clouds: Array<{
     clouds_id: {
@@ -113,7 +136,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
         `&fields=id,email,full_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
-        `workshop.days_of_week,workshop.start_time,workshop.end_time,` +
+        `workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
         `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +

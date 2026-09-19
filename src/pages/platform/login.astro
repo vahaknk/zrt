@@ -59,10 +59,10 @@
   <body>
     <div class="card">
       <h1>Sign In</h1>
-      <p class="error" id="error">Invalid email or password.</p>
+      <p class="error" id="error">Invalid username or password.</p>
       <form id="login-form">
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" required autocomplete="email" />
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" required autocomplete="username" />
         <label for="password">Password</label>
         <input id="password" name="password" type="password" required autocomplete="current-password" />
         <button type="submit" id="submit-btn">Continue</button>
@@ -80,20 +80,20 @@
         submitBtn.disabled = true;
         submitBtn.textContent = '...';
 
-        const email = (document.getElementById('email') as HTMLInputElement).value;
+        const username = (document.getElementById('username') as HTMLInputElement).value;
         const password = (document.getElementById('password') as HTMLInputElement).value;
 
         try {
           const res = await fetch('/api/platform/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ username, password }),
           });
           if (res.ok) {
             window.location.href = '/platform';
           } else {
             const data = await res.json().catch(() => ({}));
-            errorEl.textContent = data.error ?? 'Invalid email or password.';
+            errorEl.textContent = data.error ?? 'Invalid username or password.';
             errorEl.classList.add('visible');
           }
         } catch {

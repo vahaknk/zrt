@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAdmin, hashPassword } from '../../../lib/platformAuth';
+import { requireAdmin, hashPassword, generateUniqueUsername } from '../../../lib/platformAuth';
 import { adminGet, adminPost } from '../../../lib/directusAdmin';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -32,15 +32,17 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const passwordHash = await hashPassword(password);
+    const username = await generateUniqueUsername(fullName);
     const created = await adminPost('/items/platform_members', {
       email,
       full_name: fullName,
+      username,
       password_hash: passwordHash,
       status: 'active',
       facilitates_workshop: workshop_id ? Number(workshop_id) : null,
       facilitates_cloud: cloud_id ? Number(cloud_id) : null,
     });
-    return new Response(JSON.stringify({ success: true, id: created.data.id, email, password }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, id: created.data.id, username, password }), { status: 200 });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message ?? 'Failed to create facilitator' }), { status: 500 });
   }

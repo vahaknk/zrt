@@ -26,11 +26,45 @@ const WEEKDAY_LABEL: Record<Weekday, string> = {
 
 // Days/time as stored in Directus are Paris time — surfaced as-is with a
 // label rather than converted, matching how the booking page shows Paris time.
+// Used for clouds, which still have exactly one day + one time each.
 export function formatScheduleLabel(csv: string | null, startTime: string | null, endTime: string | null): string | null {
   const days = parseDays(csv);
   if (days.length === 0 || !startTime || !endTime) return null;
   const dayLabel = days.map((d) => WEEKDAY_LABEL[d]).join(' & ');
   return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} (Paris time)`;
+}
+
+export interface WorkshopScheduleEntry {
+  day: string;
+  start_time: string;
+  end_time: string;
+}
+
+// Workshops can meet on several days with a different time each — group days
+// that happen to share the same time into one clause so the common case
+// (every day at the same time) still reads as compactly as before.
+export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | null): string | null {
+  if (!schedule || schedule.length === 0) return null;
+
+  const groups = new Map<string, Weekday[]>();
+  for (const entry of schedule) {
+    const day = entry.day.trim().toLowerCase();
+    if (!(WEEKDAY_ORDER as readonly string[]).includes(day)) continue;
+    const key = `${entry.start_time}_${entry.end_time}`;
+    const list = groups.get(key) ?? [];
+    list.push(day as Weekday);
+    groups.set(key, list);
+  }
+  if (groups.size === 0) return null;
+
+  const clauses = [...groups.entries()].map(([key, days]) => {
+    const [start, end] = key.split('_');
+    const sorted = [...days].sort((a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b));
+    const dayLabel = sorted.map((d) => WEEKDAY_LABEL[d]).join(' & ');
+    return `${dayLabel} · ${start.slice(0, 5)}–${end.slice(0, 5)}`;
+  });
+
+  return `${clauses.join(', ')} (Paris time)`;
 }
 
 export function timeToMinutes(time: string | null): number | null {
@@ -55,9 +89,7 @@ function weekdayOf(date: Date): Weekday {
 export interface WorkshopInfo {
   id: number;
   name: string;
-  days_of_week: string | null;
-  start_time: string | null;
-  end_time: string | null;
+  schedule: WorkshopScheduleEntry[] | null;
 }
 
 export interface CloudInfo {
@@ -86,10 +118,11 @@ export function buildSessionBlocks(
   const dateFor = (wd: Weekday) => weekDates.find((d) => weekdayOf(d) === wd) ?? null;
 
   if (workshop) {
-    const startMin = timeToMinutes(workshop.start_time);
-    const endMin = timeToMinutes(workshop.end_time);
-    if (startMin !== null && endMin !== null) {
-      for (const wd of parseDays(workshop.days_of_week)) {
+    for (const entry of workshop.schedule ?? []) {
+      const startMin = timeToMinutes(entry.start_time);
+      const endMin = timeToMinutes(entry.end_time);
+      const wd = entry.day?.trim().toLowerCase() as Weekday | undefined;
+      if (wd && startMin !== null && endMin !== null && (WEEKDAY_ORDER as readonly string[]).includes(wd)) {
         const date = dateFor(wd);
         if (date) blocks.push({ label: workshop.name, date, startMin, endMin, kind: 'workshop', sourceId: workshop.id });
       }

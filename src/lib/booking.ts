@@ -6,7 +6,7 @@
 import { parseParisWallTime } from './parisTime';
 
 const PARIS_TZ = 'Europe/Paris';
-const MIN_LEAD_DAYS = 3;
+const MIN_LEAD_DAYS = 2;
 
 function parisDateStr(date: Date): string {
   return new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ }).format(date);

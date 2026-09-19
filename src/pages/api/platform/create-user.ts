@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAdmin, hashPassword } from '../../../lib/platformAuth';
+import { requireAdmin, hashPassword, generateUniqueUsername } from '../../../lib/platformAuth';
 import { adminGet, adminPost } from '../../../lib/directusAdmin';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -42,14 +42,16 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const passwordHash = await hashPassword(password);
+    const username = await generateUniqueUsername(registration.full_name);
     const created = await adminPost('/items/platform_members', {
       registration_request: registration.id,
       email,
       full_name: registration.full_name,
+      username,
       password_hash: passwordHash,
       status: 'active',
     });
-    return new Response(JSON.stringify({ success: true, id: created.data.id, email, password }), { status: 200 });
+    return new Response(JSON.stringify({ success: true, id: created.data.id, username, password }), { status: 200 });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message ?? 'Failed to create member' }), { status: 500 });
   }

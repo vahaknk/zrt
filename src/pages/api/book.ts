@@ -35,8 +35,8 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   // Re-validate the slot itself server-side — never trust that the frontend's
-  // list was still fresh (the 3-day booking window may have closed since the
-  // page loaded).
+  // list was still fresh (the lead-time booking window may have closed since
+  // the page loaded).
   let slot: any = null;
   try {
     const slotRes = await adminGet(`/items/intervew_slots/${slot_id}?fields=start_time,capacity`);
