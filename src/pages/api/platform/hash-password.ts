@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
-import { randomBytes } from 'crypto';
-import { hashPassword, generateUniqueUsername } from '../../../lib/platformAuth';
+import { hashPassword, generateUniqueUsername, generateRandomPassword } from '../../../lib/platformAuth';
 
 // Internal endpoint for the Directus Flow that auto-creates platform_members
 // on enrollment. Directus's sandboxed "Run Script" operation can't reliably
@@ -17,7 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response('Unauthorized', { status: 401 });
   }
 
-  const password = providedPassword || randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+  const password = providedPassword || generateRandomPassword();
 
   const hash = await hashPassword(password);
   const username = full_name ? await generateUniqueUsername(full_name) : undefined;

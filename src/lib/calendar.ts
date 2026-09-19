@@ -67,6 +67,22 @@ export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | 
   return `${clauses.join(', ')} (Paris time)`;
 }
 
+// Real UTC instant for a recurring weekly Paris day/time, anchored to the
+// nearest occurrence of that weekday from `anchor` — used to let the browser
+// convert a schedule blurb (not tied to a specific calendar date) to local
+// time. DST-correct since the actual date determines the Paris UTC offset.
+export function scheduleEntryInstant(weekday: string, time: string | null, anchor: Date = new Date()): Date | null {
+  const wd = weekday.trim().toLowerCase() as Weekday;
+  if (!(WEEKDAY_ORDER as readonly string[]).includes(wd)) return null;
+  const min = timeToMinutes(time);
+  if (min === null) return null;
+  const anchorIdx = (anchor.getDay() + 6) % 7; // Monday=0
+  const targetIdx = WEEKDAY_ORDER.indexOf(wd);
+  const diff = (targetIdx - anchorIdx + 7) % 7;
+  const date = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + diff);
+  return zonedInstant('Europe/Paris', date, min);
+}
+
 export function timeToMinutes(time: string | null): number | null {
   if (!time) return null;
   const [h, m] = time.split(':').map(Number);

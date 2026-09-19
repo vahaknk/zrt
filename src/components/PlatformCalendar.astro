@@ -195,18 +195,72 @@ const enrichedBlocks = blocks.map((b) => {
 </style>
 
 <script>
-  // Show each block's time in the viewer's own timezone — only the browser
-  // knows that, so this runs after render (the block is positioned in Paris
-  // time server-side, but the label itself is local-only, no Paris shown).
-  document.querySelectorAll('.block').forEach((el) => {
-    const start = el.getAttribute('data-start');
-    const end = el.getAttribute('data-end');
-    if (!start || !end) return;
-    const fmt = (iso: string) =>
-      new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-    const div = document.createElement('span');
-    div.className = 'local';
-    div.textContent = `${fmt(start)}–${fmt(end)}`;
-    el.appendChild(div);
+  // The grid is rendered server-side in Paris time (hour axis + block
+  // positions), because only the browser knows the viewer's own timezone.
+  // Here we recompute the whole grid — hour marks, gridlines, and each
+  // block's vertical position/height and displayed time — from the block's
+  // real UTC instant, so everything lines up in the viewer's local time.
+  // (Simplification: a block's day column stays the one it was scheduled on
+  // in Paris time; only its time-of-day shifts. For sessions scheduled well
+  // outside typical daytime hours in Paris, a viewer many hours ahead or
+  // behind could see a session's local time cross midnight into the next/
+  // previous day while it stays drawn under its original day column.)
+  const PX_PER_MIN = 1.5;
+
+  function fmtHour(min: number): string {
+    const wrapped = ((min % (24 * 60)) + 24 * 60) % (24 * 60);
+    const h = Math.floor(wrapped / 60);
+    const m = wrapped % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+  }
+
+  document.querySelectorAll<HTMLElement>('.pcal .grid-card').forEach((card) => {
+    const gridBody = card.querySelector<HTMLElement>('.grid-body');
+    const hourCol = card.querySelector<HTMLElement>('.hour-col');
+    const daysArea = card.querySelector<HTMLElement>('.days-area');
+    const blockEls = [...card.querySelectorAll<HTMLAnchorElement>('.block')];
+    if (!gridBody || !hourCol || !daysArea || blockEls.length === 0) return;
+
+    const localBlocks = blockEls.map((el) => {
+      const start = new Date(el.dataset.start!);
+      const end = new Date(el.dataset.end!);
+      const startMin = start.getHours() * 60 + start.getMinutes();
+      let endMin = end.getHours() * 60 + end.getMinutes();
+      if (end.toDateString() !== start.toDateString()) endMin += 24 * 60;
+      return { el, startMin, endMin };
+    });
+
+    const BUFFER = 30;
+    const earliest = Math.min(...localBlocks.map((b) => b.startMin));
+    const latest = Math.max(...localBlocks.map((b) => b.endMin));
+    const boundsStart = Math.max(0, Math.floor((earliest - BUFFER) / 30) * 30);
+    const boundsEnd = Math.min(24 * 60, Math.ceil((latest + BUFFER) / 30) * 30);
+
+    gridBody.style.height = `${(boundsEnd - boundsStart) * PX_PER_MIN}px`;
+
+    hourCol.innerHTML = '';
+    daysArea.querySelectorAll('.hline').forEach((el) => el.remove());
+    for (let m = Math.ceil(boundsStart / 60) * 60; m <= boundsEnd; m += 60) {
+      const top = (m - boundsStart) * PX_PER_MIN;
+      const mark = document.createElement('div');
+      mark.className = 'mark';
+      mark.style.top = `${top}px`;
+      mark.textContent = fmtHour(m);
+      hourCol.appendChild(mark);
+
+      const hline = document.createElement('div');
+      hline.className = 'hline';
+      hline.style.top = `${top}px`;
+      daysArea.insertBefore(hline, daysArea.firstChild);
+    }
+
+    for (const { el, startMin, endMin } of localBlocks) {
+      el.style.top = `${(startMin - boundsStart) * PX_PER_MIN}px`;
+      el.style.height = `${Math.max(20, (endMin - startMin) * PX_PER_MIN)}px`;
+      const timeEl = document.createElement('span');
+      timeEl.className = 'local';
+      timeEl.textContent = `${fmtHour(startMin)}–${fmtHour(endMin)}`;
+      el.insertBefore(timeEl, el.querySelector('.note'));
+    }
   });
 </script>

@@ -2,7 +2,7 @@
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
-import { formatScheduleLabel } from '../../../../lib/calendar';
+import { formatScheduleLabel, parseDays, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
 
 const member = await requireMember(Astro.request);
@@ -18,6 +18,13 @@ if (!membership) {
 const cloud = membership.clouds_id;
 
 const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
+const scheduleInstants = parseDays(cloud.day_of_week)
+  .map((day) => {
+    const start = scheduleEntryInstant(day, cloud.start_time);
+    const end = scheduleEntryInstant(day, cloud.end_time);
+    return start && end ? { start: start.toISOString(), end: end.toISOString() } : null;
+  })
+  .filter((e): e is { start: string; end: string } => e !== null);
 
 interface Material {
   id: number;
@@ -142,7 +149,9 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
       <img src="/cloud.png" alt="" />
       <div>
         <h1>{cloud.name}</h1>
-        {schedule && <div class="schedule">{schedule}</div>}
+        {schedule && (
+          <div class="schedule" data-schedule={JSON.stringify(scheduleInstants)}>{schedule}</div>
+        )}
         <a class="zoom" href={cloud.bundle.zoom_link} target="_blank" rel="noopener">Join Zoom</a>
       </div>
     </div>

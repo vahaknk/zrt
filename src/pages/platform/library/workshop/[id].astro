@@ -2,7 +2,7 @@
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
-import { formatWorkshopScheduleLabel } from '../../../../lib/calendar';
+import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
 
 const member = await requireMember(Astro.request);
@@ -17,6 +17,13 @@ if (!workshop) {
 }
 
 const schedule = formatWorkshopScheduleLabel(workshop.schedule);
+const scheduleInstants = (workshop.schedule ?? [])
+  .map((e) => {
+    const start = scheduleEntryInstant(e.day, e.start_time);
+    const end = scheduleEntryInstant(e.day, e.end_time);
+    return start && end ? { start: start.toISOString(), end: end.toISOString() } : null;
+  })
+  .filter((e): e is { start: string; end: string } => e !== null);
 
 interface Material {
   id: number;
@@ -141,7 +148,9 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
       <img src="/lamp.png" alt="" />
       <div>
         <h1>{workshop.name}</h1>
-        {schedule && <div class="schedule">{schedule}</div>}
+        {schedule && (
+          <div class="schedule" data-schedule={JSON.stringify(scheduleInstants)}>{schedule}</div>
+        )}
         <a class="zoom" href={workshop.zoom_link} target="_blank" rel="noopener">Join Zoom</a>
       </div>
     </div>

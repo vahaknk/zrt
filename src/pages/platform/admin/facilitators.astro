@@ -46,7 +46,7 @@ try {
     .card h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; }
     form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem; }
     form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
-    form input, form select {
+    form input, form select, form textarea {
       width: 100%;
       padding: 0.5rem 0.6rem;
       border: 1px solid #e0e0da;
@@ -55,6 +55,7 @@ try {
       font-family: inherit;
       background: #fff;
     }
+    form textarea { resize: vertical; }
     form select {
       appearance: none;
       -webkit-appearance: none;
@@ -132,6 +133,45 @@ try {
     </div>
 
     <div class="card">
+      <h2>Bulk add facilitators</h2>
+      <p style="color:#797970;font-size:0.85rem;margin-bottom:0.75rem;">
+        Upload a CSV (name, email columns) or paste lines below as <code>Full Name, email@example.com</code>. Passwords are generated automatically.
+      </p>
+      <form id="bulk-form">
+        <div class="full">
+          <label>CSV file (optional)</label>
+          <input type="file" id="csv-input" accept=".csv,text/csv" />
+        </div>
+        <div class="full">
+          <label>Facilitators</label>
+          <textarea name="entries" rows="6" required placeholder={"Ani Petrosyan, ani@example.com\nAren Selvioğlu, aren@example.com"}></textarea>
+        </div>
+        <div class="full">
+          <label>Assign all to</label>
+          <select name="target" required>
+            <option value="" disabled selected>Select a workshop or cloud…</option>
+            {workshops.length > 0 && (
+              <optgroup label="Workshops">
+                {workshops.map((w) => <option value={`workshop:${w.id}`}>{w.name}</option>)}
+              </optgroup>
+            )}
+            {clouds.length > 0 && (
+              <optgroup label="Clouds">
+                {clouds.map((c) => <option value={`cloud:${c.id}`}>{c.name}</option>)}
+              </optgroup>
+            )}
+          </select>
+        </div>
+        <p class="msg" hidden></p>
+        <button type="submit">Create facilitators</button>
+      </form>
+      <table id="bulk-results" hidden style="margin-top:1rem;">
+        <thead><tr><th>Name</th><th>Username</th><th>Password</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
       <h2>Current facilitators</h2>
       {facilitators.length === 0 ? (
         <p style="color:#888;font-size:0.9rem;">None yet.</p>
@@ -191,6 +231,118 @@ try {
         }
       } catch {
         msg.textContent = 'Failed to create facilitator';
+        msg.classList.add('error');
+        msg.hidden = false;
+      }
+      submitBtn.disabled = false;
+    });
+
+    const bulkForm = document.getElementById('bulk-form') as HTMLFormElement;
+    const bulkResults = document.getElementById('bulk-results') as HTMLTableElement;
+    const bulkTextarea = bulkForm.querySelector<HTMLTextAreaElement>('textarea[name="entries"]')!;
+    const csvInput = document.getElementById('csv-input') as HTMLInputElement;
+
+    function parseCsvLine(line: string): string[] {
+      const cells: string[] = [];
+      let cur = '';
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
+        if (inQuotes) {
+          if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++; }
+          else if (ch === '"') { inQuotes = false; }
+          else { cur += ch; }
+        } else {
+          if (ch === '"') inQuotes = true;
+          else if (ch === ',') { cells.push(cur); cur = ''; }
+          else cur += ch;
+        }
+      }
+      cells.push(cur);
+      return cells.map((c) => c.trim());
+    }
+
+    csvInput.addEventListener('change', async () => {
+      const file = csvInput.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      const rows = text.split(/\r\n|\r|\n/).map((r) => r.trim()).filter(Boolean).map(parseCsvLine);
+      if (rows.length === 0) return;
+
+      let nameIdx = 0;
+      let emailIdx = 1;
+      let dataRows = rows;
+      const header = rows[0].map((c) => c.toLowerCase());
+      const headerEmailIdx = header.findIndex((c) => c.includes('email'));
+      if (headerEmailIdx !== -1) {
+        emailIdx = headerEmailIdx;
+        const headerNameIdx = header.findIndex((c) => c.includes('name'));
+        nameIdx = headerNameIdx !== -1 ? headerNameIdx : (headerEmailIdx === 0 ? 1 : 0);
+        dataRows = rows.slice(1);
+      }
+
+      const lines = dataRows
+        .filter((r) => r[emailIdx])
+        .map((r) => `${r[nameIdx] ?? ''}, ${r[emailIdx] ?? ''}`);
+      bulkTextarea.value = lines.join('\n');
+    });
+    bulkForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msg = bulkForm.querySelector<HTMLParagraphElement>('.msg')!;
+      msg.hidden = true;
+      msg.className = 'msg';
+      bulkResults.hidden = true;
+      bulkResults.querySelector('tbody')!.innerHTML = '';
+      const submitBtn = bulkForm.querySelector<HTMLButtonElement>('button')!;
+      submitBtn.disabled = true;
+
+      const fd = new FormData(bulkForm);
+      const [kind, id] = String(fd.get('target')).split(':');
+      const entries = String(fd.get('entries') ?? '')
+        .split('\n')
+        .map((line) => line.trim())
+        .filter(Boolean)
+        .map((line) => {
+          const [full_name, email] = line.split(',').map((s) => s.trim());
+          return { full_name, email };
+        });
+
+      const payload: Record<string, unknown> = { entries };
+      if (kind === 'workshop') payload.workshop_id = Number(id);
+      else if (kind === 'cloud') payload.cloud_id = Number(id);
+
+      try {
+        const res = await fetch('/api/platform/create-facilitators-bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const tbody = bulkResults.querySelector('tbody')!;
+          let successCount = 0;
+          for (const r of data.results) {
+            const tr = document.createElement('tr');
+            if (r.error) {
+              tr.innerHTML = `<td>${r.full_name || r.email}</td><td colspan="2" style="color:#c00;">${r.error}</td>`;
+            } else {
+              successCount++;
+              tr.innerHTML = `<td>${r.full_name}</td><td>${r.username}</td><td>${r.password}</td>`;
+            }
+            tbody.appendChild(tr);
+          }
+          bulkResults.hidden = false;
+          msg.textContent = `Created ${successCount} of ${data.results.length} — relay usernames/passwords below, they won't be shown again`;
+          msg.classList.add('success');
+          msg.hidden = false;
+          bulkForm.reset();
+        } else {
+          msg.textContent = data.error ?? 'Failed to create facilitators';
+          msg.classList.add('error');
+          msg.hidden = false;
+        }
+      } catch {
+        msg.textContent = 'Failed to create facilitators';
         msg.classList.add('error');
         msg.hidden = false;
       }

@@ -12,6 +12,10 @@ export async function hashPassword(plain: string): Promise<string> {
   return `scrypt:${salt.toString('hex')}:${derived.toString('hex')}`;
 }
 
+export function generateRandomPassword(): string {
+  return randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
+}
+
 // First name + first letter of last name, e.g. "Ani Petrosyan" -> "anip".
 // No transliteration — a non-Latin name just produces a non-Latin username,
 // which the member can still type fine on their own keyboard/layout.
