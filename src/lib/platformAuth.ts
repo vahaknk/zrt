@@ -93,8 +93,8 @@ export interface Member {
       end_time: string | null;
     };
   }>;
-  facilitates_workshop: { id: number; name: string } | null;
-  facilitates_cloud: { id: number; name: string } | null;
+  facilitates_workshops: Array<{ workshops_id: { id: number; name: string } }>;
+  facilitates_clouds: Array<{ clouds_id: { id: number; name: string } }>;
 }
 
 // The name to show on the platform — the admin-filled Armenian name when
@@ -105,24 +105,24 @@ export function displayName(person: { full_name: string; armenian_name?: string 
   return person.armenian_name?.trim() || person.full_name;
 }
 
-// A facilitator is any member assigned to run a workshop or cloud —
-// derived from the assignment itself rather than a separate flag, so the
-// two can never drift out of sync.
-export function isFacilitator(member: Pick<Member, 'facilitates_workshop' | 'facilitates_cloud'>): boolean {
-  return !!(member.facilitates_workshop || member.facilitates_cloud);
+// A facilitator is any member assigned to run at least one workshop or
+// cloud — derived from the assignment itself rather than a separate flag,
+// so the two can never drift out of sync.
+export function isFacilitator(member: Pick<Member, 'facilitates_workshops' | 'facilitates_clouds'>): boolean {
+  return member.facilitates_workshops.length > 0 || member.facilitates_clouds.length > 0;
 }
 
 // Shared by the materials and schedule-override endpoints: only an admin,
-// or the facilitator actually assigned to the workshop/cloud in question,
+// or a facilitator actually assigned to the workshop/cloud in question,
 // may manage it.
 export function canManageWorkshopOrCloud(
-  member: Pick<Member, 'is_admin' | 'facilitates_workshop' | 'facilitates_cloud'>,
+  member: Pick<Member, 'is_admin' | 'facilitates_workshops' | 'facilitates_clouds'>,
   workshop: number | null,
   cloud: number | null
 ): boolean {
   if (member.is_admin) return true;
-  if (workshop && member.facilitates_workshop?.id === workshop) return true;
-  if (cloud && member.facilitates_cloud?.id === cloud) return true;
+  if (workshop && member.facilitates_workshops.some((w) => w.workshops_id.id === workshop)) return true;
+  if (cloud && member.facilitates_clouds.some((c) => c.clouds_id.id === cloud)) return true;
   return false;
 }
 
@@ -153,7 +153,8 @@ export async function requireMember(request: Request): Promise<Member | null> {
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
         `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +
-        `facilitates_workshop.id,facilitates_workshop.name,facilitates_cloud.id,facilitates_cloud.name&limit=1`
+        `facilitates_workshops.workshops_id.id,facilitates_workshops.workshops_id.name,` +
+        `facilitates_clouds.clouds_id.id,facilitates_clouds.clouds_id.name&limit=1`
     );
     return res.data?.[0] ?? null;
   } catch {

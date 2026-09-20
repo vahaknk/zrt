@@ -8,7 +8,7 @@ const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
-if (!member.facilitates_workshop && !member.facilitates_cloud) {
+if (member.facilitates_workshops.length === 0 && member.facilitates_clouds.length === 0) {
   return Astro.redirect('/platform');
 }
 
@@ -37,11 +37,12 @@ interface Assignment {
 
 const assignments: Assignment[] = [];
 
-for (const [kind, target] of [
-  ['workshop', member.facilitates_workshop] as const,
-  ['cloud', member.facilitates_cloud] as const,
-]) {
-  if (!target) continue;
+const targets: Array<{ kind: 'workshop' | 'cloud'; target: { id: number; name: string } }> = [
+  ...member.facilitates_workshops.map((w) => ({ kind: 'workshop' as const, target: w.workshops_id })),
+  ...member.facilitates_clouds.map((c) => ({ kind: 'cloud' as const, target: c.clouds_id })),
+];
+
+for (const { kind, target } of targets) {
   let materials: Material[] = [];
   let overrides: Override[] = [];
   try {

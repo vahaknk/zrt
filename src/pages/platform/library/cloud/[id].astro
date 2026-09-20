@@ -48,7 +48,7 @@ let facilitators: { full_name: string; armenian_name: string | null }[] = [];
 let participants: { full_name: string; armenian_name: string | null }[] = [];
 try {
   const [facilitatorsRes, participantsRes] = await Promise.all([
-    adminGet(`/items/platform_members?filter[facilitates_cloud][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[facilitates_clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
     adminGet(`/items/platform_members?filter[clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
   ]);
   facilitators = facilitatorsRes.data ?? [];

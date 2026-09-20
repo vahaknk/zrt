@@ -10,15 +10,22 @@ if (!member) {
 
 let workshops: { id: number; name: string }[] = [];
 let clouds: { id: number; name: string }[] = [];
-let facilitators: { id: number; full_name: string; armenian_name: string | null; username: string; facilitates_workshop: { name: string } | null; facilitates_cloud: { name: string } | null }[] = [];
+let facilitators: {
+  id: number;
+  full_name: string;
+  armenian_name: string | null;
+  username: string;
+  facilitates_workshops: Array<{ workshops_id: { name: string } }>;
+  facilitates_clouds: Array<{ clouds_id: { name: string } }>;
+}[] = [];
 
 try {
   const [workshopsRes, cloudsRes, facilitatorsRes] = await Promise.all([
     adminGet(`/items/workshops?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
     adminGet(`/items/clouds?filter[active][_eq]=true&fields=id,name&sort=name&limit=-1`),
     adminGet(
-      `/items/platform_members?filter[_or][0][facilitates_workshop][_nnull]=true&filter[_or][1][facilitates_cloud][_nnull]=true` +
-        `&fields=id,full_name,armenian_name,username,facilitates_workshop.name,facilitates_cloud.name&sort=full_name&limit=-1`
+      `/items/platform_members?filter[_or][0][facilitates_workshops][workshops_id][_nnull]=true&filter[_or][1][facilitates_clouds][clouds_id][_nnull]=true` +
+        `&fields=id,full_name,armenian_name,username,facilitates_workshops.workshops_id.name,facilitates_clouds.clouds_id.name&sort=full_name&limit=-1`
     ),
   ]);
   workshops = workshopsRes.data ?? [];
@@ -66,6 +73,10 @@ try {
       padding-right: 2rem;
     }
     form .full { grid-column: 1 / -1; }
+    .assign-group { grid-column: 1 / -1; }
+    .assign-group > span { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
+    .assign-checks { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
+    .assign-checks label { display: flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #1a1a1a; margin-bottom: 0; }
     form button {
       grid-column: 1 / -1;
       padding: 0.6rem;
@@ -111,21 +122,16 @@ try {
           <label>Initial password</label>
           <input type="text" name="password" required />
         </div>
-        <div>
-          <label>Assign to</label>
-          <select name="target" required>
-            <option value="" disabled selected>Select a workshop or cloud…</option>
-            {workshops.length > 0 && (
-              <optgroup label="Workshops">
-                {workshops.map((w) => <option value={`workshop:${w.id}`}>{w.name}</option>)}
-              </optgroup>
-            )}
-            {clouds.length > 0 && (
-              <optgroup label="Clouds">
-                {clouds.map((c) => <option value={`cloud:${c.id}`}>{c.name}</option>)}
-              </optgroup>
-            )}
-          </select>
+        <div class="assign-group">
+          <span>Assign to (pick any number)</span>
+          <div class="assign-checks">
+            {workshops.map((w) => (
+              <label><input type="checkbox" name="workshop_ids" value={w.id} /> {w.name}</label>
+            ))}
+            {clouds.map((c) => (
+              <label><input type="checkbox" name="cloud_ids" value={c.id} /> {c.name}</label>
+            ))}
+          </div>
         </div>
         <p class="msg" hidden></p>
         <button type="submit">Create facilitator</button>
@@ -146,21 +152,16 @@ try {
           <label>Facilitators</label>
           <textarea name="entries" rows="6" required placeholder={"Ani Petrosyan, ani@example.com\nAren Selvioğlu, aren@example.com"}></textarea>
         </div>
-        <div class="full">
-          <label>Assign all to</label>
-          <select name="target" required>
-            <option value="" disabled selected>Select a workshop or cloud…</option>
-            {workshops.length > 0 && (
-              <optgroup label="Workshops">
-                {workshops.map((w) => <option value={`workshop:${w.id}`}>{w.name}</option>)}
-              </optgroup>
-            )}
-            {clouds.length > 0 && (
-              <optgroup label="Clouds">
-                {clouds.map((c) => <option value={`cloud:${c.id}`}>{c.name}</option>)}
-              </optgroup>
-            )}
-          </select>
+        <div class="assign-group">
+          <span>Assign all to (pick any number)</span>
+          <div class="assign-checks">
+            {workshops.map((w) => (
+              <label><input type="checkbox" name="workshop_ids" value={w.id} /> {w.name}</label>
+            ))}
+            {clouds.map((c) => (
+              <label><input type="checkbox" name="cloud_ids" value={c.id} /> {c.name}</label>
+            ))}
+          </div>
         </div>
         <p class="msg" hidden></p>
         <button type="submit">Create facilitators</button>
@@ -179,13 +180,19 @@ try {
         <table>
           <thead><tr><th>Name</th><th>Username</th><th>Assigned to</th></tr></thead>
           <tbody>
-            {facilitators.map((f) => (
-              <tr>
-                <td>{displayName(f)}</td>
-                <td>{f.username}</td>
-                <td>{f.facilitates_workshop?.name ?? f.facilitates_cloud?.name ?? '—'}</td>
-              </tr>
-            ))}
+            {facilitators.map((f) => {
+              const assigned = [
+                ...f.facilitates_workshops.map((w) => w.workshops_id.name),
+                ...f.facilitates_clouds.map((c) => c.clouds_id.name),
+              ];
+              return (
+                <tr>
+                  <td>{displayName(f)}</td>
+                  <td>{f.username}</td>
+                  <td>{assigned.length > 0 ? assigned.join(', ') : '—'}</td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}
@@ -203,14 +210,22 @@ try {
       submitBtn.disabled = true;
 
       const fd = new FormData(form);
-      const [kind, id] = String(fd.get('target')).split(':');
+      const workshopIds = [...form.querySelectorAll<HTMLInputElement>('input[name="workshop_ids"]:checked')].map((el) => Number(el.value));
+      const cloudIds = [...form.querySelectorAll<HTMLInputElement>('input[name="cloud_ids"]:checked')].map((el) => Number(el.value));
+      if (workshopIds.length === 0 && cloudIds.length === 0) {
+        msg.textContent = 'Assign at least one workshop or cloud';
+        msg.classList.add('error');
+        msg.hidden = false;
+        submitBtn.disabled = false;
+        return;
+      }
       const payload: Record<string, unknown> = {
         full_name: fd.get('full_name'),
         email: fd.get('email'),
         password: fd.get('password'),
+        workshop_ids: workshopIds,
+        cloud_ids: cloudIds,
       };
-      if (kind === 'workshop') payload.workshop_id = Number(id);
-      else if (kind === 'cloud') payload.cloud_id = Number(id);
 
       try {
         const res = await fetch('/api/platform/create-facilitator', {
@@ -297,7 +312,15 @@ try {
       submitBtn.disabled = true;
 
       const fd = new FormData(bulkForm);
-      const [kind, id] = String(fd.get('target')).split(':');
+      const workshopIds = [...bulkForm.querySelectorAll<HTMLInputElement>('input[name="workshop_ids"]:checked')].map((el) => Number(el.value));
+      const cloudIds = [...bulkForm.querySelectorAll<HTMLInputElement>('input[name="cloud_ids"]:checked')].map((el) => Number(el.value));
+      if (workshopIds.length === 0 && cloudIds.length === 0) {
+        msg.textContent = 'Assign at least one workshop or cloud';
+        msg.classList.add('error');
+        msg.hidden = false;
+        submitBtn.disabled = false;
+        return;
+      }
       const entries = String(fd.get('entries') ?? '')
         .split('\n')
         .map((line) => line.trim())
@@ -307,9 +330,7 @@ try {
           return { full_name, email };
         });
 
-      const payload: Record<string, unknown> = { entries };
-      if (kind === 'workshop') payload.workshop_id = Number(id);
-      else if (kind === 'cloud') payload.cloud_id = Number(id);
+      const payload: Record<string, unknown> = { entries, workshop_ids: workshopIds, cloud_ids: cloudIds };
 
       try {
         const res = await fetch('/api/platform/create-facilitators-bulk', {

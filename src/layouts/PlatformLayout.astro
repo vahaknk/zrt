@@ -7,8 +7,8 @@ export interface Props {
     full_name: string;
     armenian_name?: string | null;
     is_admin: boolean;
-    facilitates_workshop?: { id: number; name: string } | null;
-    facilitates_cloud?: { id: number; name: string } | null;
+    facilitates_workshops?: Array<{ workshops_id: { id: number; name: string } }>;
+    facilitates_clouds?: Array<{ clouds_id: { id: number; name: string } }>;
   };
 }
 
@@ -75,7 +75,7 @@ const isActive = (path: string, exact = false) => (exact ? pathname === path : p
         <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>Բուն էջ</a>
         <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>Օրացոյց</a>
         <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>Գրադարան</a>
-        {(member.facilitates_workshop || member.facilitates_cloud) && (
+        {((member.facilitates_workshops?.length ?? 0) > 0 || (member.facilitates_clouds?.length ?? 0) > 0) && (
           <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>Ուղեկից</a>
         )}
         {member.is_admin && (
