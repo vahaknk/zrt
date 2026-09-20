@@ -1,5 +1,6 @@
 ---
 import { displayName } from '../lib/platformAuth';
+import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 export interface Props {
   title: string;
@@ -15,6 +16,7 @@ export interface Props {
 const { title, member } = Astro.props;
 const pathname = Astro.url.pathname;
 const isActive = (path: string, exact = false) => (exact ? pathname === path : pathname.startsWith(path));
+const L = makeLabelGetter(await getPlatformLabels());
 ---
 
 <!doctype html>
@@ -64,6 +66,20 @@ const isActive = (path: string, exact = false) => (exact ? pathname === path : p
         .who .name { display: none; }
         .nav { order: 3; flex-basis: 100%; gap: 1rem; padding-top: 0.15rem; }
       }
+
+      .site-footer {
+        margin-top: 2rem;
+        padding: 1.5rem 1.5rem 2rem;
+        border-top: 1px solid #eaeae6;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .site-footer img { height: 36px; width: auto; opacity: 0.85; }
+      .site-footer .links { display: flex; gap: 1.25rem; font-size: 0.8rem; }
+      .site-footer .links a { color: #666; text-decoration: none; }
+      .site-footer .links a:hover { color: #1a1a1a; text-decoration: underline; }
     </style>
   </head>
   <body>
@@ -72,22 +88,30 @@ const isActive = (path: string, exact = false) => (exact ? pathname === path : p
         <img src="/zartsants-logo.svg" alt="Zartsants" />
       </a>
       <nav class="nav">
-        <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>Բուն էջ</a>
-        <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>Օրացոյց</a>
-        <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>Գրադարան</a>
+        <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>{L('nav_home', 'Բուն էջ')}</a>
+        <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>{L('nav_calendar', 'Օրացոյց')}</a>
+        <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարան')}</a>
         {((member.facilitates_workshops?.length ?? 0) > 0 || (member.facilitates_clouds?.length ?? 0) > 0) && (
-          <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>Ուղեկից</a>
+          <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>{L('nav_facilitator', 'Ուղեկից')}</a>
         )}
         {member.is_admin && (
-          <a href="/platform/admin" class={isActive('/platform/admin') ? 'active' : undefined}>Փեթակ</a>
+          <a href="/platform/admin" class={isActive('/platform/admin') ? 'active' : undefined}>{L('nav_admin', 'Փեթակ')}</a>
         )}
       </nav>
       <div class="who">
         <span class="name">{displayName(member)}</span>
-        <a class="logout" href="/api/platform/logout">Log out</a>
+        <a class="logout" href="/api/platform/logout">{L('nav_logout', 'Log out')}</a>
       </div>
     </header>
     <slot />
+    <footer class="site-footer">
+      <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+      <div class="links">
+        <a href="https://zartsants.com" target="_blank" rel="noopener">zartsants.com</a>
+        <a href="https://www.instagram.com/zartsants/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/profile.php?id=61591820653723" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </footer>
     <script is:inline src="/schedule-local.js" defer></script>
   </body>
 </html>

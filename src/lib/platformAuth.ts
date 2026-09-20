@@ -79,6 +79,7 @@ export interface Member {
     age_group: string;
     schedule_note: string | null;
     zoom_link: string;
+    image: string | null;
     schedule: Array<{ day: string; start_time: string; end_time: string }> | null;
   } | null;
   clouds: Array<{
@@ -91,6 +92,7 @@ export interface Member {
       day_of_week: string | null;
       start_time: string | null;
       end_time: string | null;
+      image: string | null;
     };
   }>;
   facilitates_workshops: Array<{ workshops_id: { id: number; name: string } }>;
@@ -149,8 +151,8 @@ export async function requireMember(request: Request): Promise<Member | null> {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
         `&fields=id,email,full_name,armenian_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
-        `workshop.schedule,` +
-        `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,` +
+        `workshop.image,workshop.schedule,` +
+        `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
         `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +
         `facilitates_workshops.workshops_id.id,facilitates_workshops.workshops_id.name,` +

@@ -2,6 +2,7 @@
 import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import PlatformCalendar from '../../components/PlatformCalendar.astro';
 import { requireMember } from '../../lib/platformAuth';
+import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -9,6 +10,7 @@ if (!member) {
 }
 
 const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
+const L = makeLabelGetter(await getPlatformLabels());
 ---
 
 <PlatformLayout title="Zartsants Platform — Calendar" member={member}>
@@ -18,7 +20,7 @@ const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
   </style>
 
   <div class="container">
-    <h1>Calendar</h1>
+    <h1>{L('calendar_title', 'Calendar')}</h1>
     <PlatformCalendar workshop={member.workshop} clouds={clouds} basePath="/platform/calendar" />
   </div>
 </PlatformLayout>

@@ -4,11 +4,16 @@ import { requireMember, displayName } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatScheduleLabel, parseDays, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
+import { asset } from '../../../../lib/asset';
+import { getPlatformLabels, makeLabelGetter } from '../../../../lib/platformLabels';
+
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
 
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 const id = Number(Astro.params.id);
 const membership = member.clouds.find((c) => c.clouds_id.id === id);
@@ -44,11 +49,11 @@ try {
   console.error('Failed to load cloud materials:', e);
 }
 
-let facilitators: { full_name: string; armenian_name: string | null }[] = [];
+let facilitators: { full_name: string; armenian_name: string | null; image: string | null }[] = [];
 let participants: { full_name: string; armenian_name: string | null }[] = [];
 try {
   const [facilitatorsRes, participantsRes] = await Promise.all([
-    adminGet(`/items/platform_members?filter[facilitates_clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[facilitates_clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name,image&limit=-1`),
     adminGet(`/items/platform_members?filter[clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
   ]);
   facilitators = facilitatorsRes.data ?? [];
@@ -71,7 +76,11 @@ function formatWeek(weekStart: string): string {
   return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()} – ${MONTH_SHORT[end.getMonth()]} ${end.getDate()}`;
 }
 
-const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'Audio', reading: 'Reading' };
+const TYPE_LABEL: Record<Material['type'], string> = {
+  video: L('material_type_video', 'Video'),
+  audio: L('material_type_audio', 'Audio'),
+  reading: L('material_type_reading', 'Reading'),
+};
 ---
 
 <PlatformLayout title={`Zartsants Platform — ${cloud.name}`} member={member}>
@@ -90,6 +99,15 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
       margin-bottom: 2rem;
     }
     .hero img { height: 76px; width: auto; flex-shrink: 0; }
+    .hero.has-image {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    .hero.has-image img.full { width: 100%; height: 400px; object-fit: contain; display: block; background: #fff6d6; }
+    .hero.has-image .hero-body { padding: 1.5rem; }
     .hero h1 { font-size: 1.3rem; font-weight: 700; }
     .hero .schedule { font-size: 0.85rem; color: #5c4f00; margin-top: 0.3rem; }
     .hero .zoom {
@@ -140,35 +158,76 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
       padding: 0.3rem 0.75rem;
       font-size: 0.85rem;
     }
+    .roster .facilitator-chip {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      background: #f6f6f4;
+      border-radius: 999px;
+      padding: 0.35rem 1.1rem 0.35rem 0.35rem;
+      font-size: 0.95rem;
+    }
+    .roster .facilitator-chip img,
+    .roster .facilitator-chip .avatar-fallback {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .roster .facilitator-chip .avatar-fallback {
+      background: #fdf0b8;
+      color: #7a6600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 2.25rem;
+    }
   </style>
 
   <div class="container">
-    <a class="back" href="/platform/library">&larr; Library</a>
+    <a class="back" href="/platform/library">&larr; {L('detail_back_to_library', 'Library')}</a>
 
-    <div class="hero">
-      <img src="/cloud.png" alt="" />
-      <div>
+    <div class={`hero ${cloud.image ? 'has-image' : ''}`}>
+      {cloud.image ? (
+        <img class="full" src={asset(DIRECTUS_URL, cloud.image)!} alt="" />
+      ) : (
+        <img src="/cloud.png" alt="" />
+      )}
+      <div class={cloud.image ? 'hero-body' : undefined}>
         <h1>{cloud.name}</h1>
         {schedule && (
           <div class="schedule" data-schedule={JSON.stringify(scheduleInstants)}>{schedule}</div>
         )}
-        <a class="zoom" href={cloud.bundle.zoom_link} target="_blank" rel="noopener">Join Zoom</a>
+        <a class="zoom" href={cloud.bundle.zoom_link} target="_blank" rel="noopener">{L('detail_join_zoom', 'Join Zoom')}</a>
       </div>
     </div>
 
     <div class="roster">
       <div class="section">
-        <h2>Ուղեկից <span class="count">{facilitators.length}</span></h2>
+        <h2>{L('detail_facilitators_heading', 'Ուղեկից')} <span class="count">{facilitators.length}</span></h2>
         {facilitators.length === 0 ? (
-          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">Not assigned yet.</p>
+          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_facilitators_empty', 'Not assigned yet.')}</p>
         ) : (
-          <div class="names">{facilitators.map((f) => <span>{displayName(f)}</span>)}</div>
+          <div class="names">
+            {facilitators.map((f) => (
+              <span class="facilitator-chip">
+                {f.image ? (
+                  <img src={asset(DIRECTUS_URL, f.image)!} alt="" />
+                ) : (
+                  <span class="avatar-fallback">{displayName(f).trim().charAt(0).toUpperCase()}</span>
+                )}
+                {displayName(f)}
+              </span>
+            ))}
+          </div>
         )}
       </div>
       <div class="section">
-        <h2>Մասնակիցներ <span class="count">{participants.length}</span></h2>
+        <h2>{L('detail_participants_heading', 'Մասնակիցներ')} <span class="count">{participants.length}</span></h2>
         {participants.length === 0 ? (
-          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">No one enrolled yet.</p>
+          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_participants_empty', 'No one enrolled yet.')}</p>
         ) : (
           <div class="names">{participants.map((p) => <span>{displayName(p)}</span>)}</div>
         )}
@@ -176,7 +235,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
     </div>
 
     {materials.length === 0 ? (
-      <div class="empty-state">No materials shared yet.</div>
+      <div class="empty-state">{L('detail_materials_empty', 'No materials shared yet.')}</div>
     ) : (
       [...weekGroups.entries()].map(([weekStart, items]) => (
         <div class="week">

@@ -2,11 +2,13 @@
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireAdmin, displayName } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 const member = await requireAdmin(Astro.request);
 if (!member) {
   return Astro.redirect('/platform');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 interface Roster {
   id: number;
@@ -156,42 +158,42 @@ try {
   </style>
 
   <div class="container">
-    <a class="back" href="/platform/admin">&larr; Admin</a>
-    <h1>Members</h1>
+    <a class="back" href="/platform/admin">&larr; {L('admin_back_link', 'Admin')}</a>
+    <h1>{L('admin_hub_members_title', 'Members')}</h1>
 
     <div class="card">
-      <h2>Create member account</h2>
+      <h2>{L('members_create_heading', 'Create member account')}</h2>
       {enrolledRegistrations.length === 0 ? (
-        <p class="empty">No enrolled registrations without an existing account.</p>
+        <p class="empty">{L('members_no_registrations', 'No enrolled registrations without an existing account.')}</p>
       ) : (
-        <form id="create-form">
+        <form id="create-form" data-error-text={L('members_create_error', 'Failed to create member')} data-created-template={L('facilitators_created_template', 'Created — {username} / {password} (relay this, it won’t be shown again)')}>
           <div class="full">
-            <label>Registration</label>
+            <label>{L('members_registration_label', 'Registration')}</label>
             <select name="registration_id" required>
-              <option value="" disabled selected>Select an enrolled registration…</option>
+              <option value="" disabled selected>{L('members_registration_placeholder', 'Select an enrolled registration…')}</option>
               {enrolledRegistrations.map((r) => (
                 <option value={r.id}>{r.full_name} ({r.email})</option>
               ))}
             </select>
           </div>
           <div class="full">
-            <label>Initial password</label>
+            <label>{L('facilitators_password_label', 'Initial password')}</label>
             <input type="text" name="password" required />
           </div>
           <p class="msg" hidden></p>
-          <button type="submit">Create member</button>
+          <button type="submit">{L('members_create_button', 'Create member')}</button>
         </form>
       )}
     </div>
 
     <div class="card">
-      <h2>Workshop &amp; cloud assignments</h2>
+      <h2>{L('members_assignments_heading', 'Workshop & cloud assignments')}</h2>
       {roster.length === 0 ? (
-        <p class="empty">No members yet.</p>
+        <p class="empty">{L('members_none_yet', 'No members yet.')}</p>
       ) : (
         <>
-          <input id="roster-search" type="search" placeholder="Search by name or email…" />
-          <p class="empty" id="roster-no-match" hidden>No members match “<span></span>”.</p>
+          <input id="roster-search" type="search" placeholder={L('members_search_placeholder', 'Search by name or email…')} />
+          <p class="empty" id="roster-no-match" hidden>{L('members_no_match_prefix', 'No members match “')}<span></span>{L('members_no_match_suffix', '”.')}</p>
           {roster.map((m) => {
           const memberCloudIds = new Set(m.clouds.map((c) => c.clouds_id.id));
           return (
@@ -202,16 +204,16 @@ try {
               </div>
               <div class="roster-fields">
                 <div>
-                  <label>Workshop</label>
+                  <label>{L('members_workshop_label', 'Workshop')}</label>
                   <select class="workshop-select">
-                    <option value="">— none —</option>
+                    <option value="">{L('members_none_option', '— none —')}</option>
                     {workshops.map((w) => (
                       <option value={w.id} selected={m.workshop?.id === w.id}>{w.name}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label>Clouds</label>
+                  <label>{L('members_clouds_label', 'Clouds')}</label>
                   <div class="cloud-checks">
                     {clouds.map((c) => (
                       <label>
@@ -221,7 +223,7 @@ try {
                     ))}
                   </div>
                 </div>
-                <button class="save-btn" type="button">Save</button>
+                <button class="save-btn" type="button" data-saved-text={L('members_saved_text', '✓ Saved')} data-save-error-text={L('members_save_error_text', '✗ Error')}>{L('members_save_button', 'Save')}</button>
                 <span class="save-msg"></span>
               </div>
             </div>
@@ -254,17 +256,18 @@ try {
         });
         const data = await res.json();
         if (res.ok) {
-          msg.textContent = `Created — ${data.username} / ${data.password} (relay this, it won't be shown again)`;
+          const template = form.dataset.createdTemplate ?? "Created — {username} / {password} (relay this, it won't be shown again)";
+          msg.textContent = template.replace('{username}', data.username).replace('{password}', data.password);
           msg.classList.add('success');
           msg.hidden = false;
           form.reset();
         } else {
-          msg.textContent = data.error ?? 'Failed to create member';
+          msg.textContent = data.error ?? form.dataset.errorText ?? 'Failed to create member';
           msg.classList.add('error');
           msg.hidden = false;
         }
       } catch {
-        msg.textContent = 'Failed to create member';
+        msg.textContent = form.dataset.errorText ?? 'Failed to create member';
         msg.classList.add('error');
         msg.hidden = false;
       }
@@ -310,14 +313,14 @@ try {
             body: JSON.stringify({ member_id: memberId, workshop_id: workshopId, cloud_ids: cloudIds }),
           });
           if (res.ok) {
-            saveMsg.textContent = '✓ Saved';
+            saveMsg.textContent = saveBtn.dataset.savedText ?? '✓ Saved';
             saveMsg.classList.add('success');
           } else {
-            saveMsg.textContent = '✗ Error';
+            saveMsg.textContent = saveBtn.dataset.saveErrorText ?? '✗ Error';
             saveMsg.classList.add('error');
           }
         } catch {
-          saveMsg.textContent = '✗ Error';
+          saveMsg.textContent = saveBtn.dataset.saveErrorText ?? '✗ Error';
           saveMsg.classList.add('error');
         }
         saveBtn.disabled = false;

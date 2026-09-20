@@ -2,11 +2,13 @@
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireAdmin } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 const member = await requireAdmin(Astro.request);
 if (!member) {
   return Astro.redirect('/platform');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 let workshops: { id: number; name: string }[] = [];
 let clouds: { id: number; name: string }[] = [];
@@ -81,50 +83,50 @@ try {
   </style>
 
   <div class="container">
-    <a class="back" href="/platform/admin">&larr; Admin</a>
-    <h1>Materials</h1>
+    <a class="back" href="/platform/admin">&larr; {L('admin_back_link', 'Admin')}</a>
+    <h1>{L('admin_hub_materials_title', 'Materials')}</h1>
 
     <div class="card">
-      <h2>Add material</h2>
-      <form id="create-form">
+      <h2>{L('materials_add_heading', 'Add material')}</h2>
+      <form id="create-form" data-added-text={L('materials_added_text', 'Added.')} data-error-text={L('materials_add_error', 'Failed to add material')}>
         <div class="full">
-          <label>Workshop or cloud</label>
+          <label>{L('materials_target_label', 'Workshop or cloud')}</label>
           <select name="target" required>
-            <option value="" disabled selected>Select a workshop or cloud…</option>
+            <option value="" disabled selected>{L('materials_target_placeholder', 'Select a workshop or cloud…')}</option>
             {workshops.length > 0 && (
-              <optgroup label="Workshops">
+              <optgroup label={L('materials_optgroup_workshops', 'Workshops')}>
                 {workshops.map((w) => <option value={`workshop:${w.id}`}>{w.name}</option>)}
               </optgroup>
             )}
             {clouds.length > 0 && (
-              <optgroup label="Clouds">
+              <optgroup label={L('materials_optgroup_clouds', 'Clouds')}>
                 {clouds.map((c) => <option value={`cloud:${c.id}`}>{c.name}</option>)}
               </optgroup>
             )}
           </select>
         </div>
         <div>
-          <label>Week starting</label>
+          <label>{L('facilitator_week_starting_label', 'Week starting')}</label>
           <input type="date" name="week_start" required />
         </div>
         <div>
-          <label>Type</label>
+          <label>{L('facilitator_type_label', 'Type')}</label>
           <select name="type" required>
-            <option value="video">Video</option>
-            <option value="audio">Audio</option>
-            <option value="reading">Reading</option>
+            <option value="video">{L('material_type_video', 'Video')}</option>
+            <option value="audio">{L('material_type_audio', 'Audio')}</option>
+            <option value="reading">{L('material_type_reading', 'Reading')}</option>
           </select>
         </div>
         <div class="full">
-          <label>Label</label>
-          <input type="text" name="label" placeholder="e.g. Week 1 recording" required />
+          <label>{L('facilitator_label_label', 'Label')}</label>
+          <input type="text" name="label" placeholder={L('facilitator_label_placeholder', 'e.g. Week 1 recording')} required />
         </div>
         <div class="full">
-          <label>URL</label>
+          <label>{L('facilitator_url_label', 'URL')}</label>
           <input type="url" name="url" placeholder="https://…" required />
         </div>
         <p class="msg" hidden></p>
-        <button type="submit">Add material</button>
+        <button type="submit">{L('facilitator_add_material_button', 'Add material')}</button>
       </form>
     </div>
   </div>
@@ -158,17 +160,17 @@ try {
         });
         const data = await res.json();
         if (res.ok) {
-          msg.textContent = 'Added.';
+          msg.textContent = form.dataset.addedText ?? 'Added.';
           msg.classList.add('success');
           msg.hidden = false;
           form.reset();
         } else {
-          msg.textContent = data.error ?? 'Failed to add material';
+          msg.textContent = data.error ?? form.dataset.errorText ?? 'Failed to add material';
           msg.classList.add('error');
           msg.hidden = false;
         }
       } catch {
-        msg.textContent = 'Failed to add material';
+        msg.textContent = form.dataset.errorText ?? 'Failed to add material';
         msg.classList.add('error');
         msg.hidden = false;
       }

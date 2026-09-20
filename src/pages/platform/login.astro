@@ -1,3 +1,8 @@
+---
+import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
+const L = makeLabelGetter(await getPlatformLabels());
+---
+
 <!doctype html>
 <html lang="en">
   <head>
@@ -58,30 +63,35 @@
   </head>
   <body>
     <div class="card">
-      <h1>Sign In</h1>
-      <p class="error" id="error">Invalid username or password.</p>
+      <h1>{L('login_title', 'Sign In')}</h1>
+      <p class="error" id="error">{L('login_error_invalid', 'Invalid username or password.')}</p>
       <form id="login-form">
-        <label for="username">Username</label>
+        <label for="username">{L('login_username_label', 'Username')}</label>
         <input id="username" name="username" type="text" required autocomplete="username" />
-        <label for="password">Password</label>
+        <label for="password">{L('login_password_label', 'Password')}</label>
         <input id="password" name="password" type="password" required autocomplete="current-password" />
-        <button type="submit" id="submit-btn">Continue</button>
+        <button type="submit" id="submit-btn">{L('login_continue_button', 'Continue')}</button>
       </form>
     </div>
 
-    <script>
-      const form = document.getElementById('login-form') as HTMLFormElement;
-      const errorEl = document.getElementById('error') as HTMLParagraphElement;
-      const submitBtn = document.getElementById('submit-btn') as HTMLButtonElement;
+    <script is:inline define:vars={{
+      errorInvalid: L('login_error_invalid', 'Invalid username or password.'),
+      errorGeneric: L('login_error_generic', 'Something went wrong. Please try again.'),
+      loadingText: L('login_loading', '...'),
+      continueText: L('login_continue_button', 'Continue'),
+    }}>
+      const form = document.getElementById('login-form');
+      const errorEl = document.getElementById('error');
+      const submitBtn = document.getElementById('submit-btn');
 
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         errorEl.classList.remove('visible');
         submitBtn.disabled = true;
-        submitBtn.textContent = '...';
+        submitBtn.textContent = loadingText;
 
-        const username = (document.getElementById('username') as HTMLInputElement).value;
-        const password = (document.getElementById('password') as HTMLInputElement).value;
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
 
         try {
           const res = await fetch('/api/platform/login', {
@@ -93,16 +103,16 @@
             window.location.href = '/platform';
           } else {
             const data = await res.json().catch(() => ({}));
-            errorEl.textContent = data.error ?? 'Invalid username or password.';
+            errorEl.textContent = data.error ?? errorInvalid;
             errorEl.classList.add('visible');
           }
         } catch {
-          errorEl.textContent = 'Something went wrong. Please try again.';
+          errorEl.textContent = errorGeneric;
           errorEl.classList.add('visible');
         }
 
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Continue';
+        submitBtn.textContent = continueText;
       });
     </script>
   </body>

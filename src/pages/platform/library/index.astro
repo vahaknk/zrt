@@ -2,11 +2,16 @@
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../lib/platformAuth';
 import { formatScheduleLabel, formatWorkshopScheduleLabel, parseDays, scheduleEntryInstant } from '../../../lib/calendar';
+import { asset } from '../../../lib/asset';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
 
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 function scheduleInstantsFor(days: string[], start: string | null, end: string | null) {
   return days
@@ -51,6 +56,27 @@ const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
       background: var(--banner, #f1f0ea);
     }
     .course-banner img { height: 110px; width: auto; display: block; }
+    .course-banner.full {
+      height: auto;
+      display: block;
+    }
+    .course-banner.full img { width: 100%; height: auto; display: block; }
+    .workshop-row .course-banner.full {
+      height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #efeaff;
+    }
+    .workshop-row .course-banner.full img { width: 100%; height: 100%; object-fit: contain; }
+    .clouds-grid .course-banner.full {
+      height: 160px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff6d6;
+    }
+    .clouds-grid .course-banner.full img { width: 100%; height: 100%; object-fit: contain; }
     .course-body { padding: 0.85rem 1rem 1rem; }
     .course-title { font-weight: 700; font-size: 0.95rem; }
     .course-sub { font-size: 0.78rem; color: #797970; margin-top: 0.2rem; }
@@ -73,21 +99,27 @@ const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
   </style>
 
   <div class="container">
-    <h1>Library</h1>
+    <h1>{L('library_title', 'Library')}</h1>
 
     {!workshop && clouds.length === 0 ? (
-      <div class="empty-state">No workshop or cloud assigned yet.</div>
+      <div class="empty-state">{L('library_empty_state', 'No workshop or cloud assigned yet.')}</div>
     ) : (
       <>
         {workshop && (
           <div class="workshop-row">
             <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
-              <div class="course-banner" style="--banner:#efeaff">
-                <img src="/lamp.png" alt="" />
-              </div>
+              {workshop.image ? (
+                <div class="course-banner full">
+                  <img src={asset(DIRECTUS_URL, workshop.image)!} alt="" />
+                </div>
+              ) : (
+                <div class="course-banner" style="--banner:#efeaff">
+                  <img src="/lamp.png" alt="" />
+                </div>
+              )}
               <div class="course-body">
                 <div class="course-title">{workshop.name}</div>
-                <div class="course-sub" data-schedule={JSON.stringify(workshopScheduleInstants)}>{workshopSchedule ?? 'Workshop'}</div>
+                <div class="course-sub" data-schedule={JSON.stringify(workshopScheduleInstants)}>{workshopSchedule ?? L('library_workshop_fallback', 'Workshop')}</div>
               </div>
             </a>
           </div>
@@ -99,12 +131,18 @@ const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
               const instants = scheduleInstantsFor(parseDays(cloud.day_of_week), cloud.start_time, cloud.end_time);
               return (
                 <a class="course" href={`/platform/library/cloud/${cloud.id}`}>
-                  <div class="course-banner" style="--banner:#fff6d6">
-                    <img src="/cloud.png" alt="" />
-                  </div>
+                  {cloud.image ? (
+                    <div class="course-banner full">
+                      <img src={asset(DIRECTUS_URL, cloud.image)!} alt="" />
+                    </div>
+                  ) : (
+                    <div class="course-banner" style="--banner:#fff6d6">
+                      <img src="/cloud.png" alt="" />
+                    </div>
+                  )}
                   <div class="course-body">
                     <div class="course-title">{cloud.name}</div>
-                    <div class="course-sub" data-schedule={JSON.stringify(instants)}>{schedule ?? 'Cloud'}</div>
+                    <div class="course-sub" data-schedule={JSON.stringify(instants)}>{schedule ?? L('library_cloud_fallback', 'Cloud')}</div>
                   </div>
                 </a>
               );

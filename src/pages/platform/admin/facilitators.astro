@@ -2,11 +2,13 @@
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireAdmin, displayName } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 const member = await requireAdmin(Astro.request);
 if (!member) {
   return Astro.redirect('/platform');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 let workshops: { id: number; name: string }[] = [];
 let clouds: { id: number; name: string }[] = [];
@@ -104,26 +106,26 @@ try {
   </style>
 
   <div class="container">
-    <a class="back" href="/platform/admin">&larr; Admin</a>
-    <h1>Facilitators</h1>
+    <a class="back" href="/platform/admin">&larr; {L('admin_back_link', 'Admin')}</a>
+    <h1>{L('admin_hub_facilitators_title', 'Facilitators')}</h1>
 
     <div class="card">
-      <h2>Create facilitator account</h2>
-      <form id="create-form">
+      <h2>{L('facilitators_create_heading', 'Create facilitator account')}</h2>
+      <form id="create-form" data-assign-required-text={L('facilitators_assign_required', 'Assign at least one workshop or cloud')} data-error-text={L('facilitators_create_error', 'Failed to create facilitator')} data-created-template={L('facilitators_created_template', 'Created — {username} / {password} (relay this, it won’t be shown again)')}>
         <div>
-          <label>Full name</label>
+          <label>{L('facilitators_full_name_label', 'Full name')}</label>
           <input type="text" name="full_name" required />
         </div>
         <div>
-          <label>Email</label>
+          <label>{L('facilitators_email_label', 'Email')}</label>
           <input type="email" name="email" required />
         </div>
         <div>
-          <label>Initial password</label>
+          <label>{L('facilitators_password_label', 'Initial password')}</label>
           <input type="text" name="password" required />
         </div>
         <div class="assign-group">
-          <span>Assign to (pick any number)</span>
+          <span>{L('facilitators_assign_to_label', 'Assign to (pick any number)')}</span>
           <div class="assign-checks">
             {workshops.map((w) => (
               <label><input type="checkbox" name="workshop_ids" value={w.id} /> {w.name}</label>
@@ -134,26 +136,26 @@ try {
           </div>
         </div>
         <p class="msg" hidden></p>
-        <button type="submit">Create facilitator</button>
+        <button type="submit">{L('facilitators_create_button', 'Create facilitator')}</button>
       </form>
     </div>
 
     <div class="card">
-      <h2>Bulk add facilitators</h2>
+      <h2>{L('facilitators_bulk_heading', 'Bulk add facilitators')}</h2>
       <p style="color:#797970;font-size:0.85rem;margin-bottom:0.75rem;">
-        Upload a CSV (name, email columns) or paste lines below as <code>Full Name, email@example.com</code>. Passwords are generated automatically.
+        {L('facilitators_bulk_instructions', 'Upload a CSV (name, email columns) or paste lines below as')} <code>Full Name, email@example.com</code>. {L('facilitators_bulk_instructions2', 'Passwords are generated automatically.')}
       </p>
-      <form id="bulk-form">
+      <form id="bulk-form" data-assign-required-text={L('facilitators_assign_required', 'Assign at least one workshop or cloud')} data-error-text={L('facilitators_bulk_error', 'Failed to create facilitators')} data-summary-template={L('facilitators_bulk_summary_template', 'Created {count} of {total} — relay usernames/passwords below, they won’t be shown again')}>
         <div class="full">
-          <label>CSV file (optional)</label>
+          <label>{L('facilitators_csv_label', 'CSV file (optional)')}</label>
           <input type="file" id="csv-input" accept=".csv,text/csv" />
         </div>
         <div class="full">
-          <label>Facilitators</label>
+          <label>{L('admin_hub_facilitators_title', 'Facilitators')}</label>
           <textarea name="entries" rows="6" required placeholder={"Ani Petrosyan, ani@example.com\nAren Selvioğlu, aren@example.com"}></textarea>
         </div>
         <div class="assign-group">
-          <span>Assign all to (pick any number)</span>
+          <span>{L('facilitators_assign_all_label', 'Assign all to (pick any number)')}</span>
           <div class="assign-checks">
             {workshops.map((w) => (
               <label><input type="checkbox" name="workshop_ids" value={w.id} /> {w.name}</label>
@@ -164,21 +166,21 @@ try {
           </div>
         </div>
         <p class="msg" hidden></p>
-        <button type="submit">Create facilitators</button>
+        <button type="submit">{L('facilitators_bulk_button', 'Create facilitators')}</button>
       </form>
       <table id="bulk-results" hidden style="margin-top:1rem;">
-        <thead><tr><th>Name</th><th>Username</th><th>Password</th></tr></thead>
+        <thead><tr><th>{L('facilitators_col_name', 'Name')}</th><th>{L('facilitators_col_username', 'Username')}</th><th>{L('facilitators_col_password', 'Password')}</th></tr></thead>
         <tbody></tbody>
       </table>
     </div>
 
     <div class="card">
-      <h2>Current facilitators</h2>
+      <h2>{L('facilitators_current_heading', 'Current facilitators')}</h2>
       {facilitators.length === 0 ? (
-        <p style="color:#888;font-size:0.9rem;">None yet.</p>
+        <p style="color:#888;font-size:0.9rem;">{L('facilitators_none_yet', 'None yet.')}</p>
       ) : (
         <table>
-          <thead><tr><th>Name</th><th>Username</th><th>Assigned to</th></tr></thead>
+          <thead><tr><th>{L('facilitators_col_name', 'Name')}</th><th>{L('facilitators_col_username', 'Username')}</th><th>{L('facilitators_col_assigned', 'Assigned to')}</th></tr></thead>
           <tbody>
             {facilitators.map((f) => {
               const assigned = [
@@ -213,7 +215,7 @@ try {
       const workshopIds = [...form.querySelectorAll<HTMLInputElement>('input[name="workshop_ids"]:checked')].map((el) => Number(el.value));
       const cloudIds = [...form.querySelectorAll<HTMLInputElement>('input[name="cloud_ids"]:checked')].map((el) => Number(el.value));
       if (workshopIds.length === 0 && cloudIds.length === 0) {
-        msg.textContent = 'Assign at least one workshop or cloud';
+        msg.textContent = form.dataset.assignRequiredText ?? 'Assign at least one workshop or cloud';
         msg.classList.add('error');
         msg.hidden = false;
         submitBtn.disabled = false;
@@ -235,17 +237,18 @@ try {
         });
         const data = await res.json();
         if (res.ok) {
-          msg.textContent = `Created — ${data.username} / ${data.password} (relay this, it won't be shown again)`;
+          const template = form.dataset.createdTemplate ?? "Created — {username} / {password} (relay this, it won't be shown again)";
+          msg.textContent = template.replace('{username}', data.username).replace('{password}', data.password);
           msg.classList.add('success');
           msg.hidden = false;
           form.reset();
         } else {
-          msg.textContent = data.error ?? 'Failed to create facilitator';
+          msg.textContent = data.error ?? form.dataset.errorText ?? 'Failed to create facilitator';
           msg.classList.add('error');
           msg.hidden = false;
         }
       } catch {
-        msg.textContent = 'Failed to create facilitator';
+        msg.textContent = form.dataset.errorText ?? 'Failed to create facilitator';
         msg.classList.add('error');
         msg.hidden = false;
       }
@@ -315,7 +318,7 @@ try {
       const workshopIds = [...bulkForm.querySelectorAll<HTMLInputElement>('input[name="workshop_ids"]:checked')].map((el) => Number(el.value));
       const cloudIds = [...bulkForm.querySelectorAll<HTMLInputElement>('input[name="cloud_ids"]:checked')].map((el) => Number(el.value));
       if (workshopIds.length === 0 && cloudIds.length === 0) {
-        msg.textContent = 'Assign at least one workshop or cloud';
+        msg.textContent = bulkForm.dataset.assignRequiredText ?? 'Assign at least one workshop or cloud';
         msg.classList.add('error');
         msg.hidden = false;
         submitBtn.disabled = false;
@@ -353,17 +356,18 @@ try {
             tbody.appendChild(tr);
           }
           bulkResults.hidden = false;
-          msg.textContent = `Created ${successCount} of ${data.results.length} — relay usernames/passwords below, they won't be shown again`;
+          const summaryTemplate = bulkForm.dataset.summaryTemplate ?? "Created {count} of {total} — relay usernames/passwords below, they won't be shown again";
+          msg.textContent = summaryTemplate.replace('{count}', String(successCount)).replace('{total}', String(data.results.length));
           msg.classList.add('success');
           msg.hidden = false;
           bulkForm.reset();
         } else {
-          msg.textContent = data.error ?? 'Failed to create facilitators';
+          msg.textContent = data.error ?? bulkForm.dataset.errorText ?? 'Failed to create facilitators';
           msg.classList.add('error');
           msg.hidden = false;
         }
       } catch {
-        msg.textContent = 'Failed to create facilitators';
+        msg.textContent = bulkForm.dataset.errorText ?? 'Failed to create facilitators';
         msg.classList.add('error');
         msg.hidden = false;
       }

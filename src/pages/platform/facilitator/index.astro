@@ -3,6 +3,7 @@ import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -11,6 +12,7 @@ if (!member) {
 if (member.facilitates_workshops.length === 0 && member.facilitates_clouds.length === 0) {
   return Astro.redirect('/platform');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 interface Material {
   id: number;
@@ -20,19 +22,12 @@ interface Material {
   week_start: string;
 }
 
-interface Override {
-  id: number;
-  date: string;
-  note: string | null;
-}
-
 interface Assignment {
   kind: 'workshop' | 'cloud';
   id: number;
   name: string;
   materials: Material[];
   weekGroups: Map<string, Material[]>;
-  overrides: Override[];
 }
 
 const assignments: Assignment[] = [];
@@ -44,18 +39,11 @@ const targets: Array<{ kind: 'workshop' | 'cloud'; target: { id: number; name: s
 
 for (const { kind, target } of targets) {
   let materials: Material[] = [];
-  let overrides: Override[] = [];
   try {
-    const [materialsRes, overridesRes] = await Promise.all([
-      adminGet(
-        `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,week_start&limit=-1`
-      ),
-      adminGet(
-        `/items/schedule_overrides?filter[${kind}][_eq]=${target.id}&filter[active][_eq]=true&sort=-date&fields=id,date,note&limit=-1`
-      ),
-    ]);
+    const materialsRes = await adminGet(
+      `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,week_start&limit=-1`
+    );
     materials = materialsRes.data ?? [];
-    overrides = overridesRes.data ?? [];
   } catch (e) {
     console.error(`Failed to load ${kind} data:`, e);
   }
@@ -65,7 +53,7 @@ for (const { kind, target } of targets) {
     list.push(m);
     weekGroups.set(m.week_start, list);
   }
-  assignments.push({ kind, id: target.id, name: target.name, materials, weekGroups, overrides });
+  assignments.push({ kind, id: target.id, name: target.name, materials, weekGroups });
 }
 
 const MONTH_SHORT = MONTH_LABELS.hyw;
@@ -75,7 +63,11 @@ function formatWeek(weekStart: string): string {
   return `${MONTH_SHORT[d.getMonth()]} ${d.getDate()} – ${MONTH_SHORT[end.getMonth()]} ${end.getDate()}`;
 }
 
-const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'Audio', reading: 'Reading' };
+const TYPE_LABEL: Record<Material['type'], string> = {
+  video: L('material_type_video', 'Video'),
+  audio: L('material_type_audio', 'Audio'),
+  reading: L('material_type_reading', 'Reading'),
+};
 ---
 
 <PlatformLayout title="Zartsants Platform — Ուղեկից" member={member}>
@@ -151,91 +143,42 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
     .section .remove:hover { color: #c00; }
 
     .empty-state { color: #888; font-size: 0.9rem; }
-
-    .sub-heading { font-size: 0.95rem; font-weight: 700; margin: 1.75rem 0 0.75rem; }
-    .override-form {
-      background: #fff;
-      border: 1px solid #e9e9e4;
-      border-radius: 14px;
-      padding: 1.25rem;
-      margin-bottom: 1rem;
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: 0.75rem;
-    }
-    .override-form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
-    .override-form input {
-      width: 100%;
-      padding: 0.5rem 0.6rem;
-      border: 1px solid #e0e0da;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-family: inherit;
-    }
-    .override-form .full { grid-column: 1 / -1; }
-    .override-form button {
-      grid-column: 1 / -1;
-      padding: 0.6rem;
-      background: #1a1a1a;
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      font-family: inherit;
-    }
-    .override-form button:disabled { opacity: 0.6; cursor: default; }
-    .override-form .error { grid-column: 1 / -1; color: #c00; font-size: 0.85rem; }
-
-    .overrides-list { display: flex; flex-direction: column; gap: 0.5rem; }
-    .override-row {
-      background: #fff;
-      border: 1px solid #e9e9e4;
-      border-radius: 12px;
-      padding: 0.75rem 1rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.9rem;
-    }
-    .override-row .note { color: #797970; font-size: 0.8rem; margin-left: 0.5rem; }
   </style>
 
   <div class="container">
-    <h1>Ուղեկից</h1>
+    <h1>{L('nav_facilitator', 'Ուղեկից')}</h1>
 
     {assignments.map((a) => (
       <div class="assignment" data-kind={a.kind} data-id={a.id}>
         <div class="assignment-title">{a.name}</div>
 
-        <form class="add-form" data-kind={a.kind} data-id={a.id}>
+        <form class="add-form" data-kind={a.kind} data-id={a.id} data-error-text={L('facilitator_add_material_error', 'Failed to add material')}>
           <div>
-            <label>Week starting</label>
+            <label>{L('facilitator_week_starting_label', 'Week starting')}</label>
             <input type="date" name="week_start" required />
           </div>
           <div>
-            <label>Type</label>
+            <label>{L('facilitator_type_label', 'Type')}</label>
             <select name="type" required>
-              <option value="video">Video</option>
-              <option value="audio">Audio</option>
-              <option value="reading">Reading</option>
+              <option value="video">{L('material_type_video', 'Video')}</option>
+              <option value="audio">{L('material_type_audio', 'Audio')}</option>
+              <option value="reading">{L('material_type_reading', 'Reading')}</option>
             </select>
           </div>
           <div class="full">
-            <label>Label</label>
-            <input type="text" name="label" placeholder="e.g. Week 1 recording" required />
+            <label>{L('facilitator_label_label', 'Label')}</label>
+            <input type="text" name="label" placeholder={L('facilitator_label_placeholder', 'e.g. Week 1 recording')} required />
           </div>
           <div class="full">
-            <label>URL</label>
+            <label>{L('facilitator_url_label', 'URL')}</label>
             <input type="url" name="url" placeholder="https://…" required />
           </div>
           <p class="error" hidden></p>
-          <button type="submit">Add material</button>
+          <button type="submit">{L('facilitator_add_material_button', 'Add material')}</button>
         </form>
 
         {a.materials.length === 0 ? (
-          <p class="empty-state">No materials shared yet.</p>
+          <p class="empty-state">{L('detail_materials_empty', 'No materials shared yet.')}</p>
         ) : (
           <div class="weeks">
             {[...a.weekGroups.entries()].map(([weekStart, items]) => (
@@ -252,7 +195,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
                           {typeItems.map((m) => (
                             <li>
                               <a href={m.url} target="_blank" rel="noopener">{m.label}</a>
-                              <button class="remove" data-id={m.id} type="button">Remove</button>
+                              <button class="remove" data-id={m.id} data-confirm-text={L('facilitator_remove_confirm', 'Remove this material?')} type="button">{L('facilitator_remove_button', 'Remove')}</button>
                             </li>
                           ))}
                         </ul>
@@ -260,30 +203,6 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
                     );
                   })}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        <div class="sub-heading">Cancel a session</div>
-        <form class="override-form" data-kind={a.kind} data-id={a.id}>
-          <div>
-            <label>Date</label>
-            <input type="date" name="date" required />
-          </div>
-          <div>
-            <label>Note (optional)</label>
-            <input type="text" name="note" placeholder="e.g. I'm unavailable" />
-          </div>
-          <p class="error" hidden></p>
-          <button type="submit">Cancel this session</button>
-        </form>
-
-        {a.overrides.length > 0 && (
-          <div class="overrides-list">
-            {a.overrides.map((o) => (
-              <div class="override-row">
-                <span>{o.date}{o.note && <span class="note">{o.note}</span>}</span>
               </div>
             ))}
           </div>
@@ -323,50 +242,11 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
             window.location.reload();
           } else {
             const data = await res.json().catch(() => ({}));
-            errorEl.textContent = data.error ?? 'Failed to add material';
+            errorEl.textContent = data.error ?? form.dataset.errorText ?? 'Failed to add material';
             errorEl.hidden = false;
           }
         } catch {
-          errorEl.textContent = 'Failed to add material';
-          errorEl.hidden = false;
-        }
-        submitBtn.disabled = false;
-      });
-    });
-
-    document.querySelectorAll<HTMLFormElement>('.override-form').forEach((form) => {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const errorEl = form.querySelector<HTMLParagraphElement>('.error')!;
-        errorEl.hidden = true;
-        const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-        submitBtn.disabled = true;
-
-        const kind = form.dataset.kind;
-        const id = Number(form.dataset.id);
-        const fd = new FormData(form);
-        const payload: Record<string, unknown> = {
-          date: fd.get('date'),
-          note: fd.get('note') || null,
-        };
-        if (kind === 'workshop') payload.workshop_id = id;
-        else payload.cloud_id = id;
-
-        try {
-          const res = await fetch('/api/platform/schedule-override', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-          });
-          if (res.ok) {
-            window.location.reload();
-          } else {
-            const data = await res.json().catch(() => ({}));
-            errorEl.textContent = data.error ?? 'Failed to cancel session';
-            errorEl.hidden = false;
-          }
-        } catch {
-          errorEl.textContent = 'Failed to cancel session';
+          errorEl.textContent = form.dataset.errorText ?? 'Failed to add material';
           errorEl.hidden = false;
         }
         submitBtn.disabled = false;
@@ -375,7 +255,7 @@ const TYPE_LABEL: Record<Material['type'], string> = { video: 'Video', audio: 'A
 
     document.querySelectorAll<HTMLButtonElement>('.remove').forEach((btn) => {
       btn.addEventListener('click', async () => {
-        if (!confirm('Remove this material?')) return;
+        if (!confirm(btn.dataset.confirmText ?? 'Remove this material?')) return;
         const id = Number(btn.dataset.id);
         btn.disabled = true;
         try {

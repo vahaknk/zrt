@@ -1,11 +1,13 @@
 ---
 import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import { requireMember } from '../../lib/platformAuth';
+import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
 
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 ---
 
 <PlatformLayout title="Zartsants Platform — Parev" member={member}>
@@ -26,10 +28,10 @@ if (!member) {
   </style>
 
   <div class="container">
-    <a class="back" href="/platform">&larr; Dashboard</a>
+    <a class="back" href="/platform">&larr; {L('admin_back_to_dashboard', 'Dashboard')}</a>
     <div class="empty-state">
       <img src="/platform_parev.png" alt="" />
-      <p>Coming soon.</p>
+      <p>{L('coming_soon', 'Coming soon.')}</p>
     </div>
   </div>
 </PlatformLayout>

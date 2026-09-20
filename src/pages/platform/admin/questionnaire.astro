@@ -14,11 +14,13 @@ import {
   type Weekday,
   type FormOption,
 } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 const member = await requireAdmin(Astro.request);
 if (!member) {
   return Astro.redirect('/platform');
 }
+const L = makeLabelGetter(await getPlatformLabels());
 
 interface Row {
   refId: string;
@@ -147,12 +149,12 @@ const COLS = 6 + WEEKDAYS.length;
   </style>
 
   <div class="container">
-    <a class="back" href="/platform/admin">&larr; Admin</a>
-    <h1>Questionnaire availability</h1>
-    <p class="hint">Times converted from each respondent's selected timezone to the timezone below. Click a row for the rest of their answers.</p>
+    <a class="back" href="/platform/admin">&larr; {L('admin_back_link', 'Admin')}</a>
+    <h1>{L('admin_hub_questionnaire_title', 'Questionnaire')} {L('questionnaire_title_suffix', 'availability')}</h1>
+    <p class="hint">{L('questionnaire_hint', "Times converted from each respondent's selected timezone to the timezone below. Click a row for the rest of their answers.")}</p>
 
     <form method="get" class="tz-picker">
-      <label for="tz">View times in:</label>
+      <label for="tz">{L('questionnaire_view_times_label', 'View times in:')}</label>
       <select id="tz" name="tz" onchange="this.form.submit()">
         {TIMEZONE_GROUPS.map((g) => (
           <option value={g.tz} selected={g.tz === targetTz}>{g.label.en}</option>
@@ -165,11 +167,11 @@ const COLS = 6 + WEEKDAYS.length;
         <thead>
           <tr>
             <th></th>
-            <th>ID</th>
-            <th>Participant</th>
-            <th>Respondent</th>
-            <th>Type</th>
-            <th>Timezone</th>
+            <th>{L('questionnaire_col_id', 'ID')}</th>
+            <th>{L('questionnaire_col_participant', 'Participant')}</th>
+            <th>{L('questionnaire_col_respondent', 'Respondent')}</th>
+            <th>{L('questionnaire_col_type', 'Type')}</th>
+            <th>{L('questionnaire_col_timezone', 'Timezone')}</th>
             {WEEKDAYS.map((day) => <th>{WEEKDAY_SHORT_LABELS[day].en}</th>)}
           </tr>
         </thead>
@@ -204,17 +206,17 @@ const COLS = 6 + WEEKDAYS.length;
                 <tr class="detail-row" hidden>
                   <td colspan={COLS}>
                     <dl class="detail-grid">
-                      <div><dt>Birthday</dt><dd>{r.participant_birthday ?? '—'}</dd></div>
-                      <div><dt>{r.participant_type === 'adult' ? 'Profession' : 'School'}</dt><dd>{(r.participant_type === 'adult' ? r.profession : r.current_school) ?? '—'}</dd></div>
-                      <div><dt>City / Country</dt><dd>{[r.city, r.country].filter(Boolean).join(', ') || '—'}</dd></div>
-                      <div><dt>Language proficiency</dt><dd>{resolveLabels(r.language_proficiency, proficiencyOptions)}{r.language_proficiency_other ? ` (${r.language_proficiency_other})` : ''}</dd></div>
-                      <div><dt>Interests</dt><dd>{resolveLabels(r.interests, INTEREST_OPTIONS)}{r.interests_other ? ` (${r.interests_other})` : ''}</dd></div>
+                      <div><dt>{L('questionnaire_detail_birthday', 'Birthday')}</dt><dd>{r.participant_birthday ?? '—'}</dd></div>
+                      <div><dt>{r.participant_type === 'adult' ? L('questionnaire_detail_profession', 'Profession') : L('questionnaire_detail_school', 'School')}</dt><dd>{(r.participant_type === 'adult' ? r.profession : r.current_school) ?? '—'}</dd></div>
+                      <div><dt>{L('questionnaire_detail_city_country', 'City / Country')}</dt><dd>{[r.city, r.country].filter(Boolean).join(', ') || '—'}</dd></div>
+                      <div><dt>{L('questionnaire_detail_proficiency', 'Language proficiency')}</dt><dd>{resolveLabels(r.language_proficiency, proficiencyOptions)}{r.language_proficiency_other ? ` (${r.language_proficiency_other})` : ''}</dd></div>
+                      <div><dt>{L('questionnaire_detail_interests', 'Interests')}</dt><dd>{resolveLabels(r.interests, INTEREST_OPTIONS)}{r.interests_other ? ` (${r.interests_other})` : ''}</dd></div>
                       {r.participant_type !== 'adult' && (
-                        <div><dt>Relationship to participant</dt><dd>{resolveLabels(r.relationship ? [r.relationship] : [], RELATIONSHIP_OPTIONS)}{r.relationship_other ? ` (${r.relationship_other})` : ''}</dd></div>
+                        <div><dt>{L('questionnaire_detail_relationship', 'Relationship to participant')}</dt><dd>{resolveLabels(r.relationship ? [r.relationship] : [], RELATIONSHIP_OPTIONS)}{r.relationship_other ? ` (${r.relationship_other})` : ''}</dd></div>
                       )}
-                      <div><dt>Other availability notes</dt><dd>{r.availability_other ?? '—'}</dd></div>
-                      <div><dt>Form language</dt><dd>{FORM_LANGUAGE_NAMES[r.form_language ?? ''] ?? r.form_language ?? '—'}</dd></div>
-                      <div><dt>Fee acknowledged</dt><dd>{r.fee_acknowledged ? 'Yes' : 'No'}</dd></div>
+                      <div><dt>{L('questionnaire_detail_availability_notes', 'Other availability notes')}</dt><dd>{r.availability_other ?? '—'}</dd></div>
+                      <div><dt>{L('questionnaire_detail_form_language', 'Form language')}</dt><dd>{FORM_LANGUAGE_NAMES[r.form_language ?? ''] ?? r.form_language ?? '—'}</dd></div>
+                      <div><dt>{L('questionnaire_detail_fee', 'Fee acknowledged')}</dt><dd>{r.fee_acknowledged ? L('questionnaire_yes', 'Yes') : L('questionnaire_no', 'No')}</dd></div>
                     </dl>
                   </td>
                 </tr>
@@ -222,7 +224,7 @@ const COLS = 6 + WEEKDAYS.length;
             );
           })}
           {rows.length === 0 && (
-            <tr><td colspan={COLS} style="color:#999">No questionnaire responses with availability yet.</td></tr>
+            <tr><td colspan={COLS} style="color:#999">{L('questionnaire_empty_state', 'No questionnaire responses with availability yet.')}</td></tr>
           )}
         </tbody>
       </table>
