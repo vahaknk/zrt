@@ -13,12 +13,12 @@ import { CALENDAR_WEEKDAYS, MONTH_LABELS } from '../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 interface Props {
-  workshop: WorkshopInfo | null;
+  workshops: (WorkshopInfo | null)[];
   clouds: CloudInfo[];
   basePath?: string;
 }
 
-const { workshop, clouds, basePath = '/platform/calendar' } = Astro.props;
+const { workshops, clouds, basePath = '/platform/calendar' } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
 
 const requestedWeek = Astro.url.searchParams.get('week');
@@ -44,7 +44,7 @@ try {
   console.error('Failed to load schedule overrides:', e);
 }
 
-const blocks: SessionBlock[] = buildSessionBlocks(workshop, clouds, weekDates);
+const blocks: SessionBlock[] = buildSessionBlocks(workshops, clouds, weekDates);
 const bounds = gridBounds(blocks);
 const PX_PER_MIN = 1;
 const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
@@ -196,13 +196,12 @@ const enrichedBlocks = blocks.map((b) => {
 <style is:global>
   /* Astro's default scoped CSS only applies to server-rendered markup — it
      can't tag elements created later by client-side JS with the scoping
-     attribute. The hour marks, gridlines, and per-block local-time label are
-     all built in the <script> below, so their rules live here instead,
-     namespaced under .pcal (unique to this component) to avoid bleeding
-     into other pages' unrelated classes of the same name. */
+     attribute. The hour marks and gridlines are built in the <script>
+     below, so their rules live here instead, namespaced under .pcal
+     (unique to this component) to avoid bleeding into other pages'
+     unrelated classes of the same name. */
   .pcal .hour-col .mark { position: absolute; left: 0; right: 4px; text-align: right; font-size: 0.7rem; color: #999; transform: translateY(-50%); }
   .pcal .hline { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.06); }
-  .pcal .block .local { text-decoration: none; display: block; font-weight: 600; opacity: 0.9; }
 </style>
 
 <script>
@@ -268,10 +267,6 @@ const enrichedBlocks = blocks.map((b) => {
     for (const { el, startMin, endMin } of localBlocks) {
       el.style.top = `${(startMin - boundsStart) * PX_PER_MIN}px`;
       el.style.height = `${Math.max(20, (endMin - startMin) * PX_PER_MIN)}px`;
-      const timeEl = document.createElement('span');
-      timeEl.className = 'local';
-      timeEl.textContent = `${fmtHour(startMin)}–${fmtHour(endMin)}`;
-      el.insertBefore(timeEl, el.querySelector('.note'));
     }
   });
 </script>

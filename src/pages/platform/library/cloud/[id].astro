@@ -16,11 +16,13 @@ if (!member) {
 const L = makeLabelGetter(await getPlatformLabels());
 
 const id = Number(Astro.params.id);
-const membership = member.clouds.find((c) => c.clouds_id.id === id);
-if (!membership) {
+const cloud =
+  member.clouds.find((c) => c.clouds_id.id === id)?.clouds_id ??
+  member.facilitates_clouds.find((c) => c.clouds_id.id === id)?.clouds_id ??
+  null;
+if (!cloud) {
   return Astro.redirect('/platform/library');
 }
-const cloud = membership.clouds_id;
 
 const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
 const scheduleInstants = parseDays(cloud.day_of_week)

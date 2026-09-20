@@ -16,7 +16,10 @@ if (!member) {
 const L = makeLabelGetter(await getPlatformLabels());
 
 const id = Number(Astro.params.id);
-const workshop = member.workshop?.id === id ? member.workshop : null;
+const workshop =
+  member.workshop?.id === id
+    ? member.workshop
+    : member.facilitates_workshops.find((w) => w.workshops_id.id === id)?.workshops_id ?? null;
 if (!workshop) {
   return Astro.redirect('/platform/library');
 }

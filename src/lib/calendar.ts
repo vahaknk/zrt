@@ -126,14 +126,21 @@ export interface SessionBlock {
 }
 
 export function buildSessionBlocks(
-  workshop: WorkshopInfo | null,
+  workshops: WorkshopInfo | (WorkshopInfo | null)[] | null,
   clouds: CloudInfo[],
   weekDates: Date[]
 ): SessionBlock[] {
   const blocks: SessionBlock[] = [];
   const dateFor = (wd: Weekday) => weekDates.find((d) => weekdayOf(d) === wd) ?? null;
 
-  if (workshop) {
+  // Accepts either a single workshop (the old call shape) or a list — a
+  // member can now see their own enrolled workshop alongside any they
+  // facilitate, so callers may need to pass more than one.
+  const workshopList = (Array.isArray(workshops) ? workshops : [workshops]).filter(
+    (w): w is WorkshopInfo => w !== null
+  );
+
+  for (const workshop of workshopList) {
     for (const entry of workshop.schedule ?? []) {
       if (!entry) continue;
       const startMin = timeToMinutes(entry.start_time);

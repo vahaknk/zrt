@@ -1,7 +1,7 @@
 ---
 import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import PlatformCalendar from '../../components/PlatformCalendar.astro';
-import { requireMember, displayName } from '../../lib/platformAuth';
+import { requireMember, displayName, calendarWorkshops, calendarClouds } from '../../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
 
 const member = await requireMember(Astro.request);
@@ -9,8 +9,8 @@ if (!member) {
   return Astro.redirect('/platform/login');
 }
 
-const workshop = member.workshop;
-const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
+const workshops = calendarWorkshops(member);
+const clouds = calendarClouds(member);
 const L = makeLabelGetter(await getPlatformLabels());
 ---
 
@@ -89,6 +89,6 @@ const L = makeLabelGetter(await getPlatformLabels());
       </a>
     </div>
 
-    <PlatformCalendar workshop={workshop} clouds={clouds} basePath="/platform" />
+    <PlatformCalendar workshops={workshops} clouds={clouds} basePath="/platform" />
   </div>
 </PlatformLayout>

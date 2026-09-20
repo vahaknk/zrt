@@ -67,36 +67,38 @@ export function sessionCookieOptions() {
 
 export { SESSION_COOKIE };
 
+export interface PlatformWorkshop {
+  id: number;
+  name: string;
+  age_group: string;
+  schedule_note: string | null;
+  zoom_link: string;
+  image: string | null;
+  schedule: Array<{ day: string; start_time: string; end_time: string }> | null;
+}
+
+export interface PlatformCloud {
+  id: number;
+  name: string;
+  age_groups: string;
+  schedule_note: string | null;
+  bundle: { id: number; name: string; zoom_link: string };
+  day_of_week: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  image: string | null;
+}
+
 export interface Member {
   id: number;
   email: string;
   full_name: string;
   armenian_name: string | null;
   is_admin: boolean;
-  workshop: {
-    id: number;
-    name: string;
-    age_group: string;
-    schedule_note: string | null;
-    zoom_link: string;
-    image: string | null;
-    schedule: Array<{ day: string; start_time: string; end_time: string }> | null;
-  } | null;
-  clouds: Array<{
-    clouds_id: {
-      id: number;
-      name: string;
-      age_groups: string;
-      schedule_note: string | null;
-      bundle: { id: number; name: string; zoom_link: string };
-      day_of_week: string | null;
-      start_time: string | null;
-      end_time: string | null;
-      image: string | null;
-    };
-  }>;
-  facilitates_workshops: Array<{ workshops_id: { id: number; name: string } }>;
-  facilitates_clouds: Array<{ clouds_id: { id: number; name: string } }>;
+  workshop: PlatformWorkshop | null;
+  clouds: Array<{ clouds_id: PlatformCloud }>;
+  facilitates_workshops: Array<{ workshops_id: PlatformWorkshop }>;
+  facilitates_clouds: Array<{ clouds_id: PlatformCloud }>;
 }
 
 // The name to show on the platform — the admin-filled Armenian name when
@@ -112,6 +114,27 @@ export function displayName(person: { full_name: string; armenian_name?: string 
 // so the two can never drift out of sync.
 export function isFacilitator(member: Pick<Member, 'facilitates_workshops' | 'facilitates_clouds'>): boolean {
   return member.facilitates_workshops.length > 0 || member.facilitates_clouds.length > 0;
+}
+
+// Every workshop a member should see on their calendar: the one they're
+// enrolled in as a participant (if any) plus any they facilitate —
+// deduplicated in case both happen to be the same workshop.
+export function calendarWorkshops(member: Pick<Member, 'workshop' | 'facilitates_workshops'>) {
+  const all = [member.workshop, ...member.facilitates_workshops.map((w) => w.workshops_id)].filter(
+    (w): w is NonNullable<typeof w> => w !== null
+  );
+  const seen = new Set<number>();
+  return all.filter((w) => (seen.has(w.id) ? false : (seen.add(w.id), true)));
+}
+
+// Same idea for clouds: enrolled-in plus facilitated, deduplicated.
+export function calendarClouds(member: Pick<Member, 'clouds' | 'facilitates_clouds'>) {
+  const all = [
+    ...member.clouds.map((c) => c.clouds_id),
+    ...member.facilitates_clouds.map((c) => c.clouds_id),
+  ].filter((c): c is NonNullable<typeof c> => c !== null);
+  const seen = new Set<number>();
+  return all.filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
 }
 
 // Shared by the materials and schedule-override endpoints: only an admin,
@@ -155,8 +178,13 @@ export async function requireMember(request: Request): Promise<Member | null> {
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
         `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +
-        `facilitates_workshops.workshops_id.id,facilitates_workshops.workshops_id.name,` +
-        `facilitates_clouds.clouds_id.id,facilitates_clouds.clouds_id.name&limit=1`
+        `facilitates_workshops.workshops_id.id,facilitates_workshops.workshops_id.name,facilitates_workshops.workshops_id.age_group,` +
+        `facilitates_workshops.workshops_id.schedule_note,facilitates_workshops.workshops_id.zoom_link,` +
+        `facilitates_workshops.workshops_id.image,facilitates_workshops.workshops_id.schedule,` +
+        `facilitates_clouds.clouds_id.id,facilitates_clouds.clouds_id.name,facilitates_clouds.clouds_id.age_groups,` +
+        `facilitates_clouds.clouds_id.schedule_note,facilitates_clouds.clouds_id.image,` +
+        `facilitates_clouds.clouds_id.bundle.id,facilitates_clouds.clouds_id.bundle.name,facilitates_clouds.clouds_id.bundle.zoom_link,` +
+        `facilitates_clouds.clouds_id.day_of_week,facilitates_clouds.clouds_id.start_time,facilitates_clouds.clouds_id.end_time&limit=1`
     );
     return res.data?.[0] ?? null;
   } catch {
