@@ -46,7 +46,7 @@ try {
 
 const blocks: SessionBlock[] = buildSessionBlocks(workshops, clouds, weekDates);
 const bounds = gridBounds(blocks);
-const PX_PER_MIN = 1;
+const PX_PER_MIN = 0.6;
 const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
 
 const hourMarks: number[] = [];
@@ -202,6 +202,12 @@ const enrichedBlocks = blocks.map((b) => {
      unrelated classes of the same name. */
   .pcal .hour-col .mark { position: absolute; left: 0; right: 4px; text-align: right; font-size: 0.7rem; color: #999; transform: translateY(-50%); }
   .pcal .hline { position: absolute; left: 0; right: 0; border-top: 1px solid rgba(0,0,0,0.06); }
+
+  /* The app-wide box-sizing reset (PlatformLayout.astro) is itself scoped
+     and never reaches this component's elements, so .block's padding was
+     adding to its JS-set height instead of being included in it — each
+     session block rendered taller than the grid math intended. */
+  .pcal .block { box-sizing: border-box; }
 </style>
 
 <script>
@@ -215,7 +221,7 @@ const enrichedBlocks = blocks.map((b) => {
   // outside typical daytime hours in Paris, a viewer many hours ahead or
   // behind could see a session's local time cross midnight into the next/
   // previous day while it stays drawn under its original day column.)
-  const PX_PER_MIN = 1;
+  const PX_PER_MIN = 0.6;
 
   function fmtHour(min: number): string {
     const wrapped = ((min % (24 * 60)) + 24 * 60) % (24 * 60);
@@ -240,7 +246,7 @@ const enrichedBlocks = blocks.map((b) => {
       return { el, startMin, endMin };
     });
 
-    const BUFFER = 30;
+    const BUFFER = 10;
     const earliest = Math.min(...localBlocks.map((b) => b.startMin));
     const latest = Math.max(...localBlocks.map((b) => b.endMin));
     const boundsStart = Math.max(0, Math.floor((earliest - BUFFER) / 30) * 30);

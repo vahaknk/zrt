@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireMember } from '../../../lib/platformAuth';
+import { requireMember, calendarWorkshops, calendarClouds } from '../../../lib/platformAuth';
 import { formatScheduleLabel, formatWorkshopScheduleLabel, parseDays, scheduleEntryInstant } from '../../../lib/calendar';
 import { asset } from '../../../lib/asset';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
@@ -23,11 +23,8 @@ function scheduleInstantsFor(days: string[], start: string | null, end: string |
     .filter((e): e is { start: string; end: string } => e !== null);
 }
 
-const workshop = member.workshop;
-const workshopSchedule = workshop ? formatWorkshopScheduleLabel(workshop.schedule) : null;
-const workshopScheduleInstants = (workshop?.schedule ?? []).flatMap((e) => scheduleInstantsFor([e.day], e.start_time, e.end_time));
-
-const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
+const workshops = calendarWorkshops(member);
+const clouds = calendarClouds(member);
 ---
 
 <PlatformLayout title="Zartsants Platform — Library" member={member}>
@@ -101,29 +98,33 @@ const clouds = member.clouds.map((c) => c.clouds_id).filter((c) => c !== null);
   <div class="container">
     <h1>{L('library_title', 'Library')}</h1>
 
-    {!workshop && clouds.length === 0 ? (
+    {workshops.length === 0 && clouds.length === 0 ? (
       <div class="empty-state">{L('library_empty_state', 'No workshop or cloud assigned yet.')}</div>
     ) : (
       <>
-        {workshop && (
-          <div class="workshop-row">
-            <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
-              {workshop.image ? (
-                <div class="course-banner full">
-                  <img src={asset(DIRECTUS_URL, workshop.image)!} alt="" />
+        {workshops.map((workshop) => {
+          const workshopSchedule = formatWorkshopScheduleLabel(workshop.schedule);
+          const workshopScheduleInstants = (workshop.schedule ?? []).flatMap((e) => scheduleInstantsFor([e.day], e.start_time, e.end_time));
+          return (
+            <div class="workshop-row">
+              <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
+                {workshop.image ? (
+                  <div class="course-banner full">
+                    <img src={asset(DIRECTUS_URL, workshop.image)!} alt="" />
+                  </div>
+                ) : (
+                  <div class="course-banner" style="--banner:#efeaff">
+                    <img src="/lamp.png" alt="" />
+                  </div>
+                )}
+                <div class="course-body">
+                  <div class="course-title">{workshop.name}</div>
+                  <div class="course-sub" data-schedule={JSON.stringify(workshopScheduleInstants)}>{workshopSchedule ?? L('library_workshop_fallback', 'Workshop')}</div>
                 </div>
-              ) : (
-                <div class="course-banner" style="--banner:#efeaff">
-                  <img src="/lamp.png" alt="" />
-                </div>
-              )}
-              <div class="course-body">
-                <div class="course-title">{workshop.name}</div>
-                <div class="course-sub" data-schedule={JSON.stringify(workshopScheduleInstants)}>{workshopSchedule ?? L('library_workshop_fallback', 'Workshop')}</div>
-              </div>
-            </a>
-          </div>
-        )}
+              </a>
+            </div>
+          );
+        })}
         {clouds.length > 0 && (
           <div class="clouds-grid">
             {clouds.map((cloud) => {

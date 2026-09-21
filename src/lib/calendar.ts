@@ -170,7 +170,7 @@ export function buildSessionBlocks(
 // The hour range to actually render, from the real session times (with a
 // buffer) rather than a hardcoded full-day range, so the grid stays compact.
 export function gridBounds(blocks: SessionBlock[]): { startMin: number; endMin: number } {
-  const BUFFER = 30;
+  const BUFFER = 10;
   const DEFAULT = { startMin: 9 * 60, endMin: 18 * 60 };
   if (blocks.length === 0) return DEFAULT;
   const earliest = Math.min(...blocks.map((b) => b.startMin));
