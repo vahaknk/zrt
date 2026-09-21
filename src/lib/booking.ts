@@ -1,28 +1,16 @@
 // Minimum lead time before an interview slot can be booked online, so admins
-// always have at least this many days' notice of any scheduled appointment.
-// Measured in whole calendar days (Europe/Paris), not exact hours — a slot
-// becomes bookable as soon as its Paris calendar date is far enough out,
-// regardless of what time of day "now" is.
+// always have at least this much notice of any scheduled appointment.
+// Measured as an exact rolling window (not whole calendar days) — a slot
+// becomes bookable once it's this many hours out from the current instant.
+//
+// TEMPORARY: dropped from 48 to 12 for a few days at the user's request
+// (2026-09-21) — change back to 48 afterwards.
 import { parseParisWallTime } from './parisTime';
 
-const PARIS_TZ = 'Europe/Paris';
-const MIN_LEAD_DAYS = 2;
-
-function parisDateStr(date: Date): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: PARIS_TZ }).format(date);
-}
-
-function addDaysToDateStr(dateStr: string, days: number): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
-}
-
-export function minBookableDateStr(now: Date = new Date()): string {
-  return addDaysToDateStr(parisDateStr(now), MIN_LEAD_DAYS);
-}
+const MIN_LEAD_HOURS = 12;
 
 export function isSlotBookable(startTime: string, now: Date = new Date()): boolean {
-  return parisDateStr(parseParisWallTime(startTime)) >= minBookableDateStr(now);
+  return parseParisWallTime(startTime).getTime() - now.getTime() >= MIN_LEAD_HOURS * 60 * 60 * 1000;
 }
 
 // Independent of the lead-time rule above — a slot that has already started
