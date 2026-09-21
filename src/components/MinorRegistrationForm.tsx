@@ -77,7 +77,15 @@ const groupValidatorStyle: React.CSSProperties = {
 function parseDMY(v: string): { d: number; m: number; y: number } | null {
   const match = v.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!match) return null;
-  return { d: Number(match[1]), m: Number(match[2]) - 1, y: Number(match[3]) };
+  const d = Number(match[1]);
+  const m = Number(match[2]) - 1;
+  const y = Number(match[3]);
+  // Shape-only matches accept e.g. "12/25/1990" (a US-style MM/DD slip) —
+  // reject anything that isn't a real calendar date rather than treating it
+  // as parsed, since it will otherwise fail opaquely once submitted.
+  if (m < 0 || m > 11) return null;
+  if (d < 1 || d > daysInMonth(y, m)) return null;
+  return { d, m, y };
 }
 
 function formatDMY(d: number, m: number, y: number): string {
@@ -271,7 +279,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
   const [lang, setLang] = useState<Lang>(initialLang);
   const [participantType, setParticipantType] = useState<ParticipantType>('minor');
   const [form, setForm] = useState<FormState>(initialState);
-  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'invalid_birthday'>('idle');
   const [timezone, setTimezone] = useState('Europe/Paris');
   const t = FIELD_LABELS[lang];
 
@@ -294,6 +302,12 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    if (!parseDMY(form.participant_birthday)) {
+      setStatus('invalid_birthday');
+      return;
+    }
+
     setStatus('sending');
     try {
       const res = await fetch('/api/register-minor', {
@@ -308,8 +322,15 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
           timezone,
         }),
       });
-      setStatus(res.ok ? 'success' : 'error');
-    } catch {
+      if (res.ok) {
+        setStatus('success');
+        return;
+      }
+      const body = await res.json().catch(() => null);
+      console.error('Questionnaire submission failed:', res.status, body);
+      setStatus(body?.error === 'invalid_birthday' ? 'invalid_birthday' : 'error');
+    } catch (err) {
+      console.error('Questionnaire submission failed:', err);
       setStatus('error');
     }
   };
@@ -587,6 +608,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
       </div>
 
       {status === 'error' && <p style={{ color: '#c0392b', fontSize: '0.9rem' }}>{t.error}</p>}
+      {status === 'invalid_birthday' && <p style={{ color: '#c0392b', fontSize: '0.9rem' }}>{t.invalid_birthday}</p>}
 
       <button
         type="submit"

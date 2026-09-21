@@ -8,8 +8,18 @@ import { syncMinorRegistrationToNotion } from '../../lib/notion';
 function parseDDMMYYYY(s: string): string | null {
   const m = s.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
   if (!m) return null;
-  const [, dd, mm, yyyy] = m;
-  return `${yyyy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+  const [, ddStr, mmStr, yyyy] = m;
+  const dd = Number(ddStr);
+  const mm = Number(mmStr);
+  const year = Number(yyyy);
+  // The shape regex above accepts e.g. "12/25/1990" (a US-style MM/DD slip),
+  // which isn't a valid DD/MM date — reject anything outside a real calendar
+  // date instead of forwarding it to Directus, where it fails as an opaque
+  // 500 at save time.
+  if (mm < 1 || mm > 12) return null;
+  const daysInMonth = new Date(year, mm, 0).getDate();
+  if (dd < 1 || dd > daysInMonth) return null;
+  return `${yyyy}-${mmStr.padStart(2, '0')}-${ddStr.padStart(2, '0')}`;
 }
 
 export const POST: APIRoute = async ({ request }) => {
@@ -49,6 +59,10 @@ export const POST: APIRoute = async ({ request }) => {
 
   const availability = body.availability ?? {};
   const participantBirthdayISO = parseDDMMYYYY(participantBirthdayRaw);
+
+  if (!participantBirthdayISO) {
+    return new Response(JSON.stringify({ error: 'invalid_birthday' }), { status: 400 });
+  }
 
   const answers = {
     email,
