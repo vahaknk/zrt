@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { adminPost } from '../../lib/directusAdmin';
+import { adminGet, adminPost } from '../../lib/directusAdmin';
+import { isValidBookingToken } from '../../lib/booking';
 import { syncMinorRegistrationToNotion } from '../../lib/notion';
 
 // The birthday field is entered as free text in DD/MM/YYYY — convert to the
@@ -96,9 +97,29 @@ export const POST: APIRoute = async ({ request }) => {
   // this out for several kids. The Directus row's own `id` is the reference
   // staff use (visible on the admin questionnaire page) to manually link a
   // submission to the right person.
+  //
+  // The exception is a submission from the interview-confirmation email's
+  // link: its booking token identifies exactly one registration (one per
+  // child), so that link is recorded — alongside, never merged into it.
+  let registrationRequest: number | null = null;
+  if (isValidBookingToken(body.registration_token)) {
+    try {
+      const res = await adminGet(
+        `/items/registration_requests?filter[token][_eq]=${encodeURIComponent(body.registration_token)}&filter[slot_chosen][_eq]=true&fields=id&limit=1`
+      );
+      registrationRequest = res.data?.[0]?.id ?? null;
+    } catch (e) {
+      // Linking is a convenience — never lose the submission over it.
+      console.log('Questionnaire registration lookup failed:', (e as Error)?.message);
+    }
+  }
+
   let created: any = null;
   try {
-    created = await adminPost('/items/unmatched_questionnaire_leads', answers);
+    created = await adminPost('/items/unmatched_questionnaire_leads', {
+      ...answers,
+      ...(registrationRequest ? { registration_request: registrationRequest } : {}),
+    });
   } catch (e) {
     console.log('Failed to save questionnaire submission:', (e as Error)?.message);
     return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
