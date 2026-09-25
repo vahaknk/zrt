@@ -10,44 +10,56 @@ const L = makeLabelGetter(await getPlatformLabels());
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Zartsants Platform — Sign In</title>
     <style>
+      /* Same palette and chrome as PlatformLayout, so signing in looks like
+         the platform it leads to. */
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body {
         min-height: 100vh;
         display: flex;
+        flex-direction: column;
+        align-items: center;
+        background: #f6f6f4;
+        font-family: system-ui, sans-serif;
+        color: #1a1a1a;
+      }
+      main {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        background: #0a0a0a;
-        font-family: system-ui, sans-serif;
-        color: #fff;
+        padding: 2rem 1rem;
       }
+      .brand img { height: 100px; width: auto; display: block; margin-bottom: 1.5rem; }
       .card {
         width: 100%;
         max-width: 380px;
         padding: 2.5rem;
-        background: #141414;
-        border: 1px solid #222;
+        background: #fff;
+        border: 1px solid #eaeae6;
         border-radius: 12px;
       }
-      h1 { font-size: 1.5rem; margin-bottom: 2rem; font-weight: 500; }
-      label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 0.4rem; }
+      h1 { font-size: 1.5rem; margin-bottom: 2rem; font-weight: 600; }
+      label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 0.4rem; }
       input {
         width: 100%;
         padding: 0.75rem 1rem;
-        background: #1e1e1e;
-        border: 1px solid #333;
+        background: #fff;
+        border: 1px solid #dcdcd6;
         border-radius: 8px;
-        color: #fff;
+        color: #1a1a1a;
         font-size: 1rem;
         margin-bottom: 1.2rem;
         outline: none;
-        transition: border-color 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
-      input:focus { border-color: #555; }
+      input:focus { border-color: #9683fe; box-shadow: 0 0 0 3px rgba(150, 131, 254, 0.2); }
       button {
         width: 100%;
         padding: 0.8rem;
-        background: #fff;
-        color: #000;
+        background: #9683fe;
+        color: #fff;
         border: none;
         border-radius: 8px;
         font-size: 1rem;
@@ -57,11 +69,26 @@ const L = makeLabelGetter(await getPlatformLabels());
       }
       button:hover { opacity: 0.85; }
       button:disabled { opacity: 0.6; cursor: default; }
-      .error { color: #f66; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
+      .error { color: #c0392b; font-size: 0.875rem; margin-bottom: 1rem; display: none; }
       .error.visible { display: block; }
+      .site-footer {
+        width: 100%;
+        padding: 1.5rem 1.5rem 2rem;
+        border-top: 1px solid #eaeae6;
+        display: flex;
+        justify-content: center;
+      }
+      .site-footer img { height: 36px; width: auto; opacity: 0.85; }
+
+      @media (max-width: 640px) {
+        .brand img { height: 64px; }
+        .card { padding: 1.75rem 1.5rem; }
+      }
     </style>
   </head>
   <body>
+    <main>
+    <div class="brand"><img src="/zartsants-logo.svg" alt="Zartsants" /></div>
     <div class="card">
       <h1>{L('login_title', 'Sign In')}</h1>
       <p class="error" id="error">{L('login_error_invalid', 'Invalid username or password.')}</p>
@@ -73,6 +100,10 @@ const L = makeLabelGetter(await getPlatformLabels());
         <button type="submit" id="submit-btn">{L('login_continue_button', 'Continue')}</button>
       </form>
     </div>
+    </main>
+    <footer class="site-footer">
+      <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+    </footer>
 
     <script is:inline define:vars={{
       errorInvalid: L('login_error_invalid', 'Invalid username or password.'),
