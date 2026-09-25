@@ -2,7 +2,7 @@
 import { adminGet } from '../../lib/directusAdmin';
 import { getLanguage } from '../../lib/language';
 import { getLabels } from '../../lib/labels';
-import { isSlotBookable, isSlotInPast } from '../../lib/booking';
+import { isSlotBookable, isSlotInPast, isValidBookingToken, isTokenExpired } from '../../lib/booking';
 import SlotPicker from '../../components/SlotPicker';
 
 const { token } = Astro.params;
@@ -12,13 +12,15 @@ let registration: any = null;
 let expired = false;
 let labels: Record<string, string> = {};
 
-try {
-  const res = await adminGet(
-    `/items/registration_requests?filter[token][_eq]=${token}&fields=id,full_name,email,token_expires_at,slot_chosen,mailing_language&limit=1`
-  );
-  registration = res.data?.[0] ?? null;
-} catch (e) {
-  console.error('Failed to fetch registration:', e);
+if (isValidBookingToken(token)) {
+  try {
+    const res = await adminGet(
+      `/items/registration_requests?filter[token][_eq]=${encodeURIComponent(token)}&fields=id,full_name,email,token_expires_at,slot_chosen,mailing_language&limit=1`
+    );
+    registration = res.data?.[0] ?? null;
+  } catch (e) {
+    console.error('Failed to fetch registration:', e);
+  }
 }
 
 // The registration's mailing_language (chosen at signup) drives the page language —
@@ -35,11 +37,8 @@ if (!registration) {
 } else if (registration.slot_chosen) {
   // Already booked — sending them back through the picker would let them pick again.
   return Astro.redirect(`/book/confirmed?lang=${lang}`);
-} else {
-  const expiresAt = new Date(registration.token_expires_at);
-  if (isNaN(expiresAt.getTime()) || expiresAt < new Date()) {
-    expired = true;
-  }
+} else if (isTokenExpired(registration.token_expires_at)) {
+  expired = true;
 }
 
 // Fetch available slots (only if token is valid)

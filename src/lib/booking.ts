@@ -35,3 +35,34 @@ export function isTokenExpired(expiresAt: string | null | undefined, now: Date =
   const t = new Date(hasZone ? expiresAt : `${expiresAt}Z`).getTime();
   return isNaN(t) || t < now.getTime();
 }
+
+// How long an unconfirmed claim on a slot (interview_slot set, slot_chosen
+// still false) keeps holding a seat. A claim is resolved within a second or
+// two; this only bounds how long a request that crashed mid-booking blocks it.
+export const CLAIM_WINDOW_MS = 5 * 60 * 1000;
+
+// How long a provisional winner waits before re-checking the claims — far
+// longer than the gap between Directus stamping a claim and committing it.
+export const CLAIM_SETTLE_MS = 300;
+
+export interface SlotClaim {
+  id: number;
+  slot_chosen: boolean;
+  date_updated: string | null;
+}
+
+// Decides who gets a seat when several people go for the same slot at once.
+// Every contender writes its claim first and only then reads the claims, so
+// each one sees at least everyone who claimed before it — and they all rank
+// with the same order (confirmed bookings, then earliest claim, then id).
+// That makes exactly `capacity` of them winners, however the requests interleave.
+export function wonSlotClaim(claims: SlotClaim[], registrationId: number, capacity: number): boolean {
+  const ranked = [...claims].sort(
+    (a, b) =>
+      Number(b.slot_chosen) - Number(a.slot_chosen) ||
+      String(a.date_updated ?? '').localeCompare(String(b.date_updated ?? '')) ||
+      a.id - b.id
+  );
+  const position = ranked.findIndex((c) => c.id === registrationId);
+  return position !== -1 && position < capacity;
+}
