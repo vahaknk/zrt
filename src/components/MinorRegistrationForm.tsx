@@ -18,8 +18,22 @@ import {
   FIELD_LABELS,
 } from '../lib/minorFormContent';
 
+// What the registration already knows, looked up server-side from the
+// `?r=` booking token on the questionnaire link. Every field stays editable.
+export interface QuestionnairePrefill {
+  registration_token: string;
+  full_name?: string | null;
+  email?: string | null;
+  birthday?: string | null; // Directus date, YYYY-MM-DD
+  city?: string | null;
+  country?: string | null;
+  respondent_name?: string | null;
+  participant_type?: string | null;
+}
+
 interface Props {
   initialLang: Lang;
+  prefill?: QuestionnairePrefill | null;
 }
 
 const LANG_NAMES: Record<Lang, string> = { hyw: 'Հայերէն', fr: 'Français', en: 'English' };
@@ -266,6 +280,36 @@ const initialState: FormState = {
   fee_acknowledged: false,
 };
 
+// Registrations don't record minor/adult unless an admin set it, so fall back
+// to the birthday when there is one; otherwise keep the form's default.
+function prefillParticipantType(p: QuestionnairePrefill): ParticipantType {
+  if (p.participant_type === 'adult' || p.participant_type === 'minor') return p.participant_type;
+  const m = p.birthday?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) {
+    const now = new Date();
+    const age = now.getFullYear() - Number(m[1]) - (now.getMonth() + 1 < Number(m[2]) || (now.getMonth() + 1 === Number(m[2]) && now.getDate() < Number(m[3])) ? 1 : 0);
+    return age >= 18 ? 'adult' : 'minor';
+  }
+  return 'minor';
+}
+
+function prefillState(p: QuestionnairePrefill, type: ParticipantType): FormState {
+  const name = p.full_name?.trim() ?? '';
+  const bday = p.birthday?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return {
+    ...initialState,
+    email: p.email?.trim() ?? '',
+    // The registration's full_name is the participant — for adults that's
+    // the respondent themselves; for minors the parent's name is only known
+    // if an admin filled it in.
+    respondent_name: type === 'adult' ? name : p.respondent_name?.trim() ?? '',
+    participant_name: type === 'minor' ? name : '',
+    participant_birthday: bday ? `${bday[3]}/${bday[2]}/${bday[1]}` : '',
+    city: p.city?.trim() ?? '',
+    country: p.country?.trim() ?? '',
+  };
+}
+
 function toggleInArray(arr: string[], value: string): string[] {
   return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
 }
@@ -275,10 +319,14 @@ function renderBold(text: string) {
   return text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 === 1 ? <strong key={i}>{part}</strong> : part));
 }
 
-export default function MinorRegistrationForm({ initialLang }: Props) {
+export default function MinorRegistrationForm({ initialLang, prefill }: Props) {
   const [lang, setLang] = useState<Lang>(initialLang);
-  const [participantType, setParticipantType] = useState<ParticipantType>('minor');
-  const [form, setForm] = useState<FormState>(initialState);
+  const [participantType, setParticipantType] = useState<ParticipantType>(() =>
+    prefill ? prefillParticipantType(prefill) : 'minor'
+  );
+  const [form, setForm] = useState<FormState>(() =>
+    prefill ? prefillState(prefill, prefillParticipantType(prefill)) : initialState
+  );
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error' | 'invalid_birthday'>('idle');
   const [timezone, setTimezone] = useState('Europe/Paris');
   const t = FIELD_LABELS[lang];
@@ -320,6 +368,7 @@ export default function MinorRegistrationForm({ initialLang }: Props) {
           participant_type: participantType,
           form_language: lang,
           timezone,
+          registration_token: prefill?.registration_token ?? null,
         }),
       });
       if (res.ok) {

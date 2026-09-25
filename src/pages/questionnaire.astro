@@ -1,9 +1,30 @@
 ---
-import MinorRegistrationForm from '../components/MinorRegistrationForm';
+import MinorRegistrationForm, { type QuestionnairePrefill } from '../components/MinorRegistrationForm';
 import { LANGS, FIELD_LABELS, type Lang } from '../lib/minorFormContent';
+import { adminGet } from '../lib/directusAdmin';
+import { isValidBookingToken } from '../lib/booking';
 
 const requested = Astro.url.searchParams.get('lang');
 const lang: Lang = (LANGS as readonly string[]).includes(requested ?? '') ? (requested as Lang) : 'hyw';
+
+// `?r=` is the registration's booking token, added to the link in the
+// interview-confirmation email so the form opens with what we already know.
+// Only booked registrations qualify (that's the only email carrying the link),
+// and the booking token's expiry is deliberately ignored — the confirmation can
+// arrive days after registration. An unknown/bad token just means a blank form.
+const regToken = Astro.url.searchParams.get('r');
+let prefill: QuestionnairePrefill | null = null;
+if (isValidBookingToken(regToken)) {
+  try {
+    const res = await adminGet(
+      `/items/registration_requests?filter[token][_eq]=${encodeURIComponent(regToken)}&filter[slot_chosen][_eq]=true&fields=full_name,email,birthday,city,country,respondent_name,participant_type&limit=1`
+    );
+    const reg = res.data?.[0];
+    if (reg) prefill = { ...reg, registration_token: regToken };
+  } catch (e) {
+    console.error('Questionnaire prefill lookup failed:', (e as Error)?.message);
+  }
+}
 ---
 
 <!doctype html>
@@ -64,7 +85,7 @@ const lang: Lang = (LANGS as readonly string[]).includes(requested ?? '') ? (req
     <div class="hero">
       <img src="/whats_there_pic_2.webp" alt="" />
     </div>
-    <MinorRegistrationForm initialLang={lang} client:load />
+    <MinorRegistrationForm initialLang={lang} prefill={prefill} client:load />
     <div class="footer">
       <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
     </div>

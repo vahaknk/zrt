@@ -18,3 +18,20 @@ export function isSlotBookable(startTime: string, now: Date = new Date()): boole
 export function isSlotInPast(startTime: string, now: Date = new Date()): boolean {
   return parseParisWallTime(startTime).getTime() < now.getTime();
 }
+
+// Booking tokens are interpolated into Directus filter URLs, so anything
+// outside this charset (&, [, ], =, …) could smuggle in extra filter params
+// and match someone else's registration. The flow generates [a-z0-9]{32}.
+export function isValidBookingToken(token: unknown): token is string {
+  return typeof token === 'string' && /^[A-Za-z0-9]{16,128}$/.test(token);
+}
+
+// token_expires_at is a Directus dateTime (no timezone) holding UTC wall time
+// — the flow writes toISOString() and Directus drops the Z. Parsing it bare
+// would read it as the server's local time and shift the expiry.
+export function isTokenExpired(expiresAt: string | null | undefined, now: Date = new Date()): boolean {
+  if (!expiresAt) return true;
+  const hasZone = /(Z|[+-]\d{2}:?\d{2})$/.test(expiresAt);
+  const t = new Date(hasZone ? expiresAt : `${expiresAt}Z`).getTime();
+  return isNaN(t) || t < now.getTime();
+}
