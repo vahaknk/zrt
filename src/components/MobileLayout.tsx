@@ -407,7 +407,7 @@ export default function MobileLayout({ sections, directusUrl, labels, lang }: Pr
           style={{ position: 'absolute', bottom: 0, left: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
         <img src="/bottom-right.webp" alt="" onError={onImgErr}
           style={{ position: 'absolute', bottom: 0, right: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
-        <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian"
+        <img src={({ hyw: '/gulbenkian-logo-arm.png', fr: '/gulbenkian-logo-fr.png', pt: '/gulbenkian-logo-pt.png' } as Record<string, string>)[lang] ?? '/gulbenkian-logo.png'} alt="Gulbenkian"
           style={{ height: 48, width: 'auto', opacity: 0.85, position: 'relative' }} />
       </div>
     </div>

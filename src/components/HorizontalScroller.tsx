@@ -418,7 +418,7 @@ export default function HorizontalScroller({ sections, directusUrl, labels, save
       transform: 'translateX(-50%)',
       zIndex: 9999, pointerEvents: 'none',
     }}>
-      <img src={lang === 'hyw' ? '/gulbenkian-logo-arm.png' : '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: gulbenkianH, width: 'auto' }} />
+      <img src={({ hyw: '/gulbenkian-logo-arm.png', fr: '/gulbenkian-logo-fr.png', pt: '/gulbenkian-logo-pt.png' } as Record<string, string>)[lang] ?? '/gulbenkian-logo.png'} alt="Gulbenkian" style={{ height: gulbenkianH, width: 'auto' }} />
     </div>
     </>
   );
