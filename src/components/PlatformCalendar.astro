@@ -81,20 +81,32 @@ const enrichedBlocks = blocks.map((b) => {
     endIso: end.toISOString(),
   };
 });
+
+// Phones get a day-by-day list instead of the 7-column grid, which can't fit
+// on a narrow screen. Grouped under the day each session is scheduled on in
+// Paris, same as the grid's columns.
+const WEEKDAY_FULL = ['Երկուշաբթի', 'Երեքշաբթի', 'Չորեքշաբթի', 'Հինգշաբթի', 'Ուրբաթ', 'Շաբաթ', 'Կիրակի'];
+const agendaDays = weekDates
+  .map((d, i) => ({
+    label: `${WEEKDAY_FULL[i]}, ${MONTH_SHORT[d.getMonth()]} ${d.getDate()}`,
+    blocks: enrichedBlocks.filter((b) => b.dayIndex === i),
+  }))
+  .filter((day) => day.blocks.length > 0);
 ---
 
 <div class="pcal">
   <div class="weeknav">
-    <a href={`${basePath}?week=${ymd(prevWeek)}`}>&larr; {L('calendar_prev_week', 'նախորդ')}</a>
+    <a href={`${basePath}?week=${ymd(prevWeek)}`} aria-label={L('calendar_prev_week', 'նախորդ')}>&larr;<span class="lbl"> {L('calendar_prev_week', 'նախորդ')}</span></a>
     <span class="range">
       {MONTH_SHORT[weekStart.getMonth()]} {weekStart.getDate()} – {MONTH_SHORT[weekEnd.getMonth()]} {weekEnd.getDate()}
     </span>
-    <a href={`${basePath}?week=${ymd(nextWeek)}`}>{L('calendar_next_week', 'յաջորդ')} &rarr;</a>
+    <a href={`${basePath}?week=${ymd(nextWeek)}`} aria-label={L('calendar_next_week', 'յաջորդ')}><span class="lbl">{L('calendar_next_week', 'յաջորդ')} </span>&rarr;</a>
   </div>
 
   {blocks.length === 0 ? (
     <div class="empty-state">{L('calendar_empty_state', 'No workshop or cloud assigned yet.')}</div>
   ) : (
+    <>
     <div class="grid-card">
       <div class="grid-outer">
         <div class="headers">
@@ -137,6 +149,28 @@ const enrichedBlocks = blocks.map((b) => {
         </div>
       </div>
     </div>
+    <div class="agenda">
+      {agendaDays.map((day) => (
+        <div class="agenda-day">
+          <div class="agenda-date">{day.label}</div>
+          {day.blocks.map((b) => (
+            <a
+              class={`agenda-item ${b.kind} ${b.cancelled ? 'cancelled' : ''}`}
+              href={`/platform/library/${b.kind}/${b.sourceId}`}
+              data-start={b.startIso}
+              data-end={b.endIso}
+            >
+              <span class="agenda-time">{fmtHour(b.startMin)}–{fmtHour(b.endMin)}</span>
+              <span class="agenda-label">
+                {b.label}
+                {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
+              </span>
+            </a>
+          ))}
+        </div>
+      ))}
+    </div>
+    </>
   )}
   {timezone && blocks.length > 0 && (
     <div class="tz-note">{L('calendar_timezone_note', 'Ժամանակացոյցը կը ցուցադրուի ըստ ձեր արձանագրած տեղական ժամերու գօտիին։')}</div>
@@ -157,6 +191,48 @@ const enrichedBlocks = blocks.map((b) => {
   }
   .weeknav a:hover { background: #f7f4ee; }
   .weeknav .range { font-size: 0.95rem; font-weight: 700; }
+
+  .agenda { display: none; }
+  .agenda-day { margin-bottom: 1.1rem; }
+  .agenda-date { font-size: 0.8rem; font-weight: 700; color: #797970; margin-bottom: 0.45rem; }
+  .agenda-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    background: #fff;
+    border: 1px solid #e9e9e4;
+    border-left: 4px solid;
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    margin-bottom: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+  }
+  .agenda-item.workshop { border-left-color: #6b5ce6; }
+  .agenda-item.cloud { border-left-color: #2e9e4f; }
+  .agenda-item.cancelled { opacity: 0.55; }
+  .agenda-item.cancelled .agenda-label { text-decoration: line-through; }
+  .agenda-time { font-size: 0.85rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .agenda-label { font-size: 0.9rem; font-weight: 600; min-width: 0; }
+  .agenda-label .note { display: block; font-size: 0.78rem; font-weight: 400; font-style: italic; color: #797970; text-decoration: none; }
+
+  @media (max-width: 640px) {
+    .grid-card { display: none; }
+    .agenda { display: block; }
+    .weeknav { justify-content: space-between; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .weeknav .lbl { display: none; }
+    .weeknav a {
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      flex-shrink: 0;
+    }
+    .weeknav .range { font-size: 0.9rem; text-align: center; }
+  }
 
   .empty-state {
     background: #fff;
@@ -256,6 +332,15 @@ const enrichedBlocks = blocks.map((b) => {
     const m = wrapped % 60;
     return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
   }
+
+  // Phone list view: rewrite each session's time in the same timezone.
+  document.querySelectorAll<HTMLElement>('.pcal .agenda-item').forEach((el) => {
+    const timeEl = el.querySelector<HTMLElement>('.agenda-time');
+    if (!timeEl) return;
+    const start = wallTime(new Date(el.dataset.start!));
+    const end = wallTime(new Date(el.dataset.end!));
+    timeEl.textContent = `${fmtHour(start.min)}–${fmtHour(end.min)}`;
+  });
 
   document.querySelectorAll<HTMLElement>('.pcal .grid-card').forEach((card) => {
     const gridBody = card.querySelector<HTMLElement>('.grid-body');

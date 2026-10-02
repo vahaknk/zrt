@@ -66,9 +66,12 @@ const timezone = memberTimezone(member);
       .who .logout:hover { text-decoration: underline; }
 
       @media (max-width: 640px) {
-        .brand img { height: 64px; }
+        .topbar { padding: 0.5rem 1rem 0; row-gap: 0.25rem; }
+        .brand img { height: 52px; }
+        .who { margin-left: auto; }
         .who .name { display: none; }
-        .nav { order: 3; flex-basis: 100%; gap: 1rem; padding-top: 0.15rem; }
+        .nav { order: 3; flex-basis: 100%; gap: 1.1rem; }
+        .nav a { padding: 0.55rem 0; }
       }
 
       .site-footer {

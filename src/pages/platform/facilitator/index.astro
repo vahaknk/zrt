@@ -73,6 +73,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
 <PlatformLayout title="Zartsants Platform — Ուղեկից" member={member}>
   <style>
     .container { max-width: 780px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
     h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.75rem; }
 
     .assignment { margin-bottom: 2.5rem; }
@@ -90,7 +91,9 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     }
     .add-form label { display: block; font-size: 0.75rem; color: #797970; margin-bottom: 0.3rem; }
     .add-form input, .add-form select {
+      box-sizing: border-box;
       width: 100%;
+      min-width: 0;
       padding: 0.5rem 0.6rem;
       border: 1px solid #e0e0da;
       border-radius: 8px;
@@ -122,6 +125,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     }
     .add-form button:disabled { opacity: 0.6; cursor: default; }
     .add-form .error { grid-column: 1 / -1; color: #c00; font-size: 0.85rem; }
+    @media (max-width: 640px) {
+      .add-form { grid-template-columns: minmax(0, 1fr); padding: 1rem; }
+      .add-form button { padding: 0.75rem; }
+    }
 
     .week { margin-bottom: 1.5rem; }
     .week-label {
