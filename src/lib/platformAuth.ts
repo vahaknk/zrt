@@ -75,7 +75,6 @@ export interface Member {
   email: string;
   full_name: string;
   armenian_name: string | null;
-  is_admin: boolean;
   workshop: PlatformWorkshop | null;
   clouds: Array<{ clouds_id: PlatformCloud }>;
   facilitates_workshops: Array<{ workshops_id: PlatformWorkshop }>;
@@ -145,15 +144,13 @@ export function calendarClouds(member: Pick<Member, 'clouds' | 'facilitates_clou
   return all.filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
 }
 
-// Shared by the materials and schedule-override endpoints: only an admin,
-// or a facilitator actually assigned to the workshop/cloud in question,
-// may manage it.
+// Used by the materials endpoint: only a facilitator actually assigned to
+// the workshop/cloud in question may manage it.
 export function canManageWorkshopOrCloud(
-  member: Pick<Member, 'is_admin' | 'facilitates_workshops' | 'facilitates_clouds'>,
+  member: Pick<Member, 'facilitates_workshops' | 'facilitates_clouds'>,
   workshop: number | null,
   cloud: number | null
 ): boolean {
-  if (member.is_admin) return true;
   if (workshop && member.facilitates_workshops.some((w) => w.workshops_id.id === workshop)) return true;
   if (cloud && member.facilitates_clouds.some((c) => c.clouds_id.id === cloud)) return true;
   return false;
@@ -181,7 +178,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,armenian_name,is_admin,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,armenian_name,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `workshop.image,workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
@@ -198,13 +195,4 @@ export async function requireMember(request: Request): Promise<Member | null> {
   } catch {
     return null;
   }
-}
-
-// Same session check as requireMember(), plus an is_admin gate — used by
-// /platform/admin/* pages. Returns null for both "not logged in" and
-// "logged in but not admin", so callers can redirect to /platform either
-// way (it will itself bounce to /platform/login if there's no session).
-export async function requireAdmin(request: Request): Promise<Member | null> {
-  const member = await requireMember(request);
-  return member?.is_admin ? member : null;
 }
