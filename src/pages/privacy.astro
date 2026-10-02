@@ -25,7 +25,10 @@ const LAST_UPDATED = '2 October 2026';
         flex-direction: column;
         background: #9683fe;
         color: #1a1a1a;
-        font-family: 'Noto Sans', 'Noto Sans Armenian', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        /* System fonts only: this page loads nothing from third parties, and a
+           named web font that isn't loaded can fall through to a partial local
+           install (e.g. Noto Sans Armenian alone) that draws Latin as boxes. */
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
         line-height: 1.6;
       }
 
