@@ -235,7 +235,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       <div class="section">
         <h2>{L('detail_participants_heading', 'Մասնակիցներ')} <span class="count">{participants.length}</span></h2>
         {participants.length === 0 ? (
-          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_participants_empty', 'No one enrolled yet.')}</p>
+          <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_participants_empty', 'Տակաւին մասնակիցներ չկան։')}</p>
         ) : (
           <div class="names">{participants.map((p) => <span>{displayName(p)}</span>)}</div>
         )}
