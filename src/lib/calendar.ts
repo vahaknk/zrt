@@ -15,13 +15,13 @@ export function parseDays(csv: string | null): Weekday[] {
 }
 
 const WEEKDAY_LABEL: Record<Weekday, string> = {
-  monday: 'Monday',
-  tuesday: 'Tuesday',
-  wednesday: 'Wednesday',
-  thursday: 'Thursday',
-  friday: 'Friday',
-  saturday: 'Saturday',
-  sunday: 'Sunday',
+  monday: 'Երկուշաբթի',
+  tuesday: 'Երեքշաբթի',
+  wednesday: 'Չորեքշաբթի',
+  thursday: 'Հինգշաբթի',
+  friday: 'Ուրբաթ',
+  saturday: 'Շաբաթ',
+  sunday: 'Կիրակի',
 };
 
 // Days/time as stored in Directus are Paris time — surfaced as-is with a
@@ -30,8 +30,8 @@ const WEEKDAY_LABEL: Record<Weekday, string> = {
 export function formatScheduleLabel(csv: string | null, startTime: string | null, endTime: string | null): string | null {
   const days = parseDays(csv);
   if (days.length === 0 || !startTime || !endTime) return null;
-  const dayLabel = days.map((d) => WEEKDAY_LABEL[d]).join(' & ');
-  return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} (Paris time)`;
+  const dayLabel = days.map((d) => WEEKDAY_LABEL[d]).join(' եւ ');
+  return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} (Փարիզի ժամով)`;
 }
 
 export interface WorkshopScheduleEntry {
@@ -60,11 +60,11 @@ export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | 
   const clauses = [...groups.entries()].map(([key, days]) => {
     const [start, end] = key.split('_');
     const sorted = [...days].sort((a, b) => WEEKDAY_ORDER.indexOf(a) - WEEKDAY_ORDER.indexOf(b));
-    const dayLabel = sorted.map((d) => WEEKDAY_LABEL[d]).join(' & ');
+    const dayLabel = sorted.map((d) => WEEKDAY_LABEL[d]).join(' եւ ');
     return `${dayLabel} · ${start.slice(0, 5)}–${end.slice(0, 5)}`;
   });
 
-  return `${clauses.join(', ')} (Paris time)`;
+  return `${clauses.join(', ')} (Փարիզի ժամով)`;
 }
 
 // Real UTC instant for a recurring weekly Paris day/time, anchored to the

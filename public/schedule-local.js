@@ -6,7 +6,7 @@
 // local time together, mirroring how the server-rendered fallback grouped
 // them by Paris time.
 (function () {
-  var WEEKDAY_LABEL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  var WEEKDAY_LABEL = ['Երկուշաբթի', 'Երեքշաբթի', 'Չորեքշաբթի', 'Հինգշաբթի', 'Ուրբաթ', 'Շաբաթ', 'Կիրակի'];
   var WEEKDAY_INDEX = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
   var tz = document.body.dataset.tz || undefined;
   var tzCity = tz ? tz.split('/').pop().replace(/_/g, ' ') : null;
@@ -57,7 +57,7 @@
       });
       var dayLabel = days.map(function (d) {
         return WEEKDAY_LABEL[d];
-      }).join(' & ');
+      }).join(' եւ ');
       return dayLabel + ' · ' + key;
     });
 
