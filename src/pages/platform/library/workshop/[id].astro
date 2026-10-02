@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
-import { requireMember, displayName } from '../../../../lib/platformAuth';
+import { requireMember, displayName, isWebUrl } from '../../../../lib/platformAuth';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
@@ -260,7 +260,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                   <h2>{TYPE_LABEL[type]}</h2>
                   <ul>
                     {typeItems.map((m) => (
-                      <li><a href={m.url} target="_blank" rel="noopener">{m.label}</a></li>
+                      <li><a href={isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a></li>
                     ))}
                   </ul>
                 </div>

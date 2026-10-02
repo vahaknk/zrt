@@ -1,5 +1,19 @@
 import type { APIRoute } from 'astro';
+import { randomInt } from 'crypto';
 import { adminGet, adminPost } from '../../lib/directusAdmin';
+
+// The booking link's token, generated here with a cryptographic RNG. The
+// "Send registration email" flow uses the token it finds on the new record and
+// only falls back to its own (Math.random-based) one for records created by
+// hand in Directus. Same shape and lifetime as that fallback: 32 × [a-z0-9],
+// valid for 7 days.
+const TOKEN_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789';
+const TOKEN_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+function generateBookingToken(): string {
+  let token = '';
+  for (let i = 0; i < 32; i++) token += TOKEN_CHARS[randomInt(TOKEN_CHARS.length)];
+  return token;
+}
 
 // Only the registration form's own fields are accepted — the record is created
 // with the server's Directus key, so anything else a visitor sends (status,
@@ -57,7 +71,11 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    await adminPost('/items/registration_requests', cleanBody);
+    await adminPost('/items/registration_requests', {
+      ...cleanBody,
+      token: generateBookingToken(),
+      token_expires_at: new Date(Date.now() + TOKEN_LIFETIME_MS).toISOString(),
+    });
   } catch (e) {
     console.log('Registration create failed:', (e as Error)?.message);
     return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });

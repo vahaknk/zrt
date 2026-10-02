@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireMember } from '../../../lib/platformAuth';
+import { requireMember, isWebUrl } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
@@ -176,7 +176,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           </div>
           <div class="full">
             <label>{L('facilitator_url_label', 'URL')}</label>
-            <input type="url" name="url" placeholder="https://…" required />
+            <input type="url" name="url" placeholder="https://…" pattern="https?://.+" required />
           </div>
           <p class="error" hidden></p>
           <button type="submit">{L('facilitator_add_material_button', 'Add material')}</button>
@@ -199,7 +199,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                         <ul>
                           {typeItems.map((m) => (
                             <li>
-                              <a href={m.url} target="_blank" rel="noopener">{m.label}</a>
+                              <a href={isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a>
                               <button class="remove" data-id={m.id} data-confirm-text={L('facilitator_remove_confirm', 'Remove this material?')} type="button">{L('facilitator_remove_button', 'Remove')}</button>
                             </li>
                           ))}

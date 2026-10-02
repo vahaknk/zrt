@@ -109,6 +109,7 @@ const L = makeLabelGetter(await getPlatformLabels());
     <script is:inline define:vars={{
       errorInvalid: L('login_error_invalid', 'Invalid username or password.'),
       errorGeneric: L('login_error_generic', 'Something went wrong. Please try again.'),
+      errorTooMany: L('login_error_too_many', 'Չափազանց շատ փորձեր։ Հաճեցէք քիչ ետք կրկին փորձել։'),
       loadingText: L('login_loading', '...'),
       continueText: L('login_continue_button', 'Continue'),
     }}>
@@ -134,8 +135,7 @@ const L = makeLabelGetter(await getPlatformLabels());
           if (res.ok) {
             window.location.href = '/platform';
           } else {
-            const data = await res.json().catch(() => ({}));
-            errorEl.textContent = data.error ?? errorInvalid;
+            errorEl.textContent = res.status === 429 ? errorTooMany : errorInvalid;
             errorEl.classList.add('visible');
           }
         } catch {

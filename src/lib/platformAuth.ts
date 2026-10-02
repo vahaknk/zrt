@@ -5,6 +5,17 @@ import { TIMEZONE_GROUPS } from './minorFormContent';
 const SESSION_COOKIE = 'zrt_platform_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
 
+// True only for http(s) addresses — used to keep material links from being
+// javascript:/data: URLs that would run code when a student clicks them.
+export function isWebUrl(value: unknown): value is string {
+  try {
+    const u = new URL(String(value));
+    return u.protocol === 'https:' || u.protocol === 'http:';
+  } catch {
+    return false;
+  }
+}
+
 export function generateRandomPassword(): string {
   return randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
 }
@@ -43,6 +54,7 @@ export function sessionCookieOptions() {
     path: '/',
     maxAge: SESSION_MAX_AGE_SECONDS,
     httpOnly: true,
+    secure: import.meta.env.PROD,
     sameSite: 'lax' as const,
   };
 }

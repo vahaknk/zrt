@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireMember, canManageWorkshopOrCloud } from '../../../lib/platformAuth';
+import { requireMember, canManageWorkshopOrCloud, isWebUrl } from '../../../lib/platformAuth';
 import { adminGet, adminPost, adminDelete } from '../../../lib/directusAdmin';
 
 const TYPES = ['video', 'audio', 'reading'] as const;
@@ -21,6 +21,11 @@ export const POST: APIRoute = async ({ request }) => {
   }
   if (!weekStart || !TYPES.includes(type as any) || !label || !url) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+  }
+  // Students open these links — anything but a web address (javascript:,
+  // data:, …) could run code in their browser.
+  if (!isWebUrl(url)) {
+    return new Response(JSON.stringify({ error: 'The link must start with http:// or https://' }), { status: 400 });
   }
   if (!canManageWorkshopOrCloud(member, workshop, cloud)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
