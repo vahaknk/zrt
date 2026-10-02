@@ -1,17 +1,28 @@
 import type { APIRoute } from 'astro';
-import { adminGet } from '../../lib/directusAdmin';
+import { adminGet, adminPost } from '../../lib/directusAdmin';
+
+// Only the registration form's own fields are accepted — the record is created
+// with the server's Directus key, so anything else a visitor sends (status,
+// token, slot_chosen, notes…) must never reach Directus.
+const FORM_FIELDS = ['full_name', 'email', 'city', 'interview_language', 'mailing_language', 'consent'] as const;
 
 export const POST: APIRoute = async ({ request }) => {
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
+  if (!body || typeof body !== 'object') {
+    return new Response(JSON.stringify({ error: 'Invalid request' }), { status: 400 });
+  }
 
   // Strip empty strings and undefined values — Directus prefers omitted fields over empty
-  const cleanBody = Object.fromEntries(
-    Object.entries(body).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
+  const cleanBody: Record<string, unknown> = Object.fromEntries(
+    FORM_FIELDS.map((f) => [f, body[f]]).filter(([_, v]) => v !== '' && v !== undefined && v !== null)
   );
+  for (const f of FORM_FIELDS) {
+    if (f !== 'consent' && cleanBody[f] !== undefined) cleanBody[f] = String(cleanBody[f]).trim().slice(0, 200);
+  }
+  if (cleanBody.consent !== undefined) cleanBody.consent = cleanBody.consent === true;
 
-  // Cast armenian_level to number if present
-  if (cleanBody.armenian_level !== undefined) {
-    cleanBody.armenian_level = Number(cleanBody.armenian_level);
+  if (!cleanBody.full_name || !cleanBody.email || cleanBody.consent !== true) {
+    return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
   }
 
   const email = String(cleanBody.email ?? '').trim();
@@ -45,22 +56,12 @@ export const POST: APIRoute = async ({ request }) => {
     }
   }
 
-  console.log('=== /api/register called ===');
-  console.log('Sending to Directus:', JSON.stringify(cleanBody, null, 2));
-
-  const res = await fetch(`${import.meta.env.DIRECTUS_URL}/items/registration_requests`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(cleanBody),
-  });
-  
-  console.log('Directus response status:', res.status);
-  
-  if (!res.ok) {
-    const errText = await res.text();
-    console.log('Directus error body:', errText);
-    return new Response(JSON.stringify({ error: errText }), { status: res.status });
+  try {
+    await adminPost('/items/registration_requests', cleanBody);
+  } catch (e) {
+    console.log('Registration create failed:', (e as Error)?.message);
+    return new Response(JSON.stringify({ error: 'Failed to save registration' }), { status: 500 });
   }
-  
+
   return new Response(JSON.stringify({ success: true }), { status: 200 });
 };
