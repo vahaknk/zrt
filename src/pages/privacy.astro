@@ -1,0 +1,285 @@
+---
+// Privacy policy for zartsants.com — text supplied by Mille et Un Mondes
+// (2026-10-02). Deliberately self-contained (no Google Fonts) so this page in
+// particular makes no third-party requests.
+const LAST_UPDATED = '2 October 2026';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <title>Privacy policy — Zartsants</title>
+    <meta name="description" content="How Zartsants and Association Mille et Un Mondes collect, use and protect personal data." />
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html { color-scheme: light; }
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        background: #9683fe;
+        color: #1a1a1a;
+        font-family: 'Noto Sans', 'Noto Sans Armenian', system-ui, -apple-system, 'Segoe UI', sans-serif;
+        line-height: 1.6;
+      }
+
+      .top { display: flex; justify-content: center; padding: 1.75rem 1rem 1.25rem; }
+      .top img { height: 64px; width: auto; display: block; }
+
+      main { flex: 1 0 auto; padding: 0 1rem 3rem; }
+      .card {
+        max-width: 760px;
+        margin: 0 auto;
+        background: #fff;
+        border-radius: 18px;
+        padding: 2.5rem 2.75rem 2.75rem;
+        box-shadow: 0 6px 30px rgba(40, 20, 120, 0.12);
+      }
+
+      h1 { font-size: 1.9rem; line-height: 1.2; margin-bottom: 0.35rem; }
+      .updated { color: #6b6b6b; font-size: 0.9rem; margin-bottom: 2rem; }
+
+      .toc {
+        background: #f4f1ff;
+        border-radius: 12px;
+        padding: 1.1rem 1.4rem;
+        margin-bottom: 2.25rem;
+      }
+      .toc-title { font-weight: 700; font-size: 0.9rem; margin-bottom: 0.4rem; }
+      .toc ol { padding-left: 1.3rem; columns: 2; column-gap: 2rem; font-size: 0.92rem; }
+      .toc li { break-inside: avoid; margin: 0.12rem 0; }
+      .toc a { color: #4a3fcf; text-decoration: none; }
+      .toc a:hover { text-decoration: underline; }
+
+      section { margin-top: 2.25rem; scroll-margin-top: 1.5rem; }
+      h2 {
+        font-size: 1.2rem;
+        line-height: 1.3;
+        margin-bottom: 0.75rem;
+        display: flex;
+        gap: 0.6rem;
+        align-items: baseline;
+      }
+      h2 .num { color: #9683fe; font-variant-numeric: tabular-nums; }
+      p { margin-bottom: 0.8rem; }
+      ul { padding-left: 1.25rem; margin-bottom: 0.8rem; }
+      li { margin-bottom: 0.45rem; }
+      li::marker { color: #9683fe; }
+      a { color: #4a3fcf; }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.86em;
+        background: #f4f1ff;
+        padding: 0.1em 0.35em;
+        border-radius: 5px;
+      }
+
+      .address { list-style: none; padding: 0; }
+      .address li { margin-bottom: 0.25rem; }
+
+      .table-wrap { overflow-x: auto; margin: 0.25rem 0 0.8rem; }
+      table { width: 100%; border-collapse: collapse; font-size: 0.93rem; }
+      th, td { text-align: left; vertical-align: top; padding: 0.7rem 0.8rem; border-bottom: 1px solid #ece9f5; }
+      th { background: #f4f1ff; font-weight: 700; }
+      tr:last-child td { border-bottom: none; }
+
+      .retention { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.85rem; margin-top: 0.25rem; }
+      .ret {
+        border: 1px solid #ece9f5;
+        border-radius: 12px;
+        padding: 1rem 1.1rem;
+        background: #fcfbff;
+      }
+      .ret-label { font-size: 0.85rem; font-weight: 700; color: #6b6b6b; }
+      .ret-period { font-size: 1.2rem; font-weight: 700; color: #4a3fcf; margin: 0.15rem 0 0.35rem; }
+      .ret p { font-size: 0.88rem; margin: 0; color: #444; }
+
+      footer {
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
+        padding: 0 1rem 2rem;
+      }
+      footer img { height: 40px; width: auto; }
+      footer .links { display: flex; gap: 1.25rem; font-size: 0.85rem; }
+      footer .links a { color: #1a1a1a; text-decoration: none; }
+      footer .links a:hover { text-decoration: underline; }
+
+      @media (max-width: 640px) {
+        .top img { height: 52px; }
+        .card { padding: 1.6rem 1.25rem 2rem; border-radius: 14px; }
+        h1 { font-size: 1.5rem; }
+        .toc ol { columns: 1; }
+        .retention { grid-template-columns: minmax(0, 1fr); }
+        th, td { padding: 0.6rem 0.55rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <a href="/"><img src="/zartsants-logo.svg" alt="Zartsants" /></a>
+    </header>
+
+    <main>
+      <article class="card">
+        <h1>Privacy policy</h1>
+        <p class="updated">Last updated: {LAST_UPDATED}</p>
+
+        <nav class="toc" aria-label="Contents">
+          <div class="toc-title">Contents</div>
+          <ol>
+            <li><a href="#who-we-are">Who we are</a></li>
+            <li><a href="#data-we-collect">What personal data we collect</a></li>
+            <li><a href="#children">Children's data</a></li>
+            <li><a href="#purposes">Why we process your data</a></li>
+            <li><a href="#cookies">Cookies and similar technologies</a></li>
+            <li><a href="#sharing">Who we share your data with</a></li>
+            <li><a href="#transfers">International data transfers</a></li>
+            <li><a href="#retention">How long we keep your data</a></li>
+            <li><a href="#rights">Your rights</a></li>
+            <li><a href="#security">Security</a></li>
+            <li><a href="#changes">Changes to this policy</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ol>
+        </nav>
+
+        <section id="who-we-are">
+          <h2><span class="num">1.</span> Who we are</h2>
+          <p>Zartsants is a program run by <strong>Association Mille et Un Mondes</strong>, a non-profit association based in France.</p>
+          <ul class="address">
+            <li><strong>Address:</strong> 12 rue François Villon, 69003 Lyon, France</li>
+            <li><strong>Email:</strong> <a href="mailto:contact@milleetunmondes.com">contact@milleetunmondes.com</a></li>
+          </ul>
+          <p>Mille et un Mondes is the data controller for the personal data collected through zartsants.com (the "Site") within the meaning of the EU General Data Protection Regulation (GDPR).</p>
+        </section>
+
+        <section id="data-we-collect">
+          <h2><span class="num">2.</span> What personal data we collect</h2>
+          <p>Depending on how you use the Site, we may collect:</p>
+          <ul>
+            <li><strong>General visitors:</strong> an anonymous visitor identifier generated by your browser, your browser's language, the page that referred you to the Site, your browser's user-agent string, and your approximate country (resolved via our content delivery provider, Cloudflare — see <a href="#sharing">Section 6</a>).</li>
+            <li><strong>Registration &amp; the family questionnaire:</strong> the respondent's name and email; the participant's name, birthday, school/grade or profession, city and country, language proficiency, interests, and the respondent's relationship to the participant (parent, guardian, etc.); your time zone and the days/times you indicate as available; and whether you've acknowledged the program's fee.</li>
+            <li><strong>Interview booking:</strong> the date/time slot you choose and, where applicable, your preferred interview language.</li>
+            <li><strong>Platform accounts (enrolled participants):</strong> an email and password (stored as a salted hash, never in plain text), and your enrollment/workshop assignment.</li>
+            <li><strong>Staff/admin accounts:</strong> login credentials for internal team members administering the Site.</li>
+          </ul>
+        </section>
+
+        <section id="children">
+          <h2><span class="num">3.</span> Children's data</h2>
+          <p>Some of the personal data described above concerns minors (the program participants). This data is provided to us by the participant's parent or legal guardian, who identifies their relationship to the participant when submitting the questionnaire. We do not knowingly collect personal data directly from children without the involvement of a parent or guardian.</p>
+        </section>
+
+        <section id="purposes">
+          <h2><span class="num">4.</span> Why we process your data, and on what legal basis</h2>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Purpose</th><th>Legal basis</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Processing your registration, questionnaire answers, and interview booking</td><td>Performance of a contract / steps taken at your request prior to enrollment</td></tr>
+                <tr><td>Operating platform accounts for enrolled participants</td><td>Performance of a contract</td></tr>
+                <tr><td>Understanding where visitors come from and which languages the Site is used in</td><td>Legitimate interest (aggregate site analytics)</td></tr>
+                <tr><td>Remembering your chosen site language</td><td>Legitimate interest (site functionality)</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="cookies">
+          <h2><span class="num">5.</span> Cookies and similar technologies</h2>
+          <p>The Site uses:</p>
+          <ul>
+            <li><code>zrt_lang</code> (cookie, 1 year) — remembers the language you've chosen so you don't have to re-select it. Strictly functional.</li>
+            <li><code>zrt_platform_session</code> (cookie, 30 days, set only if you log into the platform area) — keeps you signed in. Strictly necessary.</li>
+            <li><code>directus_token</code> (cookie, staff/admin login only) — keeps staff signed into the internal administration area. Strictly necessary.</li>
+            <li><code>zrt_vid</code> (browser local storage, capped at 13 months) — a random identifier that lets us recognize repeat visits for aggregate, first-party analytics only.</li>
+          </ul>
+          <p>None of these are used for advertising, and the Site does not use any third-party advertising or social-media tracking cookies.</p>
+          <p>The analytics identifier is first-party only, automatically expires after 13 months, and is never shared with — or used to enrich data from — a third party. Under CNIL's guidance, first-party audience-measurement tools meeting these conditions are exempt from cookie consent requirements, so the Site does not currently display a cookie banner.</p>
+        </section>
+
+        <section id="sharing">
+          <h2><span class="num">6.</span> Who we share your data with</h2>
+          <p>We use the following service providers ("processors") to operate the Site. None of them are permitted to use your data for their own purposes.</p>
+          <ul>
+            <li><strong>Our own database (Directus)</strong>, hosted on our infrastructure — stores registration, questionnaire, booking, and platform-account data.</li>
+            <li><strong>Cloudflare</strong> — our content delivery/security provider, which sits in front of the Site for all traffic and sees visitor IP addresses as part of normal operation (standard infrastructure processing, not analytics or tracking).</li>
+            <li><strong>Notion</strong> (Notion Labs, Inc., United States) — internal team workspace used to track questionnaire responses and interview bookings.</li>
+            <li><strong>Resend</strong> — sends confirmation and notification emails on our behalf.</li>
+          </ul>
+          <p>We do not sell your personal data, and we do not share it with third parties for their own marketing purposes.</p>
+        </section>
+
+        <section id="transfers">
+          <h2><span class="num">7.</span> International data transfers</h2>
+          <p>Some of our processors (notably Notion) are located outside the European Economic Area. Where this is the case, transfers are made under an appropriate safeguard recognized by the GDPR, such as the EU–US Data Privacy Framework or Standard Contractual Clauses.</p>
+        </section>
+
+        <section id="retention">
+          <h2><span class="num">8.</span> How long we keep your data</h2>
+          <div class="retention">
+            <div class="ret">
+              <div class="ret-label">Not enrolled</div>
+              <div class="ret-period">1 year</div>
+              <p>From submission, or from the decision not to proceed with enrollment.</p>
+            </div>
+            <div class="ret">
+              <div class="ret-label">Enrolled participants</div>
+              <div class="ret-period">Participation + 3 years</div>
+              <p>Kept for the duration of the program, plus 3 years after the participant's last activity, then deleted or anonymized.</p>
+            </div>
+            <div class="ret">
+              <div class="ret-label">Platform accounts</div>
+              <div class="ret-period">Active + 1 year</div>
+              <p>Kept while the account is active, plus 1 year after deactivation, then deleted.</p>
+            </div>
+            <div class="ret">
+              <div class="ret-label">Analytics data</div>
+              <div class="ret-period">13 months</div>
+              <p>Matches CNIL's published ceiling for audience-measurement data; enforced in code via the <code>zrt_vid</code> expiry.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="rights">
+          <h2><span class="num">9.</span> Your rights</h2>
+          <p>Under the GDPR, you have the right to access, correct, delete, or restrict the use of your personal data, to object to certain processing, and to receive a copy of your data in a portable format. To exercise any of these rights, contact us at <a href="mailto:contact@milleetunmondes.com">contact@milleetunmondes.com</a>. You also have the right to lodge a complaint with the French data protection authority, the <strong>CNIL</strong> (<a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a>).</p>
+        </section>
+
+        <section id="security">
+          <h2><span class="num">10.</span> Security</h2>
+          <p>We take reasonable technical and organizational measures to protect your personal data, including hashing passwords and restricting access to internal systems to authorized staff.</p>
+        </section>
+
+        <section id="changes">
+          <h2><span class="num">11.</span> Changes to this policy</h2>
+          <p>We may update this policy from time to time. A "Last updated" date will accompany the published version and reflect the most recent revision.</p>
+        </section>
+
+        <section id="contact">
+          <h2><span class="num">12.</span> Contact</h2>
+          <p>Questions about this policy or your personal data can be sent to <a href="mailto:contact@milleetunmondes.com">contact@milleetunmondes.com</a>.</p>
+        </section>
+      </article>
+    </main>
+
+    <footer>
+      <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+      <div class="links">
+        <a href="https://zartsants.com">zartsants.com</a>
+        <a href="https://www.instagram.com/zartsants/" target="_blank" rel="noopener">Instagram</a>
+        <a href="https://www.facebook.com/profile.php?id=61591820653723" target="_blank" rel="noopener">Facebook</a>
+      </div>
+    </footer>
+  </body>
+</html>

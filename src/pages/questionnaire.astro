@@ -72,9 +72,13 @@ if (isValidBookingToken(regToken)) {
       }
       .footer {
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
         padding: 2rem 1rem 3rem;
       }
+      .footer a { color: #000; font-size: 0.85rem; text-decoration: none; }
+      .footer a:hover { text-decoration: underline; }
       .footer img {
         height: 44px;
         width: auto;
@@ -91,6 +95,7 @@ if (isValidBookingToken(regToken)) {
     <MinorRegistrationForm initialLang={lang} prefill={prefill} client:load />
     <div class="footer">
       <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+      <a href="/privacy">Privacy policy</a>
     </div>
   </body>
 </html>

@@ -409,6 +409,9 @@ export default function MobileLayout({ sections, directusUrl, labels, lang }: Pr
           style={{ position: 'absolute', bottom: 0, right: 0, height: 56, opacity: 0.45, pointerEvents: 'none' }} />
         <img src={({ hyw: '/gulbenkian-logo-arm.png', fr: '/gulbenkian-logo-fr.png', pt: '/gulbenkian-logo-pt.png' } as Record<string, string>)[lang] ?? '/gulbenkian-logo.png'} alt="Gulbenkian"
           style={{ height: 48, width: 'auto', opacity: 0.85, position: 'relative' }} />
+        <div style={{ position: 'relative', marginTop: '0.6rem' }}>
+          <a href="/privacy" style={{ color: 'inherit', fontSize: '0.8rem', textDecoration: 'none' }}>Privacy policy</a>
+        </div>
       </div>
     </div>
   );

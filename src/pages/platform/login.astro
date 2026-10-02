@@ -80,9 +80,13 @@ const L = makeLabelGetter(await getPlatformLabels());
         padding: 1.5rem 1.5rem 2rem;
         border-top: 1px solid #ebe7df;
         display: flex;
-        justify-content: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.6rem;
       }
       .site-footer img { height: 36px; width: auto; opacity: 0.85; }
+      .site-footer .privacy { color: #666; font-size: 0.8rem; text-decoration: none; }
+      .site-footer .privacy:hover { color: #1a1a1a; text-decoration: underline; }
 
       @media (max-width: 640px) {
         .brand img { height: 64px; }
@@ -107,6 +111,7 @@ const L = makeLabelGetter(await getPlatformLabels());
     </main>
     <footer class="site-footer">
       <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
+      <a class="privacy" href="/privacy">{L('footer_privacy', 'Privacy policy')}</a>
     </footer>
 
     <script is:inline define:vars={{
