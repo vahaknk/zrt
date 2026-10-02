@@ -1,5 +1,6 @@
 import { randomBytes } from 'crypto';
 import { adminGet } from './directusAdmin';
+import { TIMEZONE_GROUPS } from './minorFormContent';
 
 const SESSION_COOKIE = 'zrt_platform_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
@@ -103,9 +104,11 @@ export function memberTimezone(member: {
   }
 }
 
-// "America/Los_Angeles" -> "Los Angeles", for the "times shown in" note.
-export function timezoneCity(tz: string): string {
-  return tz.split('/').pop()!.replace(/_/g, ' ');
+// The Armenian name of a zone as the questionnaire's timezone selector shows
+// it (e.g. "Թուրքիա, Իրաք, Յորդանան"), shown next to converted schedule
+// times. Zones outside that list fall back to their city ("Los Angeles").
+export function timezoneLabel(tz: string): string {
+  return TIMEZONE_GROUPS.find((g) => g.tz === tz)?.label.hyw ?? tz.split('/').pop()!.replace(/_/g, ' ');
 }
 
 // The name to show on the platform — the admin-filled Armenian name when

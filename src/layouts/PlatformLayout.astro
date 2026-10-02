@@ -1,5 +1,5 @@
 ---
-import { displayName, memberTimezone } from '../lib/platformAuth';
+import { displayName, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 export interface Props {
@@ -86,7 +86,7 @@ const timezone = memberTimezone(member);
       .site-footer .links a:hover { color: #1a1a1a; text-decoration: underline; }
     </style>
   </head>
-  <body data-tz={timezone ?? undefined}>
+  <body data-tz={timezone ?? undefined} data-tz-label={timezone ? timezoneLabel(timezone) : undefined}>
     <header class="topbar">
       <a class="brand" href="/platform">
         <img src="/zartsants-logo.svg" alt="Zartsants" />

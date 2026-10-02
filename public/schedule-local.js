@@ -9,7 +9,7 @@
   var WEEKDAY_LABEL = ['Երկուշաբթի', 'Երեքշաբթի', 'Չորեքշաբթի', 'Հինգշաբթի', 'Ուրբաթ', 'Շաբաթ', 'Կիրակի'];
   var WEEKDAY_INDEX = { Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6 };
   var tz = document.body.dataset.tz || undefined;
-  var tzCity = tz ? tz.split('/').pop().replace(/_/g, ' ') : null;
+  var tzName = tz ? document.body.dataset.tzLabel || null : null;
 
   var formatter;
   try {
@@ -22,7 +22,7 @@
     });
   } catch (e) {
     tz = undefined;
-    tzCity = null;
+    tzName = null;
     formatter = new Intl.DateTimeFormat('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
   }
 
@@ -61,6 +61,6 @@
       return dayLabel + ' · ' + key;
     });
 
-    el.textContent = clauses.join(', ') + (tzCity ? ' (' + tzCity + ')' : '');
+    el.textContent = clauses.join(', ') + (tzName ? ' (' + tzName + ')' : '');
   });
 })();
