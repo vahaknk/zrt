@@ -1,4 +1,5 @@
 ---
+import '../styles/fonts';
 import MinorRegistrationForm, { type QuestionnairePrefill } from '../components/MinorRegistrationForm';
 import { LANGS, FIELD_LABELS, type Lang } from '../lib/minorFormContent';
 import { adminGet } from '../lib/directusAdmin';
@@ -37,9 +38,6 @@ if (isValidBookingToken(regToken)) {
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="color-scheme" content="light" />
     <title>{FIELD_LABELS[lang].page_title}</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,400;0,700;1,400&family=Noto+Sans+Armenian:wght@400;700&display=swap" rel="stylesheet" />
     <style>
       * { box-sizing: border-box; margin: 0; padding: 0; }
       html { color-scheme: light; }
