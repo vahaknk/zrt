@@ -37,6 +37,10 @@ const timezone = memberTimezone(member);
         font-family: system-ui, sans-serif;
         color: #1a1a1a;
       }
+      /* Keep the footer at the bottom of the screen on short pages: the page
+         content grows to fill whatever height the header and footer leave. */
+      body { display: flex; flex-direction: column; min-height: 100dvh; }
+      .page { flex: 1 0 auto; }
       .topbar {
         display: flex;
         align-items: center;
@@ -75,6 +79,7 @@ const timezone = memberTimezone(member);
       }
 
       .site-footer {
+        flex-shrink: 0;
         margin-top: 2rem;
         padding: 1.5rem 1.5rem 2rem;
         border-top: 1px solid #ebe7df;
@@ -107,7 +112,9 @@ const timezone = memberTimezone(member);
         <a class="logout" href="/api/platform/logout">{L('nav_logout', 'Log out')}</a>
       </div>
     </header>
-    <slot />
+    <main class="page">
+      <slot />
+    </main>
     <footer class="site-footer">
       <img src="/gulbenkian-logo.png" alt="Gulbenkian" />
       <div class="links">
