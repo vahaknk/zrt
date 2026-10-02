@@ -113,7 +113,9 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .hero h1 { font-size: 1.3rem; font-weight: 700; }
     .hero .schedule { font-size: 0.85rem; color: #4a4460; margin-top: 0.3rem; }
     .hero .zoom {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
       margin-top: 0.7rem;
       background: #fff;
       color: #4a3fcf;
@@ -123,6 +125,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       border-radius: 999px;
       text-decoration: none;
     }
+    .hero .zoom svg { height: 0.85em; width: auto; aspect-ratio: 20 / 12; flex-shrink: 0; }
     .hero .zoom:hover { opacity: 0.85; }
 
     .week { margin-bottom: 1.75rem; }
@@ -202,7 +205,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
         {schedule && (
           <div class="schedule" data-schedule={JSON.stringify(scheduleInstants)}>{schedule}</div>
         )}
-        <a class="zoom" href={workshop.zoom_link} target="_blank" rel="noopener">{L('detail_join_zoom', 'Join Zoom')}</a>
+        <a class="zoom" href={workshop.zoom_link} target="_blank" rel="noopener">
+          <svg viewBox="2 6 20 12" fill="currentColor" aria-hidden="true"><rect x="2" y="6" width="13.5" height="12" rx="3"/><path d="M17 10.2 21 7.4a.6.6 0 0 1 1 .5v8.2a.6.6 0 0 1-1 .5L17 13.8Z"/></svg>
+          {L('detail_join_zoom', 'Join Zoom')}
+        </a>
       </div>
     </div>
 
