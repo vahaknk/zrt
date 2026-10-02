@@ -140,7 +140,7 @@ export default function SlotPicker({ registration, slots, token, labels, lang }:
           style={{ width: '30%', maxHeight: 260, objectFit: 'cover', borderRadius: 12, marginBottom: '1.5rem', display: 'block' }}
         />
                 <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.5rem' }}>
-          {labels['booking_welcome'] ?? 'Բարեւ'}{', '}{registration.full_name}
+          {labels['booking_welcome'] ?? 'Բարե՛ւ'}{', '}{registration.full_name}
         </h1>
 
         {labels['booking_paris_time_note'] && (

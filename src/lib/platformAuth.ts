@@ -1,16 +1,8 @@
-import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
+import { randomBytes } from 'crypto';
 import { adminGet } from './directusAdmin';
 
-const scryptAsync = promisify(scrypt);
 const SESSION_COOKIE = 'zrt_platform_session';
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 30; // 30 days
-
-export async function hashPassword(plain: string): Promise<string> {
-  const salt = randomBytes(16);
-  const derived = (await scryptAsync(plain, salt, 64)) as Buffer;
-  return `scrypt:${salt.toString('hex')}:${derived.toString('hex')}`;
-}
 
 export function generateRandomPassword(): string {
   return randomBytes(8).toString('base64').replace(/[^a-zA-Z0-9]/g, '').slice(0, 10);
@@ -39,17 +31,6 @@ export async function generateUniqueUsername(fullName: string): Promise<string> 
   let i = 2;
   while (taken.has(`${base}${i}`)) i++;
   return `${base}${i}`;
-}
-
-export async function verifyPassword(plain: string, encoded: string): Promise<boolean> {
-  const parts = encoded.split(':');
-  if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
-  const [, saltHex, hashHex] = parts;
-  const salt = Buffer.from(saltHex, 'hex');
-  const expected = Buffer.from(hashHex, 'hex');
-  const derived = (await scryptAsync(plain, salt, 64)) as Buffer;
-  if (derived.length !== expected.length) return false;
-  return timingSafeEqual(derived, expected);
 }
 
 export function generateSessionToken(): string {
@@ -99,6 +80,33 @@ export interface Member {
   clouds: Array<{ clouds_id: PlatformCloud }>;
   facilitates_workshops: Array<{ workshops_id: PlatformWorkshop }>;
   facilitates_clouds: Array<{ clouds_id: PlatformCloud }>;
+  timezone: string | null;
+  registration_request: { timezone: string | null } | null;
+}
+
+// The IANA zone used to show every platform time in the member's own timezone
+// rather than the browser's: the one set on their platform_members record
+// (editable in Directus, and the only option for staff, who have no
+// registration), else the one they picked in the questionnaire. Null when
+// neither is on file or it isn't a zone this runtime recognises — callers
+// then fall back to the browser's timezone.
+export function memberTimezone(member: {
+  timezone?: string | null;
+  registration_request?: { timezone: string | null } | null;
+}): string | null {
+  const tz = member.timezone?.trim() || member.registration_request?.timezone?.trim();
+  if (!tz) return null;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return tz;
+  } catch {
+    return null;
+  }
+}
+
+// "America/Los_Angeles" -> "Los Angeles", for the "times shown in" note.
+export function timezoneCity(tz: string): string {
+  return tz.split('/').pop()!.replace(/_/g, ' ');
 }
 
 // The name to show on the platform — the admin-filled Armenian name when
@@ -173,7 +181,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,armenian_name,is_admin,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,armenian_name,is_admin,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `workshop.image,workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +

@@ -1,5 +1,5 @@
 ---
-import { displayName } from '../lib/platformAuth';
+import { displayName, memberTimezone } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 export interface Props {
@@ -10,6 +10,8 @@ export interface Props {
     is_admin: boolean;
     facilitates_workshops?: Array<{ workshops_id: { id: number; name: string } }>;
     facilitates_clouds?: Array<{ clouds_id: { id: number; name: string } }>;
+    timezone?: string | null;
+    registration_request?: { timezone: string | null } | null;
   };
 }
 
@@ -17,6 +19,9 @@ const { title, member } = Astro.props;
 const pathname = Astro.url.pathname;
 const isActive = (path: string, exact = false) => (exact ? pathname === path : pathname.startsWith(path));
 const L = makeLabelGetter(await getPlatformLabels());
+// Read by schedule-local.js and PlatformCalendar's script to render times in
+// the member's registered timezone; absent means "use the browser's".
+const timezone = memberTimezone(member);
 ---
 
 <!doctype html>
@@ -82,20 +87,20 @@ const L = makeLabelGetter(await getPlatformLabels());
       .site-footer .links a:hover { color: #1a1a1a; text-decoration: underline; }
     </style>
   </head>
-  <body>
+  <body data-tz={timezone ?? undefined}>
     <header class="topbar">
       <a class="brand" href="/platform">
         <img src="/zartsants-logo.svg" alt="Zartsants" />
       </a>
       <nav class="nav">
-        <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>{L('nav_home', 'Բուն էջ')}</a>
-        <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>{L('nav_calendar', 'Օրացոյց')}</a>
-        <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարան')}</a>
+        <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>{L('nav_home', 'Իմ էջս')}</a>
+        <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>{L('nav_calendar', 'Օրացոյցս')}</a>
+        <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարանս')}</a>
         {((member.facilitates_workshops?.length ?? 0) > 0 || (member.facilitates_clouds?.length ?? 0) > 0) && (
-          <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>{L('nav_facilitator', 'Ուղեկից')}</a>
+          <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>{L('nav_facilitator', 'Փեթակ')}</a>
         )}
         {member.is_admin && (
-          <a href="/platform/admin" class={isActive('/platform/admin') ? 'active' : undefined}>{L('nav_admin', 'Փեթակ')}</a>
+          <a href="/platform/admin" class={isActive('/platform/admin') ? 'active' : undefined}>{L('nav_admin', 'Տնօրէն')}</a>
         )}
       </nav>
       <div class="who">
