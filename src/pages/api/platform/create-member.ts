@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { adminGet, adminPost } from '../../../lib/directusAdmin';
-import { hashPassword, generateUniqueUsername } from '../../../lib/platformAuth';
+import { generateUniqueUsername } from '../../../lib/platformAuth';
 
 export const POST: APIRoute = async ({ request }) => {
   const { pw, registration_id, password } = await request.json();
@@ -46,7 +46,6 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const passwordHash = await hashPassword(password);
     const username = await generateUniqueUsername(registration.full_name);
     const created = await adminPost('/items/platform_members', {
       registration_request: registration.id,
@@ -54,7 +53,7 @@ export const POST: APIRoute = async ({ request }) => {
       full_name: registration.full_name,
       armenian_name: registration.armenian_name ?? null,
       username,
-      password_hash: passwordHash,
+      password,
       status: 'active',
     });
     return new Response(JSON.stringify({ success: true, id: created.data.id, username, password }), { status: 200 });

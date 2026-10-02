@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAdmin, hashPassword, generateUniqueUsername, generateRandomPassword } from '../../../lib/platformAuth';
+import { requireAdmin, generateUniqueUsername, generateRandomPassword } from '../../../lib/platformAuth';
 import { adminGet, adminPost } from '../../../lib/directusAdmin';
 
 interface Entry {
@@ -57,13 +57,12 @@ export const POST: APIRoute = async ({ request }) => {
 
     try {
       const password = generateRandomPassword();
-      const passwordHash = await hashPassword(password);
       const username = await generateUniqueUsername(fullName);
       await adminPost('/items/platform_members', {
         email,
         full_name: fullName,
         username,
-        password_hash: passwordHash,
+        password,
         status: 'active',
         // Directus M2M fields interpret a bare array of numbers as junction-row
         // primary keys (re-parenting existing links) rather than related-item
