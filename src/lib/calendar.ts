@@ -121,8 +121,43 @@ export interface SessionBlock {
   date: Date;
   startMin: number;
   endMin: number;
-  kind: 'workshop' | 'cloud';
+  kind: 'workshop' | 'cloud' | 'meeting';
   sourceId: number;
+  // Only meetings carry their own cancelled state; workshop/cloud
+  // cancellations come from schedule_overrides.
+  cancelled?: boolean;
+}
+
+export interface MeetingInfo {
+  id: number;
+  title: string;
+  starts_at: string; // Paris wall-clock "YYYY-MM-DDTHH:mm:ss"
+  duration_minutes: number;
+  status: 'scheduled' | 'cancelled';
+}
+
+// Զարդիպում blocks for the days of `weekDates` — dated, not recurring.
+export function buildMeetingBlocks(meetings: MeetingInfo[], weekDates: Date[]): SessionBlock[] {
+  const blocks: SessionBlock[] = [];
+  for (const m of meetings) {
+    const [datePart, timePart] = m.starts_at.split('T');
+    const date = weekDates.find(
+      (d) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` === datePart
+    );
+    const startMin = timeToMinutes(timePart ?? null);
+    if (!date || startMin === null) continue;
+    blocks.push({
+      label: m.title,
+      date,
+      startMin,
+      endMin: Math.min(24 * 60, startMin + (m.duration_minutes || 60)),
+      kind: 'meeting',
+      sourceId: m.id,
+      cancelled: m.status === 'cancelled',
+    });
+  }
+  return blocks;
 }
 
 export function buildSessionBlocks(

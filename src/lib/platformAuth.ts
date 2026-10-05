@@ -88,6 +88,7 @@ export interface Member {
   email: string;
   full_name: string;
   armenian_name: string | null;
+  role: 'student' | 'facilitator' | 'team' | null;
   workshop: PlatformWorkshop | null;
   clouds: Array<{ clouds_id: PlatformCloud }>;
   facilitates_workshops: Array<{ workshops_id: PlatformWorkshop }>;
@@ -159,6 +160,22 @@ export function calendarClouds(member: Pick<Member, 'clouds' | 'facilitates_clou
   return all.filter((c) => (seen.has(c.id) ? false : (seen.add(c.id), true)));
 }
 
+// Who gets the Փեթակ page: anyone assigned to run a workshop/cloud, plus
+// everyone whose role makes them a զարդիպում participant (facilitators and
+// team), even before an admin assigns them anything.
+export function hasFacilitatorPage(member: {
+  facilitates_workshops?: unknown[];
+  facilitates_clouds?: unknown[];
+  role?: Member['role'];
+}): boolean {
+  return (
+    (member.facilitates_workshops?.length ?? 0) > 0 ||
+    (member.facilitates_clouds?.length ?? 0) > 0 ||
+    member.role === 'facilitator' ||
+    member.role === 'team'
+  );
+}
+
 // Used by the materials endpoint: only a facilitator actually assigned to
 // the workshop/cloud in question may manage it.
 export function canManageWorkshopOrCloud(
@@ -193,7 +210,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,armenian_name,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,armenian_name,role,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `workshop.image,workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +

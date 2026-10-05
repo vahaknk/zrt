@@ -1,5 +1,5 @@
 ---
-import { displayName, memberTimezone, timezoneLabel } from '../lib/platformAuth';
+import { displayName, hasFacilitatorPage, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 export interface Props {
@@ -7,6 +7,7 @@ export interface Props {
   member: {
     full_name: string;
     armenian_name?: string | null;
+    role?: 'student' | 'facilitator' | 'team' | null;
     facilitates_workshops?: Array<{ workshops_id: { id: number; name: string } }>;
     facilitates_clouds?: Array<{ clouds_id: { id: number; name: string } }>;
     timezone?: string | null;
@@ -106,7 +107,7 @@ const timezone = memberTimezone(member);
         <a href="/platform" class={isActive('/platform', true) ? 'active' : undefined}>{L('nav_home', 'Իմ էջս')}</a>
         <a href="/platform/calendar" class={isActive('/platform/calendar') ? 'active' : undefined}>{L('nav_calendar', 'Օրացոյցս')}</a>
         <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարանս')}</a>
-        {((member.facilitates_workshops?.length ?? 0) > 0 || (member.facilitates_clouds?.length ?? 0) > 0) && (
+        {hasFacilitatorPage(member) && (
           <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>{L('nav_facilitator', 'Փեթակ')}</a>
         )}
       </nav>

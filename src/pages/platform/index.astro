@@ -93,6 +93,6 @@ const L = makeLabelGetter(await getPlatformLabels());
       </a>
     </div>
 
-    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} basePath="/platform" />
+    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} basePath="/platform" />
   </div>
 </PlatformLayout>

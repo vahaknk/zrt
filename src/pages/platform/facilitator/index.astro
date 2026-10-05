@@ -1,6 +1,7 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireMember, isWebUrl } from '../../../lib/platformAuth';
+import { requireMember, isWebUrl, hasFacilitatorPage, memberTimezone } from '../../../lib/platformAuth';
+import { memberMeetings, formatMeetingTime } from '../../../lib/zardipum';
 import { adminGet } from '../../../lib/directusAdmin';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
@@ -9,10 +10,13 @@ const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect('/platform/login');
 }
-if (member.facilitates_workshops.length === 0 && member.facilitates_clouds.length === 0) {
+if (!hasFacilitatorPage(member)) {
   return Astro.redirect('/platform');
 }
 const L = makeLabelGetter(await getPlatformLabels());
+
+const tz = memberTimezone(member);
+const meetings = (await memberMeetings(member.id)).map((m) => ({ ...m, when: formatMeetingTime(m, tz) }));
 
 interface Material {
   id: number;
@@ -148,10 +152,75 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .section .remove:hover { color: #c00; }
 
     .empty-state { color: #888; font-size: 0.9rem; }
+
+    .meetings { margin-bottom: 2.5rem; }
+    .meetings h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+    .meeting-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .meeting {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-left: 4px solid #e8a33d;
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      scroll-margin-top: 5rem;
+    }
+    .meeting:target { box-shadow: 0 0 0 2px #e8a33d; }
+    .meeting-title { font-weight: 700; font-size: 0.95rem; }
+    .meeting-when { font-size: 0.85rem; color: #555; margin-top: 0.2rem; }
+    .meeting-zone { color: #9a9a94; }
+    .meeting .join {
+      flex-shrink: 0;
+      padding: 0.5rem 1rem;
+      background: #1a1a1a;
+      color: #fff;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .meeting .pending { flex-shrink: 0; font-size: 0.8rem; color: #9a9a94; }
+    .meeting.cancelled { opacity: 0.6; border-left-color: #c0392b; }
+    .meeting.cancelled .meeting-title { text-decoration: line-through; }
+    .meeting .cancelled-tag { flex-shrink: 0; font-size: 0.8rem; font-weight: 700; color: #c0392b; }
+    @media (max-width: 640px) {
+      .meeting { flex-direction: column; align-items: flex-start; }
+    }
   </style>
 
   <div class="container">
     <h1>{L('nav_facilitator', 'Փեթակ')}</h1>
+
+    <section class="meetings">
+      <h2>{L('facilitator_meetings_title', 'Զարդիպումներ')}</h2>
+      {meetings.length === 0 ? (
+        <p class="empty-state">{L('facilitator_meetings_empty', 'Առայժմ զարդիպում չկայ։')}</p>
+      ) : (
+        <div class="meeting-list">
+          {meetings.map((m) => (
+            <div class={`meeting ${m.status === 'cancelled' ? 'cancelled' : ''}`} id={`zardipum-${m.id}`}>
+              <div>
+                <div class="meeting-title">{m.title}</div>
+                <div class="meeting-when">
+                  {m.when.date} · {m.when.time} <span class="meeting-zone">({m.when.zone})</span>
+                </div>
+              </div>
+              {m.status === 'cancelled' ? (
+                <span class="cancelled-tag">{L('meeting_cancelled', 'Չեղեալ')}</span>
+              ) : isWebUrl(m.zoom_link) ? (
+                <a class="join" href={m.zoom_link} target="_blank" rel="noopener">{L('meeting_join', 'Միանալ Zoom-ով')}</a>
+              ) : (
+                <span class="pending">{L('meeting_zoom_pending', 'Zoom-ի յղումը շուտով')}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
 
     {assignments.map((a) => (
       <div class="assignment" data-kind={a.kind} data-id={a.id}>
