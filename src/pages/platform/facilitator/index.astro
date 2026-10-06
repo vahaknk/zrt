@@ -8,7 +8,9 @@ import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels'
 
 const member = await requireMember(Astro.request);
 if (!member) {
-  return Astro.redirect('/platform/login');
+  // The browser keeps the #zardipum-… fragment across this redirect, so the
+  // login page can bring the visitor back to the exact meeting.
+  return Astro.redirect('/platform/login?next=/platform/facilitator');
 }
 if (!hasFacilitatorPage(member)) {
   return Astro.redirect('/platform');

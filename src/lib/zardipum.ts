@@ -1,7 +1,7 @@
 import { adminGet, adminPatch } from './directusAdmin';
 import { zonedInstant } from './timezone';
 import { timingSafeEqual } from 'crypto';
-import { isWebUrl, memberTimezone, timezoneLabel } from './platformAuth';
+import { memberTimezone, timezoneLabel } from './platformAuth';
 import { MONTH_LABELS } from './minorFormContent';
 
 // Զարդիպում — facilitator meetings. Admins create them in Directus; a Flow
@@ -192,26 +192,23 @@ function buildEmail(kind: EmailKind, m: Meeting, p: NonNullable<MeetingParticipa
     reminder: `Յիշեցում՝ ${m.title}`,
   }[kind];
   const intro = {
-    invite: 'Կը հրաւիրենք ձեզ զարդիպումի մը։',
+    invite: 'Քեզի կը հրաւիրենք Զարդիպումի մը։',
     update: 'Զարդիպումին մանրամասնութիւնները փոխուած են։ Ահաւասիկ նորերը՝',
     cancel: 'Հետեւեալ զարդիպումը չեղեալ յայտարարուած է։',
     reminder: 'Յիշեցում՝ ձեր զարդիպումը կը սկսի մէկ ժամէն։',
   }[kind];
-  const zoom =
-    kind === 'cancel'
-      ? ''
-      : isWebUrl(m.zoom_link)
-        ? `<br/>Zoom՝ <a href="${esc(m.zoom_link)}">${esc(m.zoom_link)}</a>`
-        : '<br/>Zoom-ի յղումը պիտի ղրկենք յետոյ։';
+  // No Zoom link in the email: the button opens the meeting on the Փեթակ
+  // page, which always has the current link.
   const box = `<p style="margin: 20px 0; padding: 16px 20px; background: #f6f3ee; border-radius: 8px;${kind === 'cancel' ? ' text-decoration: line-through;' : ''}">
 <strong>${esc(m.title)}</strong><br/>
 ${t.date}<br/>
-${t.time} (${esc(t.zone)})${zoom}
+${t.time} (${esc(t.zone)})
 </p>`;
   const platform =
     kind === 'cancel'
       ? ''
-      : `<p>Զարդիպումը կը գտնէք նաեւ հարթակին վրայ, ձեր Փեթակին եւ օրացոյցին մէջ՝<br/><a href="${SITE}/platform/facilitator">${SITE}/platform/facilitator</a></p>`;
+      : `<p>Զարդիպումը կրնաս գտնել նաեւ հարթակին վրայ՝ Փեթակին եւ օրացոյցին մէջ։</p>
+<p style="margin: 24px 0;"><a href="${SITE}/platform/facilitator#zardipum-${m.id}" style="display: inline-block; padding: 12px 24px; background: #1a1a1a; color: #ffffff; border-radius: 999px; font-weight: 700; text-decoration: none;">Փեթակ երթալ</a></p>`;
   const html = `<p>Բարե՛ւ ${esc(name)},</p>
 <p>${intro}</p>
 ${box}
@@ -335,10 +332,9 @@ async function doReconcile(id: number): Promise<string[]> {
     }
   }
 
-  // Already-invited people get one update when anything they were told changed.
-  const changed =
-    !!m.notified_starts_at &&
-    (changedTime || m.title !== m.notified_title || (m.zoom_link ?? '') !== (m.notified_zoom_link ?? ''));
+  // Already-invited people get one update when anything the email shows
+  // changed (the Zoom link isn't in it — the Փեթակ page always has it).
+  const changed = !!m.notified_starts_at && (changedTime || m.title !== m.notified_title);
   if (changed && invited.length) await sendToAll('update', m, invited, log);
   if (changedTime) patch.reminder_sent_at = null;
 
@@ -375,7 +371,7 @@ export async function sendDueReminders(): Promise<string[]> {
   const from = parisWallClock(new Date(now - 5 * 60000));
   const to = parisWallClock(new Date(now + (REMINDER_MINUTES + 5) * 60000));
   const res = await adminGet(
-    `/items/zardipum?filter[status][_eq]=scheduled&filter[reminder_sent_at][_null]=true` +
+    `/items/zardipum?filter[status][_eq]=scheduled&filter[reminder_sent_at][_null]=true&filter[send_reminder][_neq]=false` +
       `&filter[starts_at][_between]=${from},${to}&fields=${MEETING_FIELDS}&limit=-1`
   );
   for (const m of (res.data ?? []) as Meeting[]) {

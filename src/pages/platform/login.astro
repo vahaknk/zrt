@@ -141,7 +141,10 @@ const L = makeLabelGetter(await getPlatformLabels());
             body: JSON.stringify({ username, password }),
           });
           if (res.ok) {
-            window.location.href = '/platform';
+            // Back to the platform page that sent them here (e.g. a meeting
+            // link from an email), never to another site.
+            const next = new URLSearchParams(window.location.search).get('next') ?? '';
+            window.location.href = /^\/platform(\/|$)/.test(next) ? next + window.location.hash : '/platform';
           } else {
             errorEl.textContent = res.status === 429 ? errorTooMany : errorInvalid;
             errorEl.classList.add('visible');
