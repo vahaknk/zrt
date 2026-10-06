@@ -114,10 +114,12 @@ export function formatMeetingTime(m: Pick<Meeting, 'starts_at' | 'duration_minut
   const { start, end } = meetingInstants(m);
   const s = wallParts(start, zone);
   const e = wallParts(end, zone);
+  const time = `${s.time}–${e.time}`;
   return {
     date: `${WEEKDAY_FULL_SUN_FIRST[s.weekdayIdx]}, ${s.day} ${MONTH_LABELS.hyw[s.month - 1]} ${s.year}`,
-    time: `${s.time}–${e.time}`,
-    zone: zone === PARIS ? 'Փարիզի ժամով' : timezoneLabel(zone),
+    time,
+    // "Փարիզի ժամով՝ 18:00–19:00", or "19:00–20:00 (Թուրքիա, …)" elsewhere.
+    line: zone === PARIS ? `Փարիզի ժամով՝ ${time}` : `${time} (${timezoneLabel(zone)})`,
   };
 }
 
@@ -188,21 +190,21 @@ function buildEmail(kind: EmailKind, m: Meeting, p: NonNullable<MeetingParticipa
   const subject = {
     invite: `Զարդիպում՝ ${m.title}`,
     update: `Փոփոխութիւն՝ ${m.title}`,
-    cancel: `Չեղեալ՝ ${m.title}`,
+    cancel: `Ջնջուած է՝ ${m.title}`,
     reminder: `Յիշեցում՝ ${m.title}`,
   }[kind];
   const intro = {
     invite: 'Քեզի կը հրաւիրենք Զարդիպումի մը։',
     update: 'Զարդիպումին մանրամասնութիւնները փոխուած են։ Ահաւասիկ նորերը՝',
-    cancel: 'Հետեւեալ զարդիպումը չեղեալ յայտարարուած է։',
-    reminder: 'Յիշեցում՝ ձեր զարդիպումը կը սկսի մէկ ժամէն։',
+    cancel: 'Հետեւեալ Զարդիպումը ջնջուած է։',
+    reminder: 'Կ՚ուզէինք յիշեցնել, որ Զարդիպումը մէկ ժամէն կը սկսի։',
   }[kind];
   // No Zoom link in the email: the button opens the meeting on the Փեթակ
   // page, which always has the current link.
   const box = `<p style="margin: 20px 0; padding: 16px 20px; background: #f6f3ee; border-radius: 8px;${kind === 'cancel' ? ' text-decoration: line-through;' : ''}">
 <strong>${esc(m.title)}</strong><br/>
 ${t.date}<br/>
-${t.time} (${esc(t.zone)})
+${esc(t.line)}
 </p>`;
   const platform =
     kind === 'cancel'
@@ -217,13 +219,28 @@ ${platform}
   return { subject, html };
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+// Resend allows ~2 requests/second per account, shared by every meeting
+// being processed at once — so space sends out and retry when refused.
+let lastSend = 0;
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${import.meta.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: FROM, to, subject, html }),
-  });
-  if (!res.ok) throw new Error(`Resend → ${res.status}: ${await res.text()}`);
+  for (let attempt = 0; ; attempt++) {
+    const wait = lastSend + 600 - Date.now();
+    lastSend = Math.max(Date.now(), lastSend + 600);
+    if (wait > 0) await sleep(wait);
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${import.meta.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: FROM, to, subject, html }),
+    });
+    if (res.ok) return;
+    if (res.status === 429 && attempt < 4) {
+      await sleep(1000 * (attempt + 1));
+      continue;
+    }
+    throw new Error(`Resend → ${res.status}: ${await res.text()}`);
+  }
 }
 
 // Sends `kind` to each participant; returns the junction ids that succeeded.

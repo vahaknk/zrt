@@ -173,7 +173,6 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .meeting:target { box-shadow: 0 0 0 2px #e8a33d; }
     .meeting-title { font-weight: 700; font-size: 0.95rem; }
     .meeting-when { font-size: 0.85rem; color: #555; margin-top: 0.2rem; }
-    .meeting-zone { color: #9a9a94; }
     .meeting .join {
       flex-shrink: 0;
       padding: 0.5rem 1rem;
@@ -200,7 +199,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     <section class="meetings">
       <h2>{L('facilitator_meetings_title', 'Զարդիպումներ')}</h2>
       {meetings.length === 0 ? (
-        <p class="empty-state">{L('facilitator_meetings_empty', 'Առայժմ զարդիպում չկայ։')}</p>
+        <p class="empty-state">{L('facilitator_meetings_empty', 'Առայժմ Զարդիպում չկայ։')}</p>
       ) : (
         <div class="meeting-list">
           {meetings.map((m) => (
@@ -208,15 +207,15 @@ const TYPE_LABEL: Record<Material['type'], string> = {
               <div>
                 <div class="meeting-title">{m.title}</div>
                 <div class="meeting-when">
-                  {m.when.date} · {m.when.time} <span class="meeting-zone">({m.when.zone})</span>
+                  {m.when.date} · {m.when.line}
                 </div>
               </div>
               {m.status === 'cancelled' ? (
-                <span class="cancelled-tag">{L('meeting_cancelled', 'Չեղեալ')}</span>
+                <span class="cancelled-tag">{L('meeting_cancelled', 'Ջնջուած է։')}</span>
               ) : isWebUrl(m.zoom_link) ? (
-                <a class="join" href={m.zoom_link} target="_blank" rel="noopener">{L('meeting_join', 'Միանալ Zoom-ով')}</a>
+                <a class="join" href={m.zoom_link} target="_blank" rel="noopener">{L('meeting_join', 'Միանալ հանդիպումին')}</a>
               ) : (
-                <span class="pending">{L('meeting_zoom_pending', 'Zoom-ի յղումը շուտով')}</span>
+                <span class="pending">{L('meeting_zoom_pending', 'Զումին յղումը շուտով պիտի գայ։')}</span>
               )}
             </div>
           ))}

@@ -83,7 +83,7 @@ const enrichedBlocks = blocks.map((b) => {
     ...b,
     dayIndex,
     cancelled: b.kind === 'meeting' ? !!b.cancelled : !!override,
-    overrideNote: b.kind === 'meeting' ? (b.cancelled ? L('meeting_cancelled', 'Չեղեալ') : null) : override?.note ?? null,
+    overrideNote: b.kind === 'meeting' ? (b.cancelled ? L('meeting_cancelled', 'Ջնջուած է։') : null) : override?.note ?? null,
     top: (b.startMin - bounds.startMin) * PX_PER_MIN,
     height: Math.max(20, (b.endMin - b.startMin) * PX_PER_MIN),
     startIso: start.toISOString(),
