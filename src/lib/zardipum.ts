@@ -3,6 +3,7 @@ import { zonedInstant } from './timezone';
 import { timingSafeEqual } from 'crypto';
 import { memberTimezone, timezoneLabel } from './platformAuth';
 import { MONTH_LABELS } from './minorFormContent';
+import { notify } from './notifications';
 
 // Զարդիպում — facilitator meetings. Admins create them in Directus; a Flow
 // calls /api/zardipum/hook on every save and /api/zardipum/reminders every
@@ -355,10 +356,16 @@ async function doReconcile(id: number): Promise<string[]> {
   if (changed && invited.length) await sendToAll('update', m, invited, log);
   if (changedTime) patch.reminder_sent_at = null;
 
-  // Newly added participants get the invitation.
-  for (const rowId of await sendToAll('invite', m, pending, log)) {
+  // Newly added participants get the invitation (email + platform notification).
+  const invitedRows = await sendToAll('invite', m, pending, log);
+  for (const rowId of invitedRows) {
     await adminPatch(`/items/zardipum_participants/${rowId}`, { invited_at: new Date().toISOString() });
   }
+  await notify(
+    pending.filter((p) => invitedRows.includes(p.id)).map((p) => p.platform_members_id?.id ?? 0),
+    'meeting',
+    { meeting: m.id }
+  );
 
   if (changed || pending.length || !m.notified_starts_at) {
     Object.assign(patch, {

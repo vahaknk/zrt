@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireMember } from '../../../../lib/platformAuth';
 import { adminPost } from '../../../../lib/directusAdmin';
 import { enrolledInGroup, attachableFile } from '../../../../lib/submissions';
+import { notify, groupFacilitatorIds } from '../../../../lib/notifications';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -30,5 +31,6 @@ export const POST: APIRoute = async ({ request }) => {
     file: fileId || null,
     last_activity: now,
   });
+  await notify(await groupFacilitatorIds(workshop, cloud), 'submission', { actor: member.id, submission: created.data.id });
   return json({ id: created.data.id });
 };

@@ -1,10 +1,12 @@
 ---
 import { displayName, hasFacilitatorPage, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
+import { unreadCount } from '../lib/notifications';
 
 export interface Props {
   title: string;
   member: {
+    id?: number;
     full_name: string;
     armenian_name?: string | null;
     role?: 'student' | 'facilitator' | 'team' | null;
@@ -22,6 +24,7 @@ const L = makeLabelGetter(await getPlatformLabels());
 // Read by schedule-local.js and PlatformCalendar's script to render times in
 // the member's registered timezone; absent means "use the browser's".
 const timezone = memberTimezone(member);
+const unread = member.id ? await unreadCount(member.id) : 0;
 ---
 
 <!doctype html>
@@ -72,6 +75,25 @@ const timezone = memberTimezone(member);
       .who .name { white-space: nowrap; }
       .who .logout { color: #555; text-decoration: none; white-space: nowrap; }
       .who .logout:hover { text-decoration: underline; }
+      .bell { position: relative; display: inline-flex; color: #797970; padding: 0.2rem; }
+      .bell svg { width: 22px; height: 22px; }
+      .bell:hover, .bell.has-unread { color: #1a1a1a; }
+      .bell .badge {
+        position: absolute;
+        top: -4px;
+        right: -6px;
+        min-width: 18px;
+        height: 18px;
+        padding: 0 5px;
+        box-sizing: border-box;
+        border-radius: 999px;
+        background: #c0392b;
+        color: #fff;
+        font-size: 0.68rem;
+        font-weight: 700;
+        line-height: 18px;
+        text-align: center;
+      }
 
       @media (max-width: 640px) {
         .topbar { padding: 0.5rem 1rem 0; row-gap: 0.25rem; }
@@ -112,6 +134,12 @@ const timezone = memberTimezone(member);
         )}
       </nav>
       <div class="who">
+        {member.id && (
+          <a class={`bell ${unread ? 'has-unread' : ''}`} href="/platform/notifications" aria-label={L('notifications_title', 'Ծանուցումներ')} title={L('notifications_title', 'Ծանուցումներ')}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-1.7 1.7A1 1 0 0 0 4 19.4h16a1 1 0 0 0 .7-1.7Z" fill="currentColor"/></svg>
+            {unread > 0 && <span class="badge">{unread > 99 ? '99+' : unread}</span>}
+          </a>
+        )}
         <span class="name">{displayName(member)}</span>
         <a class="logout" href="/api/platform/logout">{L('nav_logout', 'Log out')}</a>
       </div>

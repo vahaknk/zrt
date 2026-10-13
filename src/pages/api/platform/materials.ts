@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireMember, canManageWorkshopOrCloud, isWebUrl } from '../../../lib/platformAuth';
 import { adminGet, adminPost, adminDelete } from '../../../lib/directusAdmin';
 import { getFile } from '../../../lib/platformFiles';
+import { notify, groupStudentIds } from '../../../lib/notifications';
 
 const TYPES = ['video', 'audio', 'reading'] as const;
 
@@ -50,6 +51,7 @@ export const POST: APIRoute = async ({ request }) => {
       url: url || null,
       file: fileId || null,
     });
+    await notify(await groupStudentIds(workshop, cloud), 'material', { actor: member.id, material: created.data.id });
     return new Response(JSON.stringify({ success: true, id: created.data.id }), { status: 200 });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message ?? 'Failed to create material' }), { status: 500 });

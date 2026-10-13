@@ -1,0 +1,16 @@
+---
+import { requireMember } from '../../../lib/platformAuth';
+import { getOwnNotification, markRead, notificationHref } from '../../../lib/notifications';
+
+// Opening a notification marks it read and goes to what it's about.
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login?next=/platform/notifications');
+}
+const n = await getOwnNotification(Number(Astro.params.id), member.id);
+if (!n) {
+  return Astro.redirect('/platform/notifications');
+}
+if (!n.read_at) await markRead([n.id]);
+return Astro.redirect(notificationHref(n));
+---

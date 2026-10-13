@@ -1,0 +1,53 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import { requireMember, memberTimezone } from '../../../lib/platformAuth';
+import { listNotifications, notificationText, markRead } from '../../../lib/notifications';
+import { formatDateTime } from '../../../lib/submissions';
+import { MONTH_LABELS } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login?next=/platform/notifications');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const items = await listNotifications(member.id, { limit: 100 });
+// Seeing the list counts as reading them; they stay highlighted this once.
+await markRead(items.filter((n) => !n.read_at).map((n) => n.id));
+const tz = memberTimezone(member);
+---
+
+<PlatformLayout title={`Zartsants Platform — ${L('notifications_title', 'Ծանուցումներ')}`} member={{ ...member }}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
+    ul { list-style: none; background: #fff; border: 1px solid #e9e9e4; border-radius: 14px; overflow: hidden; }
+    li + li { border-top: 1px solid #f0efe9; }
+    li a { display: block; padding: 0.85rem 1.2rem; text-decoration: none; color: #1a1a1a; }
+    li a:hover { background: #faf8f4; }
+    li.unread a { background: #f4f1ff; }
+    .text { font-size: 0.92rem; }
+    li.unread .text { font-weight: 700; }
+    .when { font-size: 0.75rem; color: #9a9a94; margin-top: 0.2rem; }
+    .empty { color: #888; font-size: 0.9rem; }
+  </style>
+
+  <div class="container">
+    <h1>{L('notifications_title', 'Ծանուցումներ')}</h1>
+    {items.length === 0 ? (
+      <p class="empty">{L('notifications_empty', 'Տակաւին ծանուցում չկայ։')}</p>
+    ) : (
+      <ul>
+        {items.map((n) => (
+          <li class={n.read_at ? '' : 'unread'}>
+            <a href={`/platform/notifications/${n.id}`}>
+              <div class="text">{notificationText(n, L)}</div>
+              <div class="when">{formatDateTime(n.date_created, tz, MONTH_LABELS.hyw)}</div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+</PlatformLayout>

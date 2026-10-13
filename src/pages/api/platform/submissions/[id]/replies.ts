@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { requireMember } from '../../../../../lib/platformAuth';
 import { adminPost, adminPatch } from '../../../../../lib/directusAdmin';
 import { getSubmission, canSeeSubmission, attachableFile } from '../../../../../lib/submissions';
+import { notify, groupFacilitatorIds } from '../../../../../lib/notifications';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -26,5 +27,13 @@ export const POST: APIRoute = async ({ request, params }) => {
     file: fileId || null,
   });
   await adminPatch(`/items/submissions/${sub.id}`, { last_activity: new Date().toISOString() });
+  // Everyone in the conversation: the participant, the group's facilitators,
+  // and anyone else (team) who already replied — minus the one replying.
+  const recipients = [
+    ...(sub.author ? [sub.author.id] : []),
+    ...(await groupFacilitatorIds(sub.workshop?.id ?? null, sub.cloud?.id ?? null)),
+    ...sub.replies.map((r) => r.author?.id ?? 0),
+  ];
+  await notify(recipients, 'reply', { actor: member.id, submission: sub.id });
   return json({ id: created.data.id });
 };

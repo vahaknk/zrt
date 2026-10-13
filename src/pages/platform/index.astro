@@ -3,6 +3,7 @@ import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import PlatformCalendar from '../../components/PlatformCalendar.astro';
 import { requireMember, memberTimezone, displayName, calendarWorkshops, calendarClouds } from '../../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
+import { listNotifications, notificationText } from '../../lib/notifications';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -12,6 +13,8 @@ if (!member) {
 const workshops = calendarWorkshops(member);
 const clouds = calendarClouds(member);
 const L = makeLabelGetter(await getPlatformLabels());
+// The few latest unread notifications, above the tiles.
+const latest = await listNotifications(member.id, { unreadOnly: true, limit: 5 });
 ---
 
 <PlatformLayout title="Zartsants Platform" member={member}>
@@ -73,10 +76,31 @@ const L = makeLabelGetter(await getPlatformLabels());
       .tile-image-figure img.icon-sm { transform: translateY(-8px); }
       .tile-image-title { padding: 0.6rem 0.4rem 0.7rem; font-size: 0.8rem; text-align: center; }
     }
+    .new-box { background: #fff; border: 1px solid #e9e9e4; border-left: 4px solid #7a63f5; border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 1.75rem; }
+    .new-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
+    .new-head h2 { font-size: 1rem; font-weight: 700; }
+    .new-head a { font-size: 0.8rem; color: #797970; text-decoration: none; }
+    .new-box ul { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+    .new-box li a { color: #1a1a1a; text-decoration: none; font-size: 0.9rem; }
+    .new-box li a:hover { text-decoration: underline; }
   </style>
 
   <div class="container">
     <h1>{L('dashboard_greeting', 'Բարե՛ւ, {name}').replace('{name}', displayName(member))}</h1>
+
+    {latest.length > 0 && (
+      <section class="new-box">
+        <div class="new-head">
+          <h2>{L('dashboard_new_title', 'Նոր')}</h2>
+          <a href="/platform/notifications">{L('dashboard_new_all', 'Բոլորը')} &rarr;</a>
+        </div>
+        <ul>
+          {latest.map((n) => (
+            <li><a href={`/platform/notifications/${n.id}`}>{notificationText(n, L)}</a></li>
+          ))}
+        </ul>
+      </section>
+    )}
 
     <div class="image-row">
       <a class="tile-image" href="/platform/parev">
