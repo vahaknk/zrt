@@ -1,0 +1,57 @@
+---
+import { displayName } from '../lib/platformAuth';
+import { formatDateTime, type Submission } from '../lib/submissions';
+import { MONTH_LABELS } from '../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
+
+// Summary rows linking to each submission's conversation page.
+interface Props {
+  submissions: Submission[];
+  showAuthor: boolean;
+  timezone: string | null;
+  emptyText: string;
+}
+const { submissions, showAuthor, timezone, emptyText } = Astro.props;
+const L = makeLabelGetter(await getPlatformLabels());
+const when = (iso: string) => formatDateTime(iso, timezone, MONTH_LABELS.hyw);
+const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}…` : s);
+---
+
+{submissions.length === 0 ? (
+  <p class="sl-empty">{emptyText}</p>
+) : (
+  <ul class="sl">
+    {submissions.map((s) => {
+      const last = s.replies[s.replies.length - 1];
+      return (
+        <li>
+          <a href={`/platform/submissions/${s.id}`}>
+            <div class="sl-head">
+              <strong>{showAuthor ? (s.author ? displayName(s.author) : '—') : when(s.date_created)}</strong>
+              {showAuthor && <span>{when(s.last_activity ?? s.date_created)}</span>}
+            </div>
+            {s.note && <div class="sl-note">{excerpt(s.note)}</div>}
+            {s.file && <div class="sl-file">📎 {s.file.filename}</div>}
+            <div class="sl-foot">
+              {s.replies.length === 0
+                ? L('submission_no_replies', 'Տակաւին պատասխան չկայ')
+                : `${s.replies.length} ${L('submission_replies_count', 'պատասխան')} · ${last.author ? displayName(last.author) : ''}`}
+            </div>
+          </a>
+        </li>
+      );
+    })}
+  </ul>
+)}
+
+<style>
+  .sl { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+  .sl a { display: block; background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 0.85rem 1.1rem; text-decoration: none; color: inherit; }
+  .sl a:hover { border-color: #cfc6ff; }
+  .sl-head { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.88rem; }
+  .sl-head span { color: #9a9a94; font-size: 0.8rem; white-space: nowrap; }
+  .sl-note { font-size: 0.88rem; color: #444; margin-top: 0.3rem; word-break: break-word; }
+  .sl-file { font-size: 0.82rem; color: #4a3fcf; margin-top: 0.3rem; word-break: break-word; }
+  .sl-foot { font-size: 0.78rem; color: #9a9a94; margin-top: 0.4rem; }
+  .sl-empty { color: #888; font-size: 0.9rem; }
+</style>

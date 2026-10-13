@@ -23,11 +23,15 @@ function putPart(url: string, blob: Blob, onBytes: (n: number) => void): Promise
   });
 }
 
-export async function uploadFile(file: File, onProgress: (fraction: number) => void): Promise<string> {
+export async function uploadFile(
+  file: File,
+  onProgress: (fraction: number) => void,
+  purpose: 'library' | 'submission' | 'reply' = 'library'
+): Promise<string> {
   const start = await fetch('/api/platform/files', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ filename: file.name, size: file.size, mime: file.type }),
+    body: JSON.stringify({ filename: file.name, size: file.size, mime: file.type, purpose }),
   });
   const info = await start.json().catch(() => ({}));
   if (!start.ok) throw new UploadError(info.error ?? 'upload_failed');

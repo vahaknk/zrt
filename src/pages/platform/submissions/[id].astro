@@ -1,0 +1,76 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import PlatformFileLink from '../../../components/PlatformFileLink.astro';
+import SubmissionComposer from '../../../components/SubmissionComposer.astro';
+import { requireMember, displayName, memberTimezone } from '../../../lib/platformAuth';
+import { getSubmission, canSeeSubmission, formatDateTime } from '../../../lib/submissions';
+import { MONTH_LABELS } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+const sub = await getSubmission(Number(Astro.params.id));
+if (!sub || !canSeeSubmission(member, sub)) {
+  return Astro.redirect('/platform');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const tz = memberTimezone(member);
+const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
+const isAuthor = sub.author?.id === member.id;
+const group = sub.workshop ?? sub.cloud;
+const back = isAuthor
+  ? { href: `/platform/library/${sub.workshop ? 'workshop' : 'cloud'}/${group?.id}#submissions`, label: group?.name ?? '' }
+  : { href: '/platform/facilitator', label: L('nav_facilitator', 'Փեթակ') };
+const authorName = sub.author ? displayName(sub.author) : '—';
+---
+
+<PlatformLayout title={`Zartsants Platform — ${L('submission_title', 'Աշխատանք')}`} member={member}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .sub-meta { font-size: 0.85rem; color: #797970; margin-bottom: 1.5rem; }
+    .thread { display: flex; flex-direction: column; gap: 0.9rem; margin-bottom: 1.75rem; }
+    .msg { background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 0.9rem 1.1rem; }
+    .msg.mine { background: #f4f1ff; border-color: #e3dcff; }
+    .msg-head { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.8rem; color: #797970; margin-bottom: 0.45rem; }
+    .msg-head strong { color: #1a1a1a; }
+    .msg-text { font-size: 0.92rem; white-space: pre-wrap; word-break: break-word; margin-bottom: 0.5rem; }
+    .msg-text:last-child { margin-bottom: 0; }
+    h2 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.6rem; }
+  </style>
+
+  <div class="container">
+    <a class="back" href={back.href}>&larr; {back.label}</a>
+    <h1>{isAuthor ? L('submission_my_title', 'Իմ աշխատանքս') : authorName}</h1>
+    <div class="sub-meta">{group?.name} · {when(sub.date_created)}</div>
+
+    <div class="thread">
+      <div class={`msg ${isAuthor ? 'mine' : ''}`}>
+        <div class="msg-head"><strong>{authorName}</strong><span>{when(sub.date_created)}</span></div>
+        {sub.note && <div class="msg-text">{sub.note}</div>}
+        {sub.file && <PlatformFileLink file={sub.file} />}
+      </div>
+      {sub.replies.map((r) => (
+        <div class={`msg ${r.author?.id === member.id ? 'mine' : ''}`}>
+          <div class="msg-head"><strong>{r.author ? displayName(r.author) : '—'}</strong><span>{when(r.date_created)}</span></div>
+          {r.text && <div class="msg-text">{r.text}</div>}
+          {r.file && <PlatformFileLink file={r.file} />}
+        </div>
+      ))}
+    </div>
+
+    <h2>{L('submission_reply_heading', 'Պատասխանել')}</h2>
+    <SubmissionComposer
+      endpoint={`/api/platform/submissions/${sub.id}/replies`}
+      purpose="reply"
+      textField="text"
+      placeholder={L('submission_reply_placeholder', 'Պատասխանդ…')}
+      submitLabel={L('submission_send', 'Ղրկել')}
+    />
+  </div>
+</PlatformLayout>

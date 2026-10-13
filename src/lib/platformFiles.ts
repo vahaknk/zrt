@@ -13,6 +13,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { adminGet } from './directusAdmin';
 import type { Member } from './platformAuth';
+import { canViewSubmissionFile } from './submissions';
 
 // Files uploaded on the platform live in the same Railway bucket Directus
 // uses, under platform/. Browsers upload straight to the bucket (multipart,
@@ -179,14 +180,16 @@ export async function libraryFiles(ownerId: number): Promise<PlatformFile[]> {
   }
 }
 
-// May this member open the file? Its owner always; otherwise anyone who can
-// see a material it's attached to — enrolled in, or facilitating, that
+// May this member open the file? Its owner always. A submission/reply file:
+// whoever can see that submission. A library file: anyone who can see a
+// material it's attached to — enrolled in, or facilitating, that
 // workshop/cloud.
 export async function canViewFile(
-  member: Pick<Member, 'id' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>,
+  member: Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>,
   file: PlatformFile
 ): Promise<boolean> {
   if (file.owner === member.id) return true;
+  if (file.purpose !== 'library') return canViewSubmissionFile(member, file.id);
   const workshops = new Set<number>([
     ...(member.workshop ? [member.workshop.id] : []),
     ...member.facilitates_workshops.map((w) => w.workshops_id.id),

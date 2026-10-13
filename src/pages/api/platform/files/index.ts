@@ -1,20 +1,24 @@
 import type { APIRoute } from 'astro';
 import { randomUUID } from 'crypto';
 import { requireMember, hasFacilitatorPage } from '../../../../lib/platformAuth';
+import type { FilePurpose } from '../../../../lib/platformFiles';
 import { adminPost, adminPatch, adminDelete } from '../../../../lib/directusAdmin';
 import { MAX_FILE_BYTES, fileKind, storageKey, startMultipartUpload } from '../../../../lib/platformFiles';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
 // Starts an upload: records the file and returns presigned part URLs the
-// browser PUTs to directly. POST { filename, size, mime }.
+// browser PUTs to directly. POST { filename, size, mime, purpose }.
+// purpose: "library" (facilitators/team), "submission" (participants in a
+// workshop/cloud) or "reply" (anyone; checked when attached to a thread).
 export const POST: APIRoute = async ({ request }) => {
   const member = await requireMember(request);
   if (!member) return json({ error: 'Unauthorized' }, 401);
-  // Library uploads are for facilitators/team; participant submissions come later.
-  if (!hasFacilitatorPage(member)) return json({ error: 'Forbidden' }, 403);
 
   const body = await request.json().catch(() => ({}));
+  const purpose = (['library', 'submission', 'reply'].includes(body.purpose) ? body.purpose : 'library') as FilePurpose;
+  if (purpose === 'library' && !hasFacilitatorPage(member)) return json({ error: 'Forbidden' }, 403);
+  if (purpose === 'submission' && !member.workshop && member.clouds.length === 0) return json({ error: 'Forbidden' }, 403);
   const filename = String(body.filename ?? '').trim();
   const size = Number(body.size);
   const mime = String(body.mime ?? '').slice(0, 120);
@@ -32,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
     size,
     mime,
     status: 'uploading',
-    purpose: 'library',
+    purpose,
     owner: member.id,
     storage_key: key,
   });

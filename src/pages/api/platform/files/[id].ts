@@ -25,8 +25,10 @@ export const DELETE: APIRoute = async ({ request, params }) => {
   if (!member) return json({ error: 'Unauthorized' }, 401);
   const file = await getFile(String(params.id));
   if (!file || file.owner !== member.id) return json({ error: 'Not found' }, 404);
-  const used = await adminGet(`/items/materials?filter[file][_eq]=${file.id}&fields=id&limit=1`);
-  if ((used.data ?? []).length) return json({ error: 'in_use' }, 409);
+  const uses = await Promise.all(
+    ['materials', 'submissions', 'submission_replies'].map((c) => adminGet(`/items/${c}?filter[file][_eq]=${file.id}&fields=id&limit=1`))
+  );
+  if (uses.some((u) => (u.data ?? []).length)) return json({ error: 'in_use' }, 409);
   try {
     if (file.upload_id) await abortMultipartUpload(file.storage_key, file.upload_id);
     else await deleteObject(file.storage_key);

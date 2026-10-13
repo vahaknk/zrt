@@ -3,6 +3,8 @@ import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireMember, isWebUrl, hasFacilitatorPage, memberTimezone } from '../../../lib/platformAuth';
 import { memberMeetings, formatMeetingTime } from '../../../lib/zardipum';
 import { libraryFiles, formatSize, MAX_FILE_BYTES } from '../../../lib/platformFiles';
+import { groupSubmissions, type Submission } from '../../../lib/submissions';
+import SubmissionList from '../../../components/SubmissionList.astro';
 import { adminGet } from '../../../lib/directusAdmin';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
@@ -56,6 +58,7 @@ interface Assignment {
   name: string;
   materials: Material[];
   weekGroups: Map<string, Material[]>;
+  submissions: Submission[];
 }
 
 const assignments: Assignment[] = [];
@@ -81,7 +84,8 @@ for (const { kind, target } of targets) {
     list.push(m);
     weekGroups.set(m.week_start, list);
   }
-  assignments.push({ kind, id: target.id, name: target.name, materials, weekGroups });
+  const submissions = await groupSubmissions(kind, target.id);
+  assignments.push({ kind, id: target.id, name: target.name, materials, weekGroups, submissions });
 }
 
 const MONTH_SHORT = MONTH_LABELS.hyw;
@@ -207,6 +211,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .source-toggle { display: flex; gap: 1rem; font-size: 0.85rem; }
     .source-toggle label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #1a1a1a; margin: 0; cursor: pointer; }
     .source-toggle input { width: auto; }
+
+    .group-submissions { margin-top: 1.75rem; }
+    .group-submissions h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; }
+    .group-submissions .count { font-weight: 400; color: #9a9a94; font-size: 0.8rem; }
 
     .meetings { margin-bottom: 2.5rem; }
     .meetings h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
@@ -374,6 +382,16 @@ const TYPE_LABEL: Record<Material['type'], string> = {
             ))}
           </div>
         )}
+
+        <div class="group-submissions">
+          <h3>{L('facilitator_submissions_title', 'Մասնակիցներուն աշխատանքները')} <span class="count">{a.submissions.length}</span></h3>
+          <SubmissionList
+            submissions={a.submissions}
+            showAuthor={true}
+            timezone={tz}
+            emptyText={L('facilitator_submissions_empty', 'Տակաւին աշխատանք չէ ղրկուած։')}
+          />
+        </div>
       </div>
     ))}
   </div>

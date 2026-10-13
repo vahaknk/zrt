@@ -1,0 +1,167 @@
+---
+import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
+import { MAX_FILE_BYTES } from '../lib/platformFiles';
+
+// A text box + optional file, posted as JSON to `endpoint` together with
+// `extra` (e.g. { workshop: 3 }). The file is uploaded first with `purpose`.
+interface Props {
+  endpoint: string;
+  purpose: 'submission' | 'reply';
+  textField: 'note' | 'text';
+  extra?: Record<string, unknown>;
+  placeholder: string;
+  submitLabel: string;
+}
+const { endpoint, purpose, textField, extra = {}, placeholder, submitLabel } = Astro.props;
+const L = makeLabelGetter(await getPlatformLabels());
+const errors = {
+  too_large: L('files_too_large', 'Ծրարը շատ մեծ է (առաւելագոյնը 2 GB)։'),
+  type_not_allowed: L('files_type_not_allowed', 'Այս տեսակի ծրար չենք ընդունիր։'),
+  upload_failed: L('files_failed', 'Ընթացքը ձախողեցաւ։ Կրկին փորձէ։'),
+  empty: L('submission_empty_error', 'Գրէ բան մը կամ ծրար մը կցէ։'),
+};
+---
+
+<form
+  class="composer"
+  data-endpoint={endpoint}
+  data-purpose={purpose}
+  data-text-field={textField}
+  data-extra={JSON.stringify(extra)}
+  data-errors={JSON.stringify(errors)}
+  data-max={MAX_FILE_BYTES}
+  data-uploading-text={L('files_uploading', 'Ընթացքի մէջ է…')}
+>
+  <textarea name="text" rows="3" placeholder={placeholder}></textarea>
+  <div class="composer-file" hidden>
+    <span class="composer-file-name"></span>
+    <button type="button" class="composer-file-remove" aria-label="×">×</button>
+  </div>
+  <div class="composer-progress" hidden><span></span><progress max="1" value="0"></progress></div>
+  <p class="composer-error" hidden></p>
+  <div class="composer-actions">
+    <button type="button" class="composer-attach">{L('submission_attach', 'Ծրար կցել')}</button>
+    <button type="submit" class="composer-send">{submitLabel}</button>
+  </div>
+</form>
+
+<style>
+  .composer { background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .composer textarea {
+    box-sizing: border-box;
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border: 1px solid #e0e0da;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  .composer-file { display: flex; align-items: center; gap: 0.5rem; background: #f7f4ee; border-radius: 8px; padding: 0.45rem 0.7rem; font-size: 0.85rem; }
+  .composer-file-name { flex: 1; word-break: break-word; }
+  .composer-file-remove { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: #9a9a94; line-height: 1; }
+  .composer-progress { font-size: 0.8rem; color: #555; }
+  .composer-progress progress { width: 100%; height: 6px; display: block; margin-top: 0.3rem; accent-color: #7a63f5; }
+  .composer-error { color: #c00; font-size: 0.85rem; }
+  .composer-actions { display: flex; justify-content: space-between; gap: 0.75rem; }
+  .composer-attach {
+    background: none;
+    border: 1px solid #e0e0da;
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .composer-send {
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .composer button:disabled { opacity: 0.6; cursor: default; }
+</style>
+
+<script>
+  import { uploadFile, UploadError } from '../lib/client/upload';
+
+  document.querySelectorAll<HTMLFormElement>('form.composer').forEach((form) => {
+    const errors: Record<string, string> = JSON.parse(form.dataset.errors ?? '{}');
+    const textarea = form.querySelector('textarea')!;
+    const fileBox = form.querySelector<HTMLElement>('.composer-file')!;
+    const fileName = form.querySelector<HTMLElement>('.composer-file-name')!;
+    const progressBox = form.querySelector<HTMLElement>('.composer-progress')!;
+    const progressText = progressBox.querySelector('span')!;
+    const progressBar = progressBox.querySelector('progress')!;
+    const errorEl = form.querySelector<HTMLElement>('.composer-error')!;
+    const buttons = form.querySelectorAll<HTMLButtonElement>('button');
+    let picked: File | null = null;
+
+    const showError = (msg: string) => {
+      errorEl.textContent = msg;
+      errorEl.hidden = false;
+    };
+
+    form.querySelector('.composer-attach')!.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.onchange = () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        if (file.size > Number(form.dataset.max)) return showError(errors.too_large);
+        errorEl.hidden = true;
+        picked = file;
+        fileName.textContent = file.name;
+        fileBox.hidden = false;
+      };
+      input.click();
+    });
+    form.querySelector('.composer-file-remove')!.addEventListener('click', () => {
+      picked = null;
+      fileBox.hidden = true;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.hidden = true;
+      const text = textarea.value.trim();
+      if (!text && !picked) return showError(errors.empty);
+      buttons.forEach((b) => (b.disabled = true));
+      window.onbeforeunload = () => true;
+      try {
+        let fileId: string | null = null;
+        if (picked) {
+          progressBox.hidden = false;
+          const name = picked.name;
+          fileId = await uploadFile(
+            picked,
+            (f) => {
+              progressText.textContent = `${form.dataset.uploadingText} ${name} — ${Math.round(f * 100)}%`;
+              progressBar.value = f;
+            },
+            form.dataset.purpose as 'submission' | 'reply'
+          );
+        }
+        const res = await fetch(form.dataset.endpoint!, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...JSON.parse(form.dataset.extra ?? '{}'), [form.dataset.textField!]: text, file: fileId }),
+        });
+        if (!res.ok) throw new UploadError('upload_failed');
+        window.onbeforeunload = null;
+        window.location.reload();
+      } catch (err) {
+        window.onbeforeunload = null;
+        progressBox.hidden = true;
+        showError(errors[err instanceof UploadError ? err.code : 'upload_failed'] ?? errors.upload_failed);
+        buttons.forEach((b) => (b.disabled = false));
+      }
+    });
+  });
+</script>
