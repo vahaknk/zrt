@@ -38,6 +38,9 @@ export const POST: APIRoute = async ({ request }) => {
     status: 'uploading',
     purpose,
     owner: member.id,
+    // Worksheets etc. can be saved; videos, images and audio are view-only
+    // unless the facilitator switches it on.
+    allow_download: kind === 'document' || kind === 'other',
     storage_key: key,
   });
   try {

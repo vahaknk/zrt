@@ -4,6 +4,7 @@ import { requireMember, displayName, isWebUrl, memberTimezone } from '../../../.
 import SubmissionComposer from '../../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, ownSubmissions } from '../../../../lib/submissions';
+import { viewsFor, percentReached } from '../../../../lib/materialViews';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
@@ -41,14 +42,14 @@ interface Material {
   type: 'video' | 'audio' | 'reading';
   label: string;
   url: string | null;
-  file: { id: string } | null;
+  file: { id: string; kind: string } | null;
   week_start: string;
 }
 
 let materials: Material[] = [];
 try {
   const res = await adminGet(
-    `/items/materials?filter[workshop][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,week_start&limit=-1`
+    `/items/materials?filter[workshop][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.kind,week_start&limit=-1`
   );
   materials = res.data ?? [];
 } catch (e) {
@@ -71,6 +72,15 @@ try {
 // Participants send their work to this group's facilitators from here.
 const canSubmit = enrolledInGroup(member, id, null);
 const mySubmissions = canSubmit ? await ownSubmissions(member.id, 'workshop', id) : [];
+// The participant's own use of each material ("Բացուած", "65%", "Աւարտած").
+const myViews = canSubmit ? await viewsFor(materials.map((m) => m.id), member.id) : [];
+function progressLabel(m: Material): string | null {
+  const v = myViews.find((x) => x.material === m.id);
+  if (!v) return null;
+  if (v.completed_at) return L('material_completed', 'Աւարտած');
+  const pct = m.file && (m.file.kind === 'video' || m.file.kind === 'audio') ? percentReached(v) : null;
+  return pct !== null ? `${pct}%` : L('material_opened', 'Բացուած');
+}
 
 const weekGroups = new Map<string, Material[]>();
 for (const m of materials) {
@@ -154,6 +164,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .section ul { list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
     .section a { color: #4a3fcf; text-decoration: none; font-size: 0.9rem; }
     .section a:hover { text-decoration: underline; }
+    .section li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+    .section .progress { font-size: 0.75rem; color: #2e9e4f; white-space: nowrap; }
 
     .submissions { margin-top: 2.5rem; }
     .submissions h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.4rem; }
@@ -273,7 +285,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                   <h2>{TYPE_LABEL[type]}</h2>
                   <ul>
                     {typeItems.map((m) => (
-                      <li><a href={m.file ? `/api/platform/files/${m.file.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a></li>
+                      <li>
+                        <a href={m.file ? `/platform/view/${m.id}` : isWebUrl(m.url) ? `/api/platform/materials/${m.id}/open` : undefined} target={m.file ? undefined : '_blank'} rel="noopener">{m.label}</a>
+                        {progressLabel(m) && <span class="progress">✓ {progressLabel(m)}</span>}
+                      </li>
                     ))}
                   </ul>
                 </div>

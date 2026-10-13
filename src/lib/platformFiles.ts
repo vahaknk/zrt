@@ -39,6 +39,7 @@ export interface PlatformFile {
   status: 'uploading' | 'processing' | 'ready' | 'failed';
   purpose: FilePurpose;
   owner: number | null;
+  allow_download: boolean;
   storage_key: string;
   upload_id: string | null;
   date_created: string;
@@ -156,7 +157,7 @@ export async function downloadUrl(file: PlatformFile, attachment: boolean): Prom
 
 // ---------------------------------------------------------------- Directus
 
-const FILE_FIELDS = 'id,filename,kind,size,mime,status,purpose,owner,storage_key,upload_id,date_created';
+const FILE_FIELDS = 'id,filename,kind,size,mime,status,purpose,owner,allow_download,storage_key,upload_id,date_created';
 
 export async function getFile(id: string): Promise<PlatformFile | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;

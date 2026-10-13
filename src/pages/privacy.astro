@@ -2,7 +2,7 @@
 // Privacy policy for zartsants.com — text supplied by Mille et Un Mondes
 // (2026-10-02). Deliberately self-contained (no Google Fonts) so this page in
 // particular makes no third-party requests.
-const LAST_UPDATED = '2 October 2026';
+const LAST_UPDATED = '13 October 2026';
 ---
 
 <!doctype html>
@@ -194,6 +194,7 @@ const LAST_UPDATED = '2 October 2026';
             <li><strong>Registration &amp; the family questionnaire:</strong> the respondent's name and email; the participant's name, birthday, school/grade or profession, city and country, language proficiency, interests, and the respondent's relationship to the participant (parent, guardian, etc.); your time zone and the days/times you indicate as available; and whether you've acknowledged the program's fee.</li>
             <li><strong>Interview booking:</strong> the date/time slot you choose and, where applicable, your preferred interview language.</li>
             <li><strong>Platform accounts (enrolled participants):</strong> a username and password, and your enrollment/workshop assignment.</li>
+            <li><strong>Platform activity:</strong> work a participant sends to their facilitators (a note and/or an uploaded file such as a document, image, audio or video recording) and the replies to it; which learning materials each participant opens and when, and — for video and audio — how much of it they played. This activity is visible only to the participant, the facilitators of their workshop or cloud, and the Zartsants team.</li>
             <li><strong>Staff/admin accounts:</strong> login credentials for internal team members administering the Site.</li>
           </ul>
         </section>
@@ -213,6 +214,7 @@ const LAST_UPDATED = '2 October 2026';
               <tbody>
                 <tr><td>Processing your registration, questionnaire answers, and interview booking</td><td>Performance of a contract / steps taken at your request prior to enrollment</td></tr>
                 <tr><td>Operating platform accounts for enrolled participants</td><td>Performance of a contract</td></tr>
+                <tr><td>Letting participants send work to their facilitators, and letting participants and their facilitators follow progress through the learning materials</td><td>Performance of a contract</td></tr>
                 <tr><td>Understanding where visitors come from and which languages the Site is used in</td><td>Legitimate interest (aggregate site analytics)</td></tr>
                 <tr><td>Remembering your chosen site language</td><td>Legitimate interest (site functionality)</td></tr>
               </tbody>
@@ -244,6 +246,8 @@ const LAST_UPDATED = '2 October 2026';
           <p>We use the following service providers ("processors") to operate the Site. None of them are permitted to use your data for their own purposes.</p>
           <ul>
             <li><strong>Our own database (Directus)</strong>, hosted on our infrastructure — stores registration, questionnaire, booking, and platform-account data.</li>
+            <li><strong>Railway</strong> (Railway Corp., United States) — hosts the Site and its database; files uploaded on the platform are stored in its European (Amsterdam) region.</li>
+            <li><strong>pCloud</strong> (pCloud AG, Switzerland) — keeps our end-of-year backup of platform work, stored in its European region.</li>
             <li><strong>Cloudflare</strong> — our content delivery/security provider, which sits in front of the Site for all traffic and sees visitor IP addresses as part of normal operation (standard infrastructure processing, not analytics or tracking).</li>
             <li><strong>Notion</strong> (Notion Labs, Inc., United States) — internal team workspace used to track questionnaire responses and interview bookings.</li>
             <li><strong>Resend</strong> — sends confirmation and notification emails on our behalf.</li>
@@ -253,7 +257,7 @@ const LAST_UPDATED = '2 October 2026';
 
         <section id="transfers">
           <h2><span class="num">7.</span> International data transfers</h2>
-          <p>Some of our processors (notably Notion) are located outside the European Economic Area. Where this is the case, transfers are made under an appropriate safeguard recognized by the GDPR, such as the EU–US Data Privacy Framework or Standard Contractual Clauses.</p>
+          <p>Some of our processors (notably Notion and Railway) are located outside the European Economic Area. Where this is the case, transfers are made under an appropriate safeguard recognized by the GDPR, such as the EU–US Data Privacy Framework or Standard Contractual Clauses.</p>
         </section>
 
         <section id="retention">
@@ -273,6 +277,11 @@ const LAST_UPDATED = '2 October 2026';
               <div class="ret-label">Platform accounts</div>
               <div class="ret-period">Active + 1 year</div>
               <p>Kept while the account is active, plus 1 year after deactivation, then deleted.</p>
+            </div>
+            <div class="ret">
+              <div class="ret-label">Platform activity and uploaded work</div>
+              <div class="ret-period">Active + 1 year</div>
+              <p>Kept with the platform account it belongs to, then deleted. At the end of each program year we keep a backup copy of that year's work with pCloud (pCloud AG, Switzerland), stored in its European region.</p>
             </div>
             <div class="ret">
               <div class="ret-label">Analytics data</div>
