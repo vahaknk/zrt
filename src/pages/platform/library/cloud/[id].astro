@@ -37,14 +37,15 @@ interface Material {
   id: number;
   type: 'video' | 'audio' | 'reading';
   label: string;
-  url: string;
+  url: string | null;
+  file: { id: string } | null;
   week_start: string;
 }
 
 let materials: Material[] = [];
 try {
   const res = await adminGet(
-    `/items/materials?filter[cloud][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,week_start&limit=-1`
+    `/items/materials?filter[cloud][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,week_start&limit=-1`
   );
   materials = res.data ?? [];
 } catch (e) {
@@ -260,7 +261,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                   <h2>{TYPE_LABEL[type]}</h2>
                   <ul>
                     {typeItems.map((m) => (
-                      <li><a href={isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a></li>
+                      <li><a href={m.file ? `/api/platform/files/${m.file.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a></li>
                     ))}
                   </ul>
                 </div>

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireMember, canManageWorkshopOrCloud, isWebUrl } from '../../../lib/platformAuth';
 import { adminGet, adminPost, adminDelete } from '../../../lib/directusAdmin';
+import { getFile } from '../../../lib/platformFiles';
 
 const TYPES = ['video', 'audio', 'reading'] as const;
 
@@ -15,20 +16,28 @@ export const POST: APIRoute = async ({ request }) => {
   const type = String(body.type ?? '').trim();
   const label = String(body.label ?? '').trim();
   const url = String(body.url ?? '').trim();
+  const fileId = String(body.file ?? '').trim();
 
   if ((!workshop && !cloud) || (workshop && cloud)) {
     return new Response(JSON.stringify({ error: 'Provide exactly one of workshop or cloud' }), { status: 400 });
   }
-  if (!weekStart || !TYPES.includes(type as any) || !label || !url) {
+  if (!weekStart || !TYPES.includes(type as any) || !label || (!url && !fileId) || (url && fileId)) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
   }
   // Students open these links — anything but a web address (javascript:,
   // data:, …) could run code in their browser.
-  if (!isWebUrl(url)) {
+  if (url && !isWebUrl(url)) {
     return new Response(JSON.stringify({ error: 'The link must start with http:// or https://' }), { status: 400 });
   }
   if (!canManageWorkshopOrCloud(member, workshop, cloud)) {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
+  }
+  // Only a finished file from the facilitator's own library.
+  if (fileId) {
+    const file = await getFile(fileId);
+    if (!file || file.owner !== member.id || file.purpose !== 'library' || file.status === 'uploading') {
+      return new Response(JSON.stringify({ error: 'File not found' }), { status: 400 });
+    }
   }
 
   try {
@@ -38,7 +47,8 @@ export const POST: APIRoute = async ({ request }) => {
       week_start: weekStart,
       type,
       label,
-      url,
+      url: url || null,
+      file: fileId || null,
     });
     return new Response(JSON.stringify({ success: true, id: created.data.id }), { status: 200 });
   } catch (e: any) {

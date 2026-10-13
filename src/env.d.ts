@@ -12,6 +12,12 @@ interface ImportMetaEnv {
   readonly ZOOM_ACCOUNT_ID?: string;
   readonly ZOOM_CLIENT_ID?: string;
   readonly ZOOM_CLIENT_SECRET?: string;
+  // The Directus Railway bucket (referenced from the Directus service's vars).
+  readonly PLATFORM_S3_ENDPOINT: string;
+  readonly PLATFORM_S3_REGION: string;
+  readonly PLATFORM_S3_BUCKET: string;
+  readonly PLATFORM_S3_KEY: string;
+  readonly PLATFORM_S3_SECRET: string;
 }
 
 interface ImportMeta {
