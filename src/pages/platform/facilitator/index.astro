@@ -226,6 +226,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .file-list a { color: #4a3fcf; text-decoration: none; font-size: 0.9rem; word-break: break-word; }
     .file-list a:hover { text-decoration: underline; }
     .file-meta { font-size: 0.75rem; color: #9a9a94; margin-top: 0.15rem; }
+    .file-link { display: inline-flex; align-items: center; gap: 0.6rem; }
+    .file-link img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #e9e5dc; }
     .file-list .remove { color: #b8b8b0; background: none; border: none; cursor: pointer; font-size: 0.85rem; font-family: inherit; padding: 0; flex-shrink: 0; }
     .file-list .remove:hover { color: #c00; }
     .source-toggle { display: flex; gap: 1rem; font-size: 0.85rem; }
@@ -330,7 +332,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           {myFiles.map((f) => (
             <li>
               <div>
-                <a href={`/api/platform/files/${f.id}`} target="_blank" rel="noopener">{f.filename}</a>
+                <a class="file-link" href={`/platform/file/${f.id}`}>
+                  {f.thumb_key && <img src={`/api/platform/files/${f.id}?thumb=1`} alt="" loading="lazy" draggable="false" />}
+                  <span>{f.filename}</span>
+                </a>
                 <div class="file-meta">{KIND_LABEL[f.kind] ?? f.kind} · {formatSize(f.size)} · {fileDate(f.date_created)}</div>
                 <label class="file-dl"><input type="checkbox" class="allow-download" data-id={f.id} checked={f.allow_download} /> {L('files_allow_download', 'Մասնակիցները կրնան ներբեռնել')}</label>
               </div>

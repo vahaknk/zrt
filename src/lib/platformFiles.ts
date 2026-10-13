@@ -8,8 +8,10 @@ import {
   HeadObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
+  PutObjectCommand,
   type Part,
 } from '@aws-sdk/client-s3';
+import sharp from 'sharp';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { adminGet } from './directusAdmin';
 import type { Member } from './platformAuth';
@@ -41,6 +43,7 @@ export interface PlatformFile {
   owner: number | null;
   allow_download: boolean;
   storage_key: string;
+  thumb_key: string | null;
   upload_id: string | null;
   date_created: string;
 }
@@ -141,6 +144,34 @@ export async function deleteObject(key: string): Promise<void> {
   await s3().send(new DeleteObjectCommand({ Bucket: Bucket(), Key: key }));
 }
 
+const THUMB_MAX_SOURCE_BYTES = 60 * 1024 ** 2;
+
+// A ~480 px WebP preview of an image, stored next to it; returns its key, or
+// null when the image can't be read (e.g. HEIC) or is unreasonably large.
+export async function createThumbnail(file: Pick<PlatformFile, 'storage_key' | 'size'>): Promise<string | null> {
+  if (file.size > THUMB_MAX_SOURCE_BYTES) return null;
+  try {
+    const obj = await s3().send(new GetObjectCommand({ Bucket: Bucket(), Key: file.storage_key }));
+    const input = Buffer.from(await obj.Body!.transformToByteArray());
+    const output = await sharp(input, { limitInputPixels: 100_000_000 })
+      .rotate() // honour the phone's orientation
+      .resize(480, 480, { fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 75 })
+      .toBuffer();
+    const key = `${file.storage_key.slice(0, file.storage_key.lastIndexOf('/'))}/preview.webp`;
+    await s3().send(new PutObjectCommand({ Bucket: Bucket(), Key: key, Body: output, ContentType: 'image/webp' }));
+    return key;
+  } catch (e) {
+    console.error('Thumbnail failed:', e);
+    return null;
+  }
+}
+
+export async function thumbnailUrl(file: PlatformFile): Promise<string | null> {
+  if (!file.thumb_key) return null;
+  return getSignedUrl(s3(), new GetObjectCommand({ Bucket: Bucket(), Key: file.thumb_key }), { expiresIn: DOWNLOAD_URL_TTL });
+}
+
 export async function downloadUrl(file: PlatformFile, attachment: boolean): Promise<string> {
   const disposition = `${attachment ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(file.filename)}`;
   return getSignedUrl(
@@ -157,7 +188,7 @@ export async function downloadUrl(file: PlatformFile, attachment: boolean): Prom
 
 // ---------------------------------------------------------------- Directus
 
-const FILE_FIELDS = 'id,filename,kind,size,mime,status,purpose,owner,allow_download,storage_key,upload_id,date_created';
+const FILE_FIELDS = 'id,filename,kind,size,mime,status,purpose,owner,allow_download,storage_key,thumb_key,upload_id,date_created';
 
 export async function getFile(id: string): Promise<PlatformFile | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;

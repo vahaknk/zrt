@@ -3,7 +3,7 @@ import { formatSize } from '../lib/platformFiles';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 interface Props {
-  file: { id: string; filename: string; kind: string; size: number };
+  file: { id: string; filename: string; kind: string; size: number; thumb_key?: string | null };
 }
 const { file } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
@@ -16,7 +16,8 @@ const KIND_LABEL: Record<string, string> = {
 };
 ---
 
-<a class="pfile" href={`/api/platform/files/${file.id}`} target="_blank" rel="noopener">
+<a class={`pfile ${file.thumb_key ? 'has-thumb' : ''}`} href={`/platform/file/${file.id}`}>
+  {file.thumb_key && <img class="pfile-thumb" src={`/api/platform/files/${file.id}?thumb=1`} alt="" loading="lazy" draggable="false" />}
   <span class="pfile-name">{file.filename}</span>
   <span class="pfile-meta">{KIND_LABEL[file.kind] ?? file.kind} · {formatSize(file.size)}</span>
 </a>
@@ -33,6 +34,9 @@ const KIND_LABEL: Record<string, string> = {
     max-width: 100%;
   }
   .pfile:hover { background: #efeae0; }
+  .pfile.has-thumb { padding: 0.4rem 0.4rem 0.55rem; }
+  .pfile-thumb { display: block; max-width: min(320px, 100%); max-height: 260px; border-radius: 7px; margin-bottom: 0.35rem; object-fit: cover; background: #e9e5dc; }
+  .pfile.has-thumb .pfile-name, .pfile.has-thumb .pfile-meta { padding: 0 0.45rem; }
   .pfile-name { color: #4a3fcf; font-size: 0.88rem; word-break: break-word; }
   .pfile-meta { color: #9a9a94; font-size: 0.75rem; }
 </style>

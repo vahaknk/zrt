@@ -1,7 +1,7 @@
 ---
 import { displayName, hasFacilitatorPage, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
-import { unreadCount } from '../lib/notifications';
+import { unreadCount, listNotifications } from '../lib/notifications';
 
 export interface Props {
   title: string;
@@ -25,6 +25,8 @@ const L = makeLabelGetter(await getPlatformLabels());
 // the member's registered timezone; absent means "use the browser's".
 const timezone = memberTimezone(member);
 const unread = member.id ? await unreadCount(member.id) : 0;
+// Newest unread id at page load: the live check only pops up what's newer.
+const newestUnread = member.id && unread ? (await listNotifications(member.id, { unreadOnly: true, limit: 1 }))[0]?.id ?? 0 : 0;
 ---
 
 <!doctype html>
@@ -78,6 +80,23 @@ const unread = member.id ? await unreadCount(member.id) : 0;
       .bell { position: relative; display: inline-flex; color: #797970; padding: 0.2rem; }
       .bell svg { width: 22px; height: 22px; }
       .bell:hover, .bell.has-unread { color: #1a1a1a; }
+      .bell .badge[hidden] { display: none; }
+      .toast {
+        position: fixed;
+        right: 1rem;
+        bottom: 1rem;
+        z-index: 50;
+        max-width: min(360px, calc(100vw - 2rem));
+        background: #1a1a1a;
+        color: #fff;
+        border-radius: 12px;
+        padding: 0.85rem 1.1rem;
+        font-size: 0.88rem;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+        text-decoration: none;
+        transition: opacity 0.3s, transform 0.3s;
+      }
+      .toast.hide { opacity: 0; transform: translateY(8px); pointer-events: none; }
       .bell .badge {
         position: absolute;
         top: -4px;
@@ -135,9 +154,9 @@ const unread = member.id ? await unreadCount(member.id) : 0;
       </nav>
       <div class="who">
         {member.id && (
-          <a class={`bell ${unread ? 'has-unread' : ''}`} href="/platform/notifications" aria-label={L('notifications_title', 'Ծանուցումներ')} title={L('notifications_title', 'Ծանուցումներ')}>
+          <a class={`bell ${unread ? 'has-unread' : ''}`} id="bell" data-newest={newestUnread} href="/platform/notifications" aria-label={L('notifications_title', 'Ծանուցումներ')} title={L('notifications_title', 'Ծանուցումներ')}>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-1.7 1.7A1 1 0 0 0 4 19.4h16a1 1 0 0 0 .7-1.7Z" fill="currentColor"/></svg>
-            {unread > 0 && <span class="badge">{unread > 99 ? '99+' : unread}</span>}
+            <span class="badge" hidden={unread === 0}>{unread > 99 ? '99+' : unread}</span>
           </a>
         )}
         <span class="name">{displayName(member)}</span>
@@ -157,5 +176,42 @@ const unread = member.id ? await unreadCount(member.id) : 0;
       </div>
     </footer>
     <script is:inline src="/schedule-local.js" defer></script>
+    <script>
+      // Live notifications: every 30 s while the tab is visible (and when it
+      // comes back), refresh the bell's count and pop up anything new.
+      const bell = document.getElementById('bell');
+      if (bell) {
+        const badge = bell.querySelector<HTMLElement>('.badge')!;
+        let newest = Number(bell.dataset.newest ?? 0);
+        const toast = (id: number, text: string) => {
+          const el = document.createElement('a');
+          el.className = 'toast hide';
+          el.href = `/platform/notifications/${id}`;
+          el.textContent = text;
+          document.body.appendChild(el);
+          requestAnimationFrame(() => el.classList.remove('hide'));
+          setTimeout(() => {
+            el.classList.add('hide');
+            setTimeout(() => el.remove(), 400);
+          }, 8000);
+        };
+        const check = async () => {
+          if (document.visibilityState !== 'visible') return;
+          const res = await fetch('/api/platform/notifications', { cache: 'no-store' }).catch(() => null);
+          if (!res?.ok) return;
+          const { count, latest } = (await res.json()) as { count: number; latest: Array<{ id: number; text: string }> };
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.hidden = count === 0;
+          bell.classList.toggle('has-unread', count > 0);
+          const fresh = latest.filter((n) => n.id > newest);
+          if (fresh.length) {
+            newest = Math.max(...fresh.map((n) => n.id));
+            toast(fresh[0].id, fresh[0].text);
+          }
+        };
+        setInterval(check, 30000);
+        document.addEventListener('visibilitychange', check);
+      }
+    </script>
   </body>
 </html>

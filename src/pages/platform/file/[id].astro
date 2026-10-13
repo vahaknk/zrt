@@ -1,0 +1,36 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import FileStage from '../../../components/FileStage.astro';
+import { requireMember, hasFacilitatorPage } from '../../../lib/platformAuth';
+import { getFile, canViewFile } from '../../../lib/platformFiles';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+// Any platform file (library, submission, reply) shown in the same viewer
+// as materials. Usage isn't counted here — that's per material.
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+const file = await getFile(String(Astro.params.id));
+if (!file || file.status === 'uploading' || !(await canViewFile(member, file))) {
+  return Astro.redirect('/platform');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const canDownload = file.purpose !== 'library' || file.allow_download || file.owner === member.id || hasFacilitatorPage(member);
+---
+
+<PlatformLayout title={`Zartsants Platform — ${file.filename}`} member={member}>
+  <style>
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; word-break: break-word; }
+  </style>
+
+  <div class="container">
+    <button class="back" type="button" onclick="history.length > 1 ? history.back() : (location.href = '/platform')">&larr; {L('viewer_back', 'Ետ')}</button>
+    <h1>{file.filename}</h1>
+    <FileStage file={file} title={file.filename} canDownload={canDownload} />
+  </div>
+</PlatformLayout>

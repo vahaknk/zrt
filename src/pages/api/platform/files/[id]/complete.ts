@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireMember } from '../../../../../lib/platformAuth';
 import { adminPatch } from '../../../../../lib/directusAdmin';
-import { getFile, completeMultipartUpload } from '../../../../../lib/platformFiles';
+import { getFile, completeMultipartUpload, createThumbnail } from '../../../../../lib/platformFiles';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -16,7 +16,8 @@ export const POST: APIRoute = async ({ request, params }) => {
     const size = await completeMultipartUpload(file.storage_key, file.upload_id);
     // Videos will go through compression (status "processing") once that
     // service exists; until then everything is ready as uploaded.
-    await adminPatch(`/items/platform_files/${file.id}`, { status: 'ready', size, upload_id: null });
+    const thumb_key = file.kind === 'image' ? await createThumbnail({ storage_key: file.storage_key, size }) : null;
+    await adminPatch(`/items/platform_files/${file.id}`, { status: 'ready', size, upload_id: null, thumb_key });
     return json({ id: file.id, status: 'ready' });
   } catch (e: any) {
     console.error('Upload complete failed:', e);

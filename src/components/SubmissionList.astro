@@ -31,7 +31,12 @@ const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}
               {showAuthor && <span>{when(s.last_activity ?? s.date_created)}</span>}
             </div>
             {s.note && <div class="sl-note">{excerpt(s.note)}</div>}
-            {s.file && <div class="sl-file">📎 {s.file.filename}</div>}
+            {s.file && (
+              <div class="sl-file">
+                {s.file.thumb_key && <img src={`/api/platform/files/${s.file.id}?thumb=1`} alt="" loading="lazy" draggable="false" />}
+                <span>📎 {s.file.filename}</span>
+              </div>
+            )}
             <div class="sl-foot">
               {s.replies.length === 0
                 ? L('submission_no_replies', 'Տակաւին պատասխան չկայ')
@@ -51,7 +56,8 @@ const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}
   .sl-head { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.88rem; }
   .sl-head span { color: #9a9a94; font-size: 0.8rem; white-space: nowrap; }
   .sl-note { font-size: 0.88rem; color: #444; margin-top: 0.3rem; word-break: break-word; }
-  .sl-file { font-size: 0.82rem; color: #4a3fcf; margin-top: 0.3rem; word-break: break-word; }
+  .sl-file { font-size: 0.82rem; color: #4a3fcf; margin-top: 0.3rem; word-break: break-word; display: flex; align-items: center; gap: 0.6rem; }
+  .sl-file img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #e9e5dc; }
   .sl-foot { font-size: 0.78rem; color: #9a9a94; margin-top: 0.4rem; }
   .sl-empty { color: #888; font-size: 0.9rem; }
 </style>

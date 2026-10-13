@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireMember, hasFacilitatorPage } from '../../../../lib/platformAuth';
 import { adminGet, adminDelete, adminPatch } from '../../../../lib/directusAdmin';
-import { getFile, canViewFile, downloadUrl, deleteObject, abortMultipartUpload } from '../../../../lib/platformFiles';
+import { getFile, canViewFile, downloadUrl, thumbnailUrl, deleteObject, abortMultipartUpload } from '../../../../lib/platformFiles';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status });
 
@@ -13,6 +13,14 @@ export const GET: APIRoute = async ({ request, params, url, redirect }) => {
   const file = await getFile(String(params.id));
   if (!file || file.status === 'uploading' || !(await canViewFile(member, file))) {
     return new Response('Not found', { status: 404 });
+  }
+  // ?thumb=1: the small preview (images), when there is one.
+  if (url.searchParams.has('thumb')) {
+    const thumb = await thumbnailUrl(file);
+    if (!thumb) return new Response('Not found', { status: 404 });
+    const res = redirect(thumb, 302);
+    res.headers.set('Cache-Control', 'private, max-age=3600');
+    return res;
   }
   // Saving a library file needs the facilitator's permission (staff always may);
   // without it the file is still shown/played, just not offered as a download.
@@ -48,6 +56,7 @@ export const DELETE: APIRoute = async ({ request, params }) => {
   try {
     if (file.upload_id) await abortMultipartUpload(file.storage_key, file.upload_id);
     else await deleteObject(file.storage_key);
+    if (file.thumb_key) await deleteObject(file.thumb_key).catch(() => {});
     await adminDelete(`/items/platform_files/${file.id}`);
     return json({ success: true });
   } catch (e: any) {

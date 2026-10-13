@@ -12,6 +12,7 @@ export interface SubmissionFile {
   kind: string;
   size: number;
   status: string;
+  thumb_key: string | null;
 }
 
 export interface SubmissionReply {
@@ -36,7 +37,7 @@ export interface Submission {
 
 type Viewer = Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>;
 
-const FILE = 'id,filename,kind,size,status';
+const FILE = 'id,filename,kind,size,status,thumb_key';
 const SUBMISSION_FIELDS =
   `id,note,date_created,last_activity,workshop.id,workshop.name,cloud.id,cloud.name,` +
   `author.id,author.full_name,author.armenian_name,file.${FILE.replace(/,/g, ',file.')},` +
