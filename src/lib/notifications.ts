@@ -8,6 +8,7 @@ import { displayName } from './platformAuth';
 export type NotificationKind =
   | 'submission'
   | 'reply'
+  | 'message'
   | 'material'
   | 'meeting'
   | 'file_review'
@@ -133,7 +134,7 @@ export async function markRead(ids: number[]): Promise<void> {
 }
 
 export function notificationHref(n: PlatformNotification): string {
-  if ((n.kind === 'submission' || n.kind === 'reply') && n.submission) return `/platform/submissions/${n.submission.id}`;
+  if ((n.kind === 'submission' || n.kind === 'reply' || n.kind === 'message') && n.submission) return `/platform/submissions/${n.submission.id}`;
   if (n.kind === 'material' && n.material) return `/api/platform/materials/${n.material.id}/open`;
   if (n.kind.startsWith('material_') && n.material) return `/platform/view/${n.material.id}`;
   if (n.kind === 'meeting' && n.meeting) return `/platform/facilitator#zardipum-${n.meeting.id}`;
@@ -150,6 +151,8 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
   switch (n.kind) {
     case 'submission':
       return fill(L('notif_submission', '{name} նոր աշխատանք մը ղրկեց՝ {group}'), { name, group: group(n.submission) });
+    case 'message':
+      return fill(L('notif_message', '{name} քեզի նամակ մը ղրկեց՝ {group}'), { name, group: group(n.submission) });
     case 'reply':
       return fill(L('notif_reply', '{name} պատասխանեց՝ {group}'), { name, group: group(n.submission) });
     case 'material':
@@ -180,7 +183,7 @@ export async function unreadConversationIds(memberId: number): Promise<Set<numbe
   try {
     const res = await adminGet(
       `/items/platform_notifications?filter[recipient][_eq]=${memberId}&filter[read_at][_null]=true` +
-        `&filter[kind][_in]=submission,reply&fields=submission&limit=-1`
+        `&filter[kind][_in]=submission,reply,message&fields=submission&limit=-1`
     );
     return new Set(((res.data ?? []) as Array<{ submission: number | null }>).map((n) => n.submission ?? 0).filter(Boolean));
   } catch {

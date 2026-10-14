@@ -64,17 +64,20 @@ try {
 }
 
 let facilitators: { full_name: string; armenian_name: string | null; image: string | null }[] = [];
-let participants: { full_name: string; armenian_name: string | null }[] = [];
+let participants: { id: number; full_name: string; armenian_name: string | null; role: string | null }[] = [];
 try {
   const [facilitatorsRes, participantsRes] = await Promise.all([
     adminGet(`/items/platform_members?filter[facilitates_clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name,image&limit=-1`),
-    adminGet(`/items/platform_members?filter[clouds][clouds_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name&limit=-1`),
+    adminGet(`/items/platform_members?filter[clouds][clouds_id][_eq]=${id}&sort=full_name&fields=id,full_name,armenian_name,role&limit=-1`),
   ]);
   facilitators = facilitatorsRes.data ?? [];
   participants = participantsRes.data ?? [];
 } catch (e) {
   console.error('Failed to load cloud roster:', e);
 }
+
+// The group's facilitators (and the team) can write to a participant by name.
+const canMessage = member.role === 'team' || facilitatesGroup(member, null, id);
 
 // Participants send their work to this group's facilitators from here.
 const canSubmit = enrolledInGroup(member, null, id);
@@ -192,6 +195,15 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .roster .section h2 { display: flex; align-items: center; justify-content: space-between; }
     .roster .count { font-weight: 400; color: #9a9a94; font-size: 0.8rem; }
     .roster .names { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .roster .names .name-link {
+      background: #efeaff;
+      color: #4a3fcf;
+      border-radius: 999px;
+      padding: 0.3rem 0.75rem;
+      font-size: 0.85rem;
+      text-decoration: none;
+    }
+    .roster .names .name-link:hover { background: #e3dcff; }
     .roster .names span {
       background: #f7f4ee;
       border-radius: 999px;
@@ -272,7 +284,15 @@ const TYPE_LABEL: Record<Material['type'], string> = {
         {participants.length === 0 ? (
           <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_participants_empty', 'Տակաւին մասնակիցներ չկան։')}</p>
         ) : (
-          <div class="names">{participants.map((p) => <span>{displayName(p)}</span>)}</div>
+          <div class="names">
+            {participants.map((p) =>
+              canMessage && p.role === 'student' ? (
+                <a class="name-link" href={`/platform/message/${p.id}?cloud=${id}`} title={L('message_write_to', 'Նամակ գրել')}>✉ {displayName(p)}</a>
+              ) : (
+                <span>{displayName(p)}</span>
+              )
+            )}
+          </div>
         )}
       </div>
     </div>

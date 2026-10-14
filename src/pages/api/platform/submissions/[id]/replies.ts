@@ -27,10 +27,11 @@ export const POST: APIRoute = async ({ request, params }) => {
     file: fileId || null,
   });
   await adminPatch(`/items/submissions/${sub.id}`, { last_activity: new Date().toISOString() });
-  // Everyone in the conversation: the participant, the group's facilitators,
+  // Everyone in the conversation: its author and participant, the group's facilitators,
   // and anyone else (team) who already replied — minus the one replying.
   const recipients = [
     ...(sub.author ? [sub.author.id] : []),
+    ...(sub.participant ? [sub.participant.id] : []),
     ...(await groupFacilitatorIds(sub.workshop?.id ?? null, sub.cloud?.id ?? null)),
     ...sub.replies.map((r) => r.author?.id ?? 0),
   ];

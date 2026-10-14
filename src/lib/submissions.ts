@@ -31,6 +31,9 @@ export interface Submission {
   workshop: { id: number; name: string } | null;
   cloud: { id: number; name: string } | null;
   author: { id: number; full_name: string; armenian_name: string | null } | null;
+  // The participant the conversation is with — the author, unless a
+  // facilitator started it with them.
+  participant: { id: number; full_name: string; armenian_name: string | null } | null;
   file: SubmissionFile | null;
   replies: SubmissionReply[];
 }
@@ -40,7 +43,8 @@ type Viewer = Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_
 const FILE = 'id,filename,kind,size,status,thumb_key';
 const SUBMISSION_FIELDS =
   `id,note,date_created,last_activity,workshop.id,workshop.name,cloud.id,cloud.name,` +
-  `author.id,author.full_name,author.armenian_name,file.${FILE.replace(/,/g, ',file.')},` +
+  `author.id,author.full_name,author.armenian_name,participant.id,participant.full_name,participant.armenian_name,` +
+  `file.${FILE.replace(/,/g, ',file.')},` +
   `replies.id,replies.text,replies.date_created,replies.author.id,replies.author.full_name,replies.author.armenian_name,` +
   `replies.file.${FILE.replace(/,/g, ',replies.file.')}`;
 
@@ -58,11 +62,16 @@ export function enrolledInGroup(member: Viewer, workshop: number | null, cloud: 
 
 export function canSeeSubmission(
   member: Viewer,
-  sub: { author: { id: number } | number | null; workshop: { id: number } | number | null; cloud: { id: number } | number | null }
+  sub: {
+    author: { id: number } | number | null;
+    participant?: { id: number } | number | null;
+    workshop: { id: number } | number | null;
+    cloud: { id: number } | number | null;
+  }
 ): boolean {
-  const id = (v: { id: number } | number | null) => (v && typeof v === 'object' ? v.id : v);
+  const id = (v: { id: number } | number | null | undefined) => (v && typeof v === 'object' ? v.id : v ?? null);
   if (member.role === 'team') return true;
-  if (id(sub.author) === member.id) return true;
+  if (id(sub.author) === member.id || id(sub.participant) === member.id) return true;
   return facilitatesGroup(member, id(sub.workshop), id(sub.cloud));
 }
 
@@ -120,8 +129,10 @@ export async function attachableFile(member: { id: number }, fileId: string, pur
 // Is this file part of a submission thread the member may see?
 export async function canViewSubmissionFile(member: Viewer, fileId: string): Promise<boolean> {
   const [subs, replies] = await Promise.all([
-    adminGet(`/items/submissions?filter[file][_eq]=${fileId}&fields=author,workshop,cloud&limit=1`),
-    adminGet(`/items/submission_replies?filter[file][_eq]=${fileId}&fields=submission.author,submission.workshop,submission.cloud&limit=1`),
+    adminGet(`/items/submissions?filter[file][_eq]=${fileId}&fields=author,participant,workshop,cloud&limit=1`),
+    adminGet(
+      `/items/submission_replies?filter[file][_eq]=${fileId}&fields=submission.author,submission.participant,submission.workshop,submission.cloud&limit=1`
+    ),
   ]);
   const sub = subs.data?.[0] ?? replies.data?.[0]?.submission ?? null;
   return !!sub && canSeeSubmission(member, sub);
@@ -147,7 +158,7 @@ export function formatDateTime(iso: string, tz: string | null, months: string[])
 // Every conversation a member is part of, most recently active first: their
 // own submissions, those of the groups they facilitate, or — team — all.
 export async function inboxSubmissions(member: Viewer, limit = 200): Promise<Submission[]> {
-  const or: object[] = [{ author: { _eq: member.id } }];
+  const or: object[] = [{ author: { _eq: member.id } }, { participant: { _eq: member.id } }];
   const ws = member.facilitates_workshops.map((w) => w.workshops_id.id);
   const cs = member.facilitates_clouds.map((c) => c.clouds_id.id);
   if (ws.length) or.push({ workshop: { _in: ws } });
@@ -160,6 +171,21 @@ export async function inboxSubmissions(member: Viewer, limit = 200): Promise<Sub
     return res.data ?? [];
   } catch (e) {
     console.error('Failed to load inbox:', e);
+    return [];
+  }
+}
+
+// Conversations between a group's facilitators and one of its participants
+// (the facilitator's "write to this participant" page).
+export async function conversationsWith(participantId: number, kind: 'workshop' | 'cloud', groupId: number): Promise<Submission[]> {
+  try {
+    const res = await adminGet(
+      `/items/submissions?filter[participant][_eq]=${participantId}&filter[${kind}][_eq]=${groupId}` +
+        `&sort=-last_activity,-date_created&fields=${SUBMISSION_FIELDS}&deep[replies][_sort]=date_created&limit=-1`
+    );
+    return res.data ?? [];
+  } catch (e) {
+    console.error('Failed to load conversations:', e);
     return [];
   }
 }

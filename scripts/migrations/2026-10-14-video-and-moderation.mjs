@@ -70,6 +70,7 @@ await api('PATCH', '/fields/platform_notifications/kind', {
     { text: 'New submission', value: 'submission' }, { text: 'New reply', value: 'reply' },
     { text: 'New material', value: 'material' }, { text: 'Meeting invitation', value: 'meeting' },
     { text: 'File to review', value: 'file_review' }, { text: 'File approved', value: 'file_approved' }, { text: 'File rejected', value: 'file_rejected' },
+    { text: 'Message from a facilitator', value: 'message' },
     { text: 'Text to review', value: 'material_review' }, { text: 'Text approved', value: 'material_approved' }, { text: 'Text rejected', value: 'material_rejected' },
   ] } },
 });
@@ -97,6 +98,16 @@ await field('materials', {
   meta: { interface: 'select-dropdown-m2o', readonly: true, width: 'half', display: 'related-values', display_options: { template: '{{full_name}}' } },
 });
 await relation('materials', 'reviewed_by', 'platform_members', 'SET NULL');
+
+// --- conversations a facilitator starts with one participant
+await field('submissions', {
+  field: 'participant', type: 'integer', schema: { is_nullable: true },
+  meta: { interface: 'select-dropdown-m2o', readonly: true, width: 'half', display: 'related-values', display_options: { template: '{{full_name}}' }, note: 'The participant this conversation is with (the author, unless a facilitator started it)' },
+});
+await relation('submissions', 'participant', 'platform_members', 'SET NULL');
+const noParticipant = (await api('GET', '/items/submissions?filter[participant][_null]=true&fields=id,author&limit=-1')).data ?? [];
+for (const s of noParticipant) if (s.author) await api('PATCH', `/items/submissions/${s.id}`, { participant: s.author });
+console.log(`~ submissions.participant filled for ${noParticipant.length} existing conversation(s)`);
 
 await api('PATCH', `/items/platform_members/${SARIN_MEMBER_ID}`, { moderator: true });
 console.log(`~ member ${SARIN_MEMBER_ID} (Sarin) is moderator`);

@@ -21,9 +21,21 @@ await markConversationRead(member.id, sub.id);
 const tz = memberTimezone(member);
 const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
 const isAuthor = sub.author?.id === member.id;
+const participant = sub.participant ?? sub.author;
+const isParticipant = participant?.id === member.id;
+const startedByFacilitator = !!sub.participant && !!sub.author && sub.author.id !== sub.participant.id;
 const group = sub.workshop ?? sub.cloud;
 const back = { href: '/platform/inbox', label: L('nav_inbox', 'Նամակատուփս') };
 const authorName = sub.author ? displayName(sub.author) : '—';
+// The participant sees their own work as «Իմ աշխատանքս», or who wrote to
+// them; facilitators see who the conversation is with.
+const title = isParticipant
+  ? startedByFacilitator
+    ? `${L('submission_from', 'Նամակ՝')} ${authorName}`
+    : L('submission_my_title', 'Իմ աշխատանքս')
+  : participant
+    ? displayName(participant)
+    : '—';
 ---
 
 <PlatformLayout title={`Zartsants Platform — ${L('submission_title', 'Աշխատանք')}`} member={member}>
@@ -46,7 +58,7 @@ const authorName = sub.author ? displayName(sub.author) : '—';
 
   <div class="container">
     <a class="back" href={back.href}>&larr; {back.label}</a>
-    <h1>{isAuthor ? L('submission_my_title', 'Իմ աշխատանքս') : authorName}</h1>
+    <h1>{title}</h1>
     <div class="sub-meta">{group?.name} · {when(sub.date_created)}</div>
 
     <div class="thread">

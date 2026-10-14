@@ -1,0 +1,69 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import SubmissionComposer from '../../../components/SubmissionComposer.astro';
+import SubmissionList from '../../../components/SubmissionList.astro';
+import { requireMember, displayName, memberTimezone } from '../../../lib/platformAuth';
+import { adminGet } from '../../../lib/directusAdmin';
+import { facilitatesGroup, conversationsWith } from '../../../lib/submissions';
+import { groupStudentIds } from '../../../lib/notifications';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+// A facilitator writes to one participant of their group:
+// /platform/message/<participant id>?workshop=<id> (or ?cloud=<id>).
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+}
+const participantId = Number(Astro.params.id);
+const workshop = Number(Astro.url.searchParams.get('workshop')) || null;
+const cloud = workshop ? null : Number(Astro.url.searchParams.get('cloud')) || null;
+const kind = workshop ? 'workshop' : 'cloud';
+const groupId = (workshop ?? cloud)!;
+if (!groupId || (member.role !== 'team' && !facilitatesGroup(member, workshop, cloud))) {
+  return Astro.redirect('/platform');
+}
+if (!(await groupStudentIds(workshop, cloud)).includes(participantId)) {
+  return Astro.redirect(`/platform/library/${kind}/${groupId}`);
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const [person, group, earlier] = await Promise.all([
+  adminGet(`/items/platform_members/${participantId}?fields=full_name,armenian_name`).then((r) => r.data),
+  adminGet(`/items/${kind === 'workshop' ? 'workshops' : 'clouds'}/${groupId}?fields=name`).then((r) => r.data),
+  conversationsWith(participantId, kind, groupId),
+]);
+const name = displayName(person);
+---
+
+<PlatformLayout title={`Zartsants Platform — ${name}`} member={member}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .sub { font-size: 0.85rem; color: #797970; margin-bottom: 1.25rem; }
+    h2 { font-size: 0.95rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  </style>
+
+  <div class="container">
+    <a class="back" href={`/platform/library/${kind}/${groupId}`}>&larr; {group?.name}</a>
+    <h1>{L('message_title', 'Նամակ՝')} {name}</h1>
+    <div class="sub">{group?.name}</div>
+
+    <SubmissionComposer
+      endpoint="/api/platform/messages"
+      purpose="reply"
+      textField="note"
+      extra={{ participant: participantId, [kind]: groupId }}
+      placeholder={L('message_placeholder', 'Նամակդ…')}
+      submitLabel={L('submission_send', 'Ղրկել')}
+    />
+
+    {earlier.length > 0 && (
+      <>
+        <h2>{L('message_earlier', 'Նախորդ նամակները')}</h2>
+        <SubmissionList submissions={earlier} showAuthor={true} timezone={memberTimezone(member)} emptyText="" />
+      </>
+    )}
+  </div>
+</PlatformLayout>

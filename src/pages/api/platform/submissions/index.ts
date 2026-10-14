@@ -25,6 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
   const now = new Date().toISOString();
   const created = await adminPost('/items/submissions', {
     author: member.id,
+    participant: member.id,
     workshop,
     cloud,
     note: note || null,
