@@ -59,7 +59,7 @@ const blocks: SessionBlock[] = [...buildSessionBlocks(workshops, clouds, weekDat
 const blockHref = (b: SessionBlock) =>
   b.kind === 'meeting' ? `/platform/facilitator#zardipum-${b.sourceId}` : `/platform/library/${b.kind}/${b.sourceId}`;
 const bounds = gridBounds(blocks);
-const PX_PER_MIN = 0.6;
+const PX_PER_MIN = 1.2;
 const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
 
 const hourMarks: number[] = [];
@@ -150,6 +150,7 @@ const agendaDays = weekDates
                 }}
                 data-start={b.startIso}
                 data-end={b.endIso}
+                data-day={b.dayIndex}
               >
                 <span>{b.label}</span>
                 {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
@@ -317,7 +318,7 @@ const agendaDays = weekDates
   // outside typical daytime hours in Paris, a viewer many hours ahead or
   // behind could see a session's local time cross midnight into the next/
   // previous day while it stays drawn under its original day column.)
-  const PX_PER_MIN = 0.6;
+  const PX_PER_MIN = 1.2;
 
   let tz: string | undefined = document.body.dataset.tz || undefined;
   let formatter: Intl.DateTimeFormat;
@@ -397,6 +398,40 @@ const agendaDays = weekDates
     for (const { el, startMin, endMin } of localBlocks) {
       el.style.top = `${(startMin - boundsStart) * PX_PER_MIN}px`;
       el.style.height = `${Math.max(20, (endMin - startMin) * PX_PER_MIN)}px`;
+    }
+
+    // Sessions that overlap on the same day sit side by side (each group of
+    // overlapping sessions shares its day column equally) instead of on top
+    // of each other.
+    const byDay = new Map<string, typeof localBlocks>();
+    for (const b of localBlocks) {
+      const day = b.el.dataset.day ?? '0';
+      byDay.set(day, [...(byDay.get(day) ?? []), b]);
+    }
+    for (const [day, blocks] of byDay) {
+      blocks.sort((a, b) => a.startMin - b.startMin || b.endMin - a.endMin);
+      let cluster: Array<{ b: (typeof blocks)[number]; col: number }> = [];
+      let clusterEnd = -1;
+      const place = () => {
+        const cols = Math.max(1, ...cluster.map((c) => c.col + 1));
+        for (const { b, col } of cluster) {
+          b.el.style.width = `calc((100% / 7 - 4px) / ${cols} - ${cols > 1 ? 2 : 0}px)`;
+          b.el.style.left = `calc(${day} * (100% / 7) + 2px + (100% / 7 - 4px) * ${col} / ${cols})`;
+        }
+      };
+      for (const b of blocks) {
+        if (b.startMin >= clusterEnd && cluster.length) {
+          place();
+          cluster = [];
+          clusterEnd = -1;
+        }
+        // first column whose last session has ended
+        let col = 0;
+        while (cluster.some((c) => c.col === col && c.b.endMin > b.startMin)) col++;
+        cluster.push({ b, col });
+        clusterEnd = Math.max(clusterEnd, b.endMin);
+      }
+      if (cluster.length) place();
     }
   });
 </script>

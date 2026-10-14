@@ -32,8 +32,9 @@ const { workshops, clouds } = await memberGroups(member);
     @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
     h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
 
-    .workshop-row { margin-bottom: 1rem; }
-    .clouds-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    /* Workshops and clouds: three cards per row. */
+    .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .workshops-grid { margin-bottom: 1.5rem; }
     .course {
       display: block;
       background: #fff;
@@ -58,14 +59,14 @@ const { workshops, clouds } = await memberGroups(member);
       display: block;
     }
     .course-banner.full img { width: 100%; height: auto; display: block; }
-    .workshop-row .course-banner.full {
-      height: 400px;
+    .workshops-grid .course-banner.full {
+      height: 160px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: #efeaff;
     }
-    .workshop-row .course-banner.full img { width: 100%; height: 100%; object-fit: contain; }
+    .workshops-grid .course-banner.full img { width: 100%; height: 100%; object-fit: contain; }
     .clouds-grid .course-banner.full {
       height: 160px;
       display: flex;
@@ -88,10 +89,10 @@ const { workshops, clouds } = await memberGroups(member);
     }
 
     @media (max-width: 640px) {
-      .clouds-grid { grid-template-columns: repeat(2, 1fr); }
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 480px) {
-      .clouds-grid { grid-template-columns: 1fr; }
+      .cards-grid { grid-template-columns: 1fr; }
     }
   </style>
 
@@ -102,11 +103,12 @@ const { workshops, clouds } = await memberGroups(member);
       <div class="empty-state">{L('library_empty_state', 'No workshop or cloud assigned yet.')}</div>
     ) : (
       <>
+        {workshops.length > 0 && (
+          <div class="cards-grid workshops-grid">
         {workshops.map((workshop) => {
           const workshopSchedule = formatWorkshopScheduleLabel(workshop.schedule);
           const workshopScheduleInstants = (workshop.schedule ?? []).flatMap((e) => scheduleInstantsFor([e.day], e.start_time, e.end_time));
           return (
-            <div class="workshop-row">
               <a class="course" href={`/platform/library/workshop/${workshop.id}`}>
                 {workshop.image ? (
                   <div class="course-banner full">
@@ -122,11 +124,12 @@ const { workshops, clouds } = await memberGroups(member);
                   <div class="course-sub" data-schedule={JSON.stringify(workshopScheduleInstants)}>{workshopSchedule ?? L('library_workshop_fallback', 'Workshop')}</div>
                 </div>
               </a>
-            </div>
           );
         })}
+          </div>
+        )}
         {clouds.length > 0 && (
-          <div class="clouds-grid">
+          <div class="cards-grid clouds-grid">
             {clouds.map((cloud) => {
               const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
               const instants = scheduleInstantsFor(parseDays(cloud.day_of_week), cloud.start_time, cloud.end_time);
