@@ -9,6 +9,8 @@ export type NotificationKind =
   | 'submission'
   | 'reply'
   | 'message'
+  | 'parev'
+  | 'news'
   | 'material'
   | 'meeting'
   | 'file_review'
@@ -34,19 +36,29 @@ export interface PlatformNotification {
   } | null;
   meeting: { id: number; title: string } | null;
   file: { id: string; filename: string; review_note: string | null } | null;
+  parev_video: { id: number; title: string } | null;
+  news: { id: number; title: string } | null;
 }
 
 const FIELDS =
   'id,kind,date_created,read_at,actor.full_name,actor.armenian_name,' +
   'submission.id,submission.workshop.name,submission.cloud.name,' +
   'material.id,material.label,material.review_note,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
-  'file.id,file.filename,file.review_note';
+  'file.id,file.filename,file.review_note,parev_video.id,parev_video.title,news.id,news.title';
 
 // Never throws: a failed notification must not fail the action behind it.
 export async function notify(
   recipients: number[],
   kind: NotificationKind,
-  refs: { actor?: number | null; submission?: number; material?: number; meeting?: number; file?: string }
+  refs: {
+    actor?: number | null;
+    submission?: number;
+    material?: number;
+    meeting?: number;
+    file?: string;
+    parev_video?: number;
+    news?: number;
+  }
 ): Promise<void> {
   const ids = [...new Set(recipients)].filter((id) => id && id !== refs.actor);
   if (!ids.length) return;
@@ -61,6 +73,8 @@ export async function notify(
         material: refs.material,
         meeting: refs.meeting,
         file: refs.file,
+        parev_video: refs.parev_video,
+        news: refs.news,
       }))
     );
   } catch (e) {
@@ -139,6 +153,8 @@ export function notificationHref(n: PlatformNotification): string {
   if (n.kind.startsWith('material_') && n.material) return `/platform/view/${n.material.id}`;
   if (n.kind === 'meeting' && n.meeting) return `/platform/facilitator#zardipum-${n.meeting.id}`;
   if (n.kind.startsWith('file_') && n.file) return `/platform/file/${n.file.id}`;
+  if (n.kind === 'parev' && n.parev_video) return `/platform/parev/${n.parev_video.id}`;
+  if (n.kind === 'news' && n.news) return `/platform/lratu#news-${n.news.id}`;
   return '/platform';
 }
 
@@ -162,6 +178,10 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
       return fill(L('notif_material', 'Նոր նիւթ՝ «{label}» · {group}'), { label: n.material?.label ?? '', group: group(n.material) });
     case 'meeting':
       return fill(L('notif_meeting', 'Նոր Զարդիպում՝ {title}'), { title: n.meeting?.title ?? '' });
+    case 'parev':
+      return fill(L('notif_parev', 'Նոր տեսերիզ «Բարեւ»-ի մէջ՝ «{title}»'), { title: n.parev_video?.title ?? '' });
+    case 'news':
+      return fill(L('notif_news', 'Լրատու՝ «{title}»'), { title: n.news?.title ?? '' });
     case 'file_review':
       return fill(L('notif_file_review', '{name} նոր ծրար մը բեռնեց՝ ստուգելու․ «{file}»'), { name, file: n.file?.filename ?? '' });
     case 'file_approved':

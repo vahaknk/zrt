@@ -1,0 +1,41 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import FileStage from '../../../components/FileStage.astro';
+import { requireMember, memberTimezone } from '../../../lib/platformAuth';
+import { getVideo } from '../../../lib/publishing';
+import { formatDateTime } from '../../../lib/submissions';
+import { MONTH_LABELS } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+// One «Բարեւ» video.
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+const video = await getVideo(Number(Astro.params.id));
+if (!video?.platform_file) {
+  return Astro.redirect('/platform/parev');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const date = formatDateTime(video.date_created, memberTimezone(member), MONTH_LABELS.hyw).split(',')[0];
+---
+
+<PlatformLayout title={`Zartsants Platform — ${video.title}`} member={member}>
+  <style>
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    h1 { font-size: 1.2rem; font-weight: 700; margin: 1rem 0 0.25rem; }
+    .meta { font-size: 0.8rem; color: #9a9a94; }
+    .desc { font-size: 0.95rem; line-height: 1.6; white-space: pre-wrap; margin-top: 0.6rem; }
+  </style>
+
+  <div class="container">
+    <a class="back" href="/platform/parev">&larr; {L('dashboard_tile_parev', 'Բարե՛ւ')}</a>
+    <FileStage file={video.platform_file} title={video.title} canDownload={false} />
+    <h1>{video.title}</h1>
+    <div class="meta">{date}</div>
+    {video.description && <p class="desc">{video.description}</p>}
+  </div>
+</PlatformLayout>

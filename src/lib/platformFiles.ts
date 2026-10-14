@@ -9,6 +9,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   PutObjectCommand,
+  CopyObjectCommand,
   type Part,
 } from '@aws-sdk/client-s3';
 import sharp from 'sharp';
@@ -30,7 +31,7 @@ const UPLOAD_URL_TTL = 6 * 3600;
 const DOWNLOAD_URL_TTL = 6 * 3600; // long enough to watch a long video with seeking
 
 export type FileKind = 'video' | 'audio' | 'image' | 'document' | 'other';
-export type FilePurpose = 'library' | 'submission' | 'reply';
+export type FilePurpose = 'library' | 'submission' | 'reply' | 'parev';
 
 export interface PlatformFile {
   id: string;
@@ -176,6 +177,25 @@ export async function thumbnailUrl(file: PlatformFile): Promise<string | null> {
   return getSignedUrl(s3(), new GetObjectCommand({ Bucket: Bucket(), Key: file.thumb_key }), { expiresIn: DOWNLOAD_URL_TTL });
 }
 
+// Copies an object inside the bucket (e.g. a Directus upload into platform/).
+export async function copyObject(fromKey: string, toKey: string): Promise<void> {
+  await s3().send(new CopyObjectCommand({ Bucket: Bucket(), Key: toKey, CopySource: `${Bucket()}/${encodeURIComponent(fromKey)}` }));
+}
+
+// A short-lived link to any object in the bucket.
+export async function presignObject(key: string, filename: string, mime: string | null, attachment: boolean): Promise<string> {
+  return getSignedUrl(
+    s3(),
+    new GetObjectCommand({
+      Bucket: Bucket(),
+      Key: key,
+      ResponseContentDisposition: `${attachment ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(filename)}`,
+      ResponseContentType: mime || undefined,
+    }),
+    { expiresIn: DOWNLOAD_URL_TTL }
+  );
+}
+
 export async function downloadUrl(file: PlatformFile, attachment: boolean): Promise<string> {
   const disposition = `${attachment ? 'attachment' : 'inline'}; filename*=UTF-8''${encodeURIComponent(file.filename)}`;
   return getSignedUrl(
@@ -232,6 +252,7 @@ export async function canViewFile(
   file: PlatformFile
 ): Promise<boolean> {
   if (file.owner === member.id) return true;
+  if (file.purpose === 'parev') return true; // «Բարեւ» videos are for everyone
   if (file.purpose !== 'library') return canViewSubmissionFile(member, file.id);
   if (member.moderator || member.role === 'team') return true;
   // Until approved, only the people running the group see it, not participants.
