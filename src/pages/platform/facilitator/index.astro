@@ -23,7 +23,7 @@ if (!hasFacilitatorPage(member)) {
 const L = makeLabelGetter(await getPlatformLabels());
 
 const tz = memberTimezone(member);
-const meetings = (await memberMeetings(member.id)).map((m) => ({ ...m, when: formatMeetingTime(m, tz) }));
+const meetings = (await memberMeetings(member.id, 1, member.role === 'team')).map((m) => ({ ...m, when: formatMeetingTime(m, tz) }));
 const myFiles = await libraryFiles(member.id);
 // «Ուղեկիցներ»: every facilitator/team member, to write to one personally.
 const colleagues = (await staffMembers()).filter((c) => c.id !== member.id);

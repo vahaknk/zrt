@@ -230,3 +230,23 @@ export async function requireMember(request: Request): Promise<Member | null> {
     return null;
   }
 }
+
+// The workshops and clouds a member's calendar and library show: their own
+// (enrolled + facilitated), or — for the team — every one of them.
+export async function memberGroups(
+  member: Pick<Member, 'role' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>
+): Promise<{ workshops: PlatformWorkshop[]; clouds: PlatformCloud[] }> {
+  if (member.role !== 'team') return { workshops: calendarWorkshops(member), clouds: calendarClouds(member) };
+  try {
+    const [w, c] = await Promise.all([
+      adminGet(`/items/workshops?sort=name&fields=id,name,age_group,schedule_note,zoom_link,image,schedule&limit=-1`),
+      adminGet(
+        `/items/clouds?sort=name&fields=id,name,age_groups,schedule_note,image,bundle.id,bundle.name,bundle.zoom_link,day_of_week,start_time,end_time&limit=-1`
+      ),
+    ]);
+    return { workshops: w.data ?? [], clouds: c.data ?? [] };
+  } catch (e) {
+    console.error('Failed to load all groups:', e);
+    return { workshops: calendarWorkshops(member), clouds: calendarClouds(member) };
+  }
+}

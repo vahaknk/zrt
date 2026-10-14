@@ -1,7 +1,7 @@
 ---
 import PlatformLayout from '../../layouts/PlatformLayout.astro';
 import PlatformCalendar from '../../components/PlatformCalendar.astro';
-import { requireMember, memberTimezone, displayName, calendarWorkshops, calendarClouds } from '../../lib/platformAuth';
+import { requireMember, memberTimezone, displayName, memberGroups } from '../../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
 import { listNotifications, notificationText } from '../../lib/notifications';
 
@@ -10,8 +10,7 @@ if (!member) {
   return Astro.redirect('/platform/login');
 }
 
-const workshops = calendarWorkshops(member);
-const clouds = calendarClouds(member);
+const { workshops, clouds } = await memberGroups(member);
 const L = makeLabelGetter(await getPlatformLabels());
 // The few latest unread notifications, above the tiles.
 const latest = await listNotifications(member.id, { unreadOnly: true, limit: 5 });
@@ -117,6 +116,6 @@ const latest = await listNotifications(member.id, { unreadOnly: true, limit: 5 }
       </a>
     </div>
 
-    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} basePath="/platform" />
+    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} allMeetings={member.role === 'team'} basePath="/platform" />
   </div>
 </PlatformLayout>

@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
-import { requireMember, displayName, isWebUrl, memberTimezone } from '../../../../lib/platformAuth';
+import { requireMember, displayName, isWebUrl, memberTimezone, memberGroups } from '../../../../lib/platformAuth';
 import SubmissionComposer from '../../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
@@ -23,7 +23,7 @@ const id = Number(Astro.params.id);
 const cloud =
   member.clouds.find((c) => c.clouds_id.id === id)?.clouds_id ??
   member.facilitates_clouds.find((c) => c.clouds_id.id === id)?.clouds_id ??
-  null;
+  (member.role === 'team' ? (await memberGroups(member)).clouds.find((c) => c.id === id) ?? null : null);
 if (!cloud) {
   return Astro.redirect('/platform/library');
 }

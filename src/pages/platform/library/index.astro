@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
-import { requireMember, calendarWorkshops, calendarClouds } from '../../../lib/platformAuth';
+import { requireMember, memberGroups } from '../../../lib/platformAuth';
 import { formatScheduleLabel, formatWorkshopScheduleLabel, parseDays, scheduleEntryInstant } from '../../../lib/calendar';
 import { asset } from '../../../lib/asset';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
@@ -23,8 +23,7 @@ function scheduleInstantsFor(days: string[], start: string | null, end: string |
     .filter((e): e is { start: string; end: string } => e !== null);
 }
 
-const workshops = calendarWorkshops(member);
-const clouds = calendarClouds(member);
+const { workshops, clouds } = await memberGroups(member);
 ---
 
 <PlatformLayout title="Zartsants Platform — Library" member={member}>

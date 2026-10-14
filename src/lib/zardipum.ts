@@ -394,13 +394,14 @@ export interface MemberMeeting {
   status: 'scheduled' | 'cancelled';
 }
 
-// Meetings a member is invited to, from `sinceDays` ago onwards, soonest first.
-export async function memberMeetings(memberId: number, sinceDays = 1): Promise<MemberMeeting[]> {
+// Meetings a member is invited to (or, with `all` — the team — every
+// meeting), from `sinceDays` ago onwards, soonest first.
+export async function memberMeetings(memberId: number, sinceDays = 1, all = false): Promise<MemberMeeting[]> {
   const since = parisWallClock(new Date(Date.now() - sinceDays * 86400000));
   try {
     const res = await adminGet(
-      `/items/zardipum?filter[participants][platform_members_id][_eq]=${memberId}` +
-        `&filter[starts_at][_gte]=${since}&sort=starts_at&fields=id,title,starts_at,duration_minutes,zoom_link,status&limit=-1`
+      `/items/zardipum?${all ? '' : `filter[participants][platform_members_id][_eq]=${memberId}&`}` +
+        `filter[starts_at][_gte]=${since}&sort=starts_at&fields=id,title,starts_at,duration_minutes,zoom_link,status&limit=-1`
     );
     return res.data ?? [];
   } catch (e) {
@@ -409,12 +410,13 @@ export async function memberMeetings(memberId: number, sinceDays = 1): Promise<M
   }
 }
 
-// Meetings overlapping the given Paris dates (YYYY-MM-DD, inclusive).
-export async function memberMeetingsBetween(memberId: number, fromDate: string, toDate: string): Promise<MemberMeeting[]> {
+// Meetings overlapping the given Paris dates (YYYY-MM-DD, inclusive); `all`
+// for the team, who see every meeting.
+export async function memberMeetingsBetween(memberId: number, fromDate: string, toDate: string, all = false): Promise<MemberMeeting[]> {
   try {
     const res = await adminGet(
-      `/items/zardipum?filter[participants][platform_members_id][_eq]=${memberId}` +
-        `&filter[starts_at][_between]=${fromDate}T00:00:00,${toDate}T23:59:59&sort=starts_at` +
+      `/items/zardipum?${all ? '' : `filter[participants][platform_members_id][_eq]=${memberId}&`}` +
+        `filter[starts_at][_between]=${fromDate}T00:00:00,${toDate}T23:59:59&sort=starts_at` +
         `&fields=id,title,starts_at,duration_minutes,zoom_link,status&limit=-1`
     );
     return res.data ?? [];

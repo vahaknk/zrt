@@ -1,6 +1,6 @@
 ---
 import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
-import { requireMember, displayName, isWebUrl, memberTimezone } from '../../../../lib/platformAuth';
+import { requireMember, displayName, isWebUrl, memberTimezone, memberGroups } from '../../../../lib/platformAuth';
 import SubmissionComposer from '../../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
@@ -23,7 +23,8 @@ const id = Number(Astro.params.id);
 const workshop =
   member.workshop?.id === id
     ? member.workshop
-    : member.facilitates_workshops.find((w) => w.workshops_id.id === id)?.workshops_id ?? null;
+    : member.facilitates_workshops.find((w) => w.workshops_id.id === id)?.workshops_id ??
+      (member.role === 'team' ? (await memberGroups(member)).workshops.find((w) => w.id === id) ?? null : null);
 if (!workshop) {
   return Astro.redirect('/platform/library');
 }

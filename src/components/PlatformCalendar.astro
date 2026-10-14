@@ -21,11 +21,12 @@ interface Props {
   // Member's registered timezone; the grid's script reads the same value
   // from <body data-tz>. Null keeps the browser's timezone.
   timezone?: string | null;
-  // Shows the զարդիպումներ this member is invited to.
+  // Shows the զարդիպումներ this member is invited to (all of them with allMeetings).
   memberId?: number;
+  allMeetings?: boolean;
 }
 
-const { workshops, clouds, basePath = '/platform/calendar', timezone = null, memberId } = Astro.props;
+const { workshops, clouds, basePath = '/platform/calendar', timezone = null, memberId, allMeetings = false } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
 
 const requestedWeek = Astro.url.searchParams.get('week');
@@ -51,7 +52,7 @@ try {
   console.error('Failed to load schedule overrides:', e);
 }
 
-const meetings = memberId ? await memberMeetingsBetween(memberId, ymd(weekStart), ymd(weekEnd)) : [];
+const meetings = memberId ? await memberMeetingsBetween(memberId, ymd(weekStart), ymd(weekEnd), allMeetings) : [];
 const blocks: SessionBlock[] = [...buildSessionBlocks(workshops, clouds, weekDates), ...buildMeetingBlocks(meetings, weekDates)].sort(
   (a, b) => a.date.getTime() - b.date.getTime() || a.startMin - b.startMin
 );
