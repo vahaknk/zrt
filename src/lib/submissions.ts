@@ -70,8 +70,11 @@ export function canSeeSubmission(
   }
 ): boolean {
   const id = (v: { id: number } | number | null | undefined) => (v && typeof v === 'object' ? v.id : v ?? null);
-  if (member.role === 'team') return true;
   if (id(sub.author) === member.id || id(sub.participant) === member.id) return true;
+  // A personal conversation between two staff members (no group) is theirs
+  // alone — not even the team sees it.
+  if (!id(sub.workshop) && !id(sub.cloud)) return false;
+  if (member.role === 'team') return true;
   return facilitatesGroup(member, id(sub.workshop), id(sub.cloud));
 }
 
@@ -163,7 +166,9 @@ export async function inboxSubmissions(member: Viewer, limit = 200): Promise<Sub
   const cs = member.facilitates_clouds.map((c) => c.clouds_id.id);
   if (ws.length) or.push({ workshop: { _in: ws } });
   if (cs.length) or.push({ cloud: { _in: cs } });
-  const filter = member.role === 'team' ? '' : `&filter=${encodeURIComponent(JSON.stringify({ _or: or }))}`;
+  // The team sees every group conversation, but personal ones only if theirs.
+  if (member.role === 'team') or.push({ workshop: { _nnull: true } }, { cloud: { _nnull: true } });
+  const filter = `&filter=${encodeURIComponent(JSON.stringify({ _or: or }))}`;
   try {
     const res = await adminGet(
       `/items/submissions?sort=-last_activity,-date_created${filter}&fields=${SUBMISSION_FIELDS}&deep[replies][_sort]=date_created&limit=${limit}`
@@ -186,6 +191,39 @@ export async function conversationsWith(participantId: number, kind: 'workshop' 
     return res.data ?? [];
   } catch (e) {
     console.error('Failed to load conversations:', e);
+    return [];
+  }
+}
+
+// Personal conversations between two staff members (no workshop/cloud).
+export async function directConversations(a: number, b: number): Promise<Submission[]> {
+  const filter = {
+    _and: [
+      { workshop: { _null: true } },
+      { cloud: { _null: true } },
+      { _or: [{ _and: [{ author: { _eq: a } }, { participant: { _eq: b } }] }, { _and: [{ author: { _eq: b } }, { participant: { _eq: a } }] }] },
+    ],
+  };
+  try {
+    const res = await adminGet(
+      `/items/submissions?filter=${encodeURIComponent(JSON.stringify(filter))}&sort=-last_activity,-date_created` +
+        `&fields=${SUBMISSION_FIELDS}&deep[replies][_sort]=date_created&limit=-1`
+    );
+    return res.data ?? [];
+  } catch (e) {
+    console.error('Failed to load direct conversations:', e);
+    return [];
+  }
+}
+
+// Everyone who can take part in personal conversations: facilitators + team.
+export async function staffMembers(): Promise<Array<{ id: number; full_name: string; armenian_name: string | null; image: string | null }>> {
+  try {
+    const res = await adminGet(
+      `/items/platform_members?filter[role][_in]=facilitator,team&filter[status][_eq]=active&sort=full_name&fields=id,full_name,armenian_name,image&limit=-1`
+    );
+    return res.data ?? [];
+  } catch {
     return [];
   }
 }

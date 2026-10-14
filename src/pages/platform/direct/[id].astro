@@ -1,0 +1,68 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import SubmissionComposer from '../../../components/SubmissionComposer.astro';
+import SubmissionList from '../../../components/SubmissionList.astro';
+import { requireMember, displayName, memberTimezone, hasFacilitatorPage } from '../../../lib/platformAuth';
+import { adminGet } from '../../../lib/directusAdmin';
+import { directConversations } from '../../../lib/submissions';
+import { asset } from '../../../lib/asset';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+// A personal conversation between two facilitators/team members.
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
+}
+if (!hasFacilitatorPage(member)) {
+  return Astro.redirect('/platform');
+}
+const otherId = Number(Astro.params.id);
+const other = otherId && otherId !== member.id
+  ? (await adminGet(`/items/platform_members/${otherId}?fields=id,full_name,armenian_name,image,role,status`).catch(() => ({ data: null }))).data
+  : null;
+if (!other || other.status !== 'active' || (other.role !== 'facilitator' && other.role !== 'team')) {
+  return Astro.redirect('/platform/facilitator#colleagues');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const earlier = await directConversations(member.id, otherId);
+const name = displayName(other);
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
+---
+
+<PlatformLayout title={`Zartsants Platform — ${name}`} member={member}>
+  <style>
+    .container { max-width: 700px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
+    .back:hover { text-decoration: underline; }
+    .who { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.25rem; }
+    .who img, .who .initial { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+    .who .initial { background: #ddd8f5; color: #4a3fcf; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem; }
+    h1 { font-size: 1.25rem; font-weight: 700; }
+    h2 { font-size: 0.95rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+  </style>
+
+  <div class="container">
+    <a class="back" href="/platform/facilitator#colleagues">&larr; {L('nav_facilitator', 'Փեթակ')}</a>
+    <div class="who">
+      {other.image ? <img src={asset(DIRECTUS_URL, other.image)!} alt="" /> : <span class="initial">{name.trim().charAt(0)}</span>}
+      <h1>{L('message_title', 'Նամակ՝')} {name}</h1>
+    </div>
+
+    <SubmissionComposer
+      endpoint="/api/platform/direct"
+      purpose="reply"
+      textField="note"
+      extra={{ to: otherId }}
+      placeholder={L('message_placeholder', 'Նամակդ…')}
+      submitLabel={L('submission_send', 'Ղրկել')}
+    />
+
+    {earlier.length > 0 && (
+      <>
+        <h2>{L('message_earlier', 'Նախորդ նամակները')}</h2>
+        <SubmissionList submissions={earlier} showAuthor={true} viewerId={member.id} timezone={memberTimezone(member)} emptyText="" />
+      </>
+    )}
+  </div>
+</PlatformLayout>

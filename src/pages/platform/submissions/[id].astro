@@ -23,13 +23,16 @@ const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
 const isAuthor = sub.author?.id === member.id;
 const participant = sub.participant ?? sub.author;
 const isParticipant = participant?.id === member.id;
+const personal = !sub.workshop && !sub.cloud;
 const startedByFacilitator = !!sub.participant && !!sub.author && sub.author.id !== sub.participant.id;
 const group = sub.workshop ?? sub.cloud;
 const back = { href: '/platform/inbox', label: L('nav_inbox', 'Նամակատուփս') };
 const authorName = sub.author ? displayName(sub.author) : '—';
 // The participant sees their own work as «Իմ աշխատանքս», or who wrote to
 // them; facilitators see who the conversation is with.
-const title = isParticipant
+const title = personal
+  ? `${L('submission_from', 'Նամակ՝')} ${isAuthor ? (sub.participant ? displayName(sub.participant) : '—') : authorName}`
+  : isParticipant
   ? startedByFacilitator
     ? `${L('submission_from', 'Նամակ՝')} ${authorName}`
     : L('submission_my_title', 'Իմ աշխատանքս')
@@ -59,7 +62,7 @@ const title = isParticipant
   <div class="container">
     <a class="back" href={back.href}>&larr; {back.label}</a>
     <h1>{title}</h1>
-    <div class="sub-meta">{group?.name} · {when(sub.date_created)}</div>
+    <div class="sub-meta">{personal ? L('conversation_personal', 'Անձնական') : group?.name} · {when(sub.date_created)}</div>
 
     <div class="thread">
       <div class={`msg ${isAuthor ? 'mine' : ''}`}>

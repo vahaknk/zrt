@@ -46,6 +46,7 @@ const runsGroups = member.facilitates_workshops.length + member.facilitates_clou
       showAuthor={runsGroups}
       showGroup={true}
       unreadIds={unread}
+      viewerId={member.id}
       timezone={memberTimezone(member)}
       emptyText={L('inbox_empty', 'Տակաւին նամակ չկայ։')}
     />

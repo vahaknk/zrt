@@ -152,7 +152,10 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
     case 'submission':
       return fill(L('notif_submission', '{name} նոր աշխատանք մը ղրկեց՝ {group}'), { name, group: group(n.submission) });
     case 'message':
-      return fill(L('notif_message', '{name} քեզի նամակ մը ղրկեց՝ {group}'), { name, group: group(n.submission) });
+      // Personal (staff-to-staff) messages have no group.
+      return group(n.submission)
+        ? fill(L('notif_message', '{name} քեզի նամակ մը ղրկեց՝ {group}'), { name, group: group(n.submission) })
+        : fill(L('notif_message_direct', '{name} քեզի նամակ մը ղրկեց'), { name });
     case 'reply':
       return fill(L('notif_reply', '{name} պատասխանեց՝ {group}'), { name, group: group(n.submission) });
     case 'material':

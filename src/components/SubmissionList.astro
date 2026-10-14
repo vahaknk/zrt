@@ -13,8 +13,10 @@ interface Props {
   // Inbox: the workshop/cloud name on each row, and which ones are unread.
   showGroup?: boolean;
   unreadIds?: Set<number>;
+  // Who is looking — so a personal conversation shows the *other* person.
+  viewerId?: number;
 }
-const { submissions, showAuthor, timezone, emptyText, showGroup = false, unreadIds = new Set<number>() } = Astro.props;
+const { submissions, showAuthor, timezone, emptyText, showGroup = false, unreadIds = new Set<number>(), viewerId } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
 const when = (iso: string) => formatDateTime(iso, timezone, MONTH_LABELS.hyw);
 const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}…` : s);
@@ -28,19 +30,22 @@ const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}
       const last = s.replies[s.replies.length - 1];
       // Facilitators see who the conversation is with (the participant);
       // a conversation a facilitator started says so.
-      const withWhom = s.participant ?? s.author;
-      const startedByFacilitator = !!s.participant && !!s.author && s.author.id !== s.participant.id;
+      const personal = !s.workshop && !s.cloud;
+      const withWhom = personal
+        ? s.author?.id === viewerId ? s.participant : s.author
+        : s.participant ?? s.author;
+      const startedByFacilitator = !personal && !!s.participant && !!s.author && s.author.id !== s.participant.id;
       return (
         <li>
           <a href={`/platform/submissions/${s.id}`} class={unreadIds.has(s.id) ? 'unread' : undefined}>
             <div class="sl-head">
               <strong>
                 {unreadIds.has(s.id) && <span class="sl-dot" aria-hidden="true"></span>}
-                {showAuthor ? (withWhom ? displayName(withWhom) : '—') : when(s.date_created)}
+                {showAuthor || personal ? (withWhom ? displayName(withWhom) : '—') : when(s.date_created)}
               </strong>
-              {showAuthor && <span>{when(s.last_activity ?? s.date_created)}</span>}
+              {(showAuthor || personal) && <span>{when(s.last_activity ?? s.date_created)}</span>}
             </div>
-            {showGroup && <div class="sl-group">{s.workshop?.name ?? s.cloud?.name}</div>}
+            {showGroup && <div class="sl-group">{personal ? L('conversation_personal', 'Անձնական') : s.workshop?.name ?? s.cloud?.name}</div>}
             {startedByFacilitator && <div class="sl-from">✉ {L('submission_from', 'Նամակ՝')} {displayName(s.author!)}</div>}
             {s.note && <div class="sl-note">{excerpt(s.note)}</div>}
             {s.file && (
