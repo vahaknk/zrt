@@ -15,9 +15,10 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (file.status !== 'uploading' || !file.upload_id) return json({ id: file.id, status: file.status });
   try {
     const size = await completeMultipartUpload(file.storage_key, file.upload_id);
-    // Videos go to the video worker (workers/video), which compresses them
-    // and marks them ready; everything else is ready now.
-    const status = file.kind === 'video' ? 'processing' : 'ready';
+    // Video and audio go to the media worker (workers/video), which converts
+    // them to formats every browser plays and marks them ready; everything
+    // else is ready now.
+    const status = file.kind === 'video' || file.kind === 'audio' ? 'processing' : 'ready';
     const thumb_key = file.kind === 'image' ? await createThumbnail({ storage_key: file.storage_key, size }) : null;
     // Library files wait for a moderator before participants see them.
     const review = file.purpose === 'library' && needsReview(member);

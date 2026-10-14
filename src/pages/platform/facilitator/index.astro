@@ -51,6 +51,8 @@ interface Material {
   label: string;
   url: string | null;
   file: { id: string; filename: string; kind: string; purpose: string; review_status: string | null } | null;
+  text: string | null;
+  review_status: string | null;
   week_start: string;
 }
 
@@ -76,7 +78,7 @@ for (const { kind, target } of targets) {
   let materials: Material[] = [];
   try {
     const materialsRes = await adminGet(
-      `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.filename,file.kind,file.purpose,file.review_status,week_start&limit=-1`
+      `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,text,review_status,file.id,file.filename,file.kind,file.purpose,file.review_status,week_start&limit=-1`
     );
     materials = materialsRes.data ?? [];
   } catch (e) {
@@ -218,6 +220,9 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       white-space: nowrap;
     }
     .upload-btn:disabled { opacity: 0.6; cursor: default; }
+    .upload-btn.secondary { background: #f1ede5; color: #1a1a1a; }
+    .files-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
+    .add-form textarea { box-sizing: border-box; width: 100%; padding: 0.5rem 0.6rem; border: 1px solid #e0e0da; border-radius: 8px; font-size: 0.9rem; font-family: inherit; resize: vertical; }
     .upload-status { margin-bottom: 0.75rem; font-size: 0.85rem; color: #555; }
     .upload-status progress { width: 100%; height: 6px; display: block; margin-top: 0.35rem; accent-color: #7a63f5; }
     .upload-status .error { color: #c00; }
@@ -321,7 +326,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     <section class="files" id="files" data-errors={JSON.stringify(uploadErrors)} data-max={MAX_FILE_BYTES}>
       <div class="files-head">
         <h2>{L('files_title', 'Իմ ծրարներս')}</h2>
-        <button type="button" class="upload-btn" id="library-upload-btn">{L('files_upload_button', 'Ծրար բեռնել')}</button>
+        <div class="files-actions">
+          <button type="button" class="upload-btn secondary" id="library-record-btn">🎙 {L('files_record_button', 'Ձայնագրել')}</button>
+          <button type="button" class="upload-btn" id="library-upload-btn">{L('files_upload_button', 'Ծրար բեռնել')}</button>
+        </div>
         <input type="file" id="library-upload-input" hidden />
       </div>
       <div class="upload-status" id="library-upload-status" hidden>
@@ -379,6 +387,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           <div class="full source-toggle">
             <label><input type="radio" name="source" value="url" checked /> {L('material_source_link', 'Յղում')}</label>
             <label><input type="radio" name="source" value="file" /> {L('material_source_file', 'Ծրար')}</label>
+            <label><input type="radio" name="source" value="text" /> {L('material_source_text', 'Գրութիւն')}</label>
           </div>
           <div class="full source-url">
             <label>{L('facilitator_url_label', 'URL')}</label>
@@ -390,7 +399,12 @@ const TYPE_LABEL: Record<Material['type'], string> = {
               <option value="">{L('material_choose_file', 'Ընտրէ ծրար մը')}</option>
               {readyFiles.map((f) => <option value={f.id}>{f.filename}{f.status === 'processing' ? ` (${L('files_processing', 'կը պատրաստուի…')})` : ''}</option>)}
               <option value="__upload__">+ {L('material_upload_new', 'Նոր ծրար բեռնել')}</option>
+              <option value="__record__">+ 🎙 {L('material_record_new', 'Ձայնագրել')}</option>
             </select>
+          </div>
+          <div class="full source-text" hidden>
+            <label>{L('material_text_label', 'Գրութիւն')}</label>
+            <textarea name="text" rows="6" maxlength="20000" disabled></textarea>
           </div>
           <p class="error" hidden></p>
           <button type="submit">{L('facilitator_add_material_button', 'Add material')}</button>
@@ -414,7 +428,9 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                           {typeItems.map((m) => (
                             <li>
                               <div class="mat">
-                                <a href={m.file ? `/platform/view/${m.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a>
+                                <a href={m.file || m.text ? `/platform/view/${m.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a>
+                                {m.text && m.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
+                                {m.text && m.review_status === 'rejected' && <span class="file-status failed">{L('material_text_rejected', 'Գրութիւնը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
                                 {m.file?.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
                                 {m.file?.review_status === 'rejected' && <span class="file-status failed">{L('material_review_rejected', 'Ծրարը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
                                 {(() => {
@@ -470,6 +486,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
 
   <script>
     import { uploadFile, UploadError } from '../../../lib/client/upload';
+    import { recordAudio } from '../../../lib/client/recorder';
 
     const filesSection = document.getElementById('files')!;
     const uploadErrors: Record<string, string> = JSON.parse(filesSection.dataset.errors ?? '{}');
@@ -478,27 +495,39 @@ const TYPE_LABEL: Record<Material['type'], string> = {
 
     // Picks a file and uploads it, reporting progress; resolves to the new
     // file's id, or null if cancelled/failed (after showing why).
-    function pickAndUpload(onProgress: (f: number, name: string) => void, onError: (msg: string) => void): Promise<string | null> {
+    async function uploadOne(file: File, onProgress: (f: number, name: string) => void, onError: (msg: string) => void) {
+      if (file.size > maxBytes) {
+        onError(uploadErrors.too_large);
+        return null;
+      }
+      window.onbeforeunload = () => true; // don't lose a long upload by navigating away
+      try {
+        return await uploadFile(file, (f) => onProgress(f, file.name));
+      } catch (e) {
+        onError(errorText(e));
+        return null;
+      } finally {
+        window.onbeforeunload = null;
+      }
+    }
+
+    // Picks a file (or, with record=true, records one) and uploads it into the
+    // library; resolves to the new file's id and name, or null.
+    function pickAndUpload(
+      onProgress: (f: number, name: string) => void,
+      onError: (msg: string) => void,
+      record = false
+    ): Promise<{ id: string; name: string } | null> {
       return new Promise((resolve) => {
+        const go = async (file: File | null | undefined) => {
+          if (!file) return resolve(null);
+          const id = await uploadOne(file, onProgress, onError);
+          resolve(id ? { id, name: file.name } : null);
+        };
+        if (record) return void recordAudio().then(go);
         const input = document.createElement('input');
         input.type = 'file';
-        input.onchange = async () => {
-          const file = input.files?.[0];
-          if (!file) return resolve(null);
-          if (file.size > maxBytes) {
-            onError(uploadErrors.too_large);
-            return resolve(null);
-          }
-          window.onbeforeunload = () => true; // don't lose a long upload by navigating away
-          try {
-            resolve(await uploadFile(file, (f) => onProgress(f, file.name)));
-          } catch (e) {
-            onError(errorText(e));
-            resolve(null);
-          } finally {
-            window.onbeforeunload = null;
-          }
-        };
+        input.onchange = () => go(input.files?.[0]);
         input.click();
       });
     }
@@ -508,9 +537,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     const libraryStatus = document.getElementById('library-upload-status')!;
     const libraryLabel = libraryStatus.querySelector<HTMLElement>('.label')!;
     const libraryBar = libraryStatus.querySelector('progress')!;
-    libraryBtn.addEventListener('click', async () => {
-      libraryBtn.disabled = true;
-      const id = await pickAndUpload(
+    const libraryRecordBtn = document.getElementById('library-record-btn') as HTMLButtonElement;
+    const libraryAdd = async (record: boolean) => {
+      libraryBtn.disabled = libraryRecordBtn.disabled = true;
+      const done = await pickAndUpload(
         (f, name) => {
           libraryStatus.hidden = false;
           libraryLabel.className = 'label';
@@ -522,11 +552,14 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           libraryLabel.className = 'label error';
           libraryLabel.textContent = msg;
           libraryBar.value = 0;
-        }
+        },
+        record
       );
-      libraryBtn.disabled = false;
-      if (id) window.location.reload();
-    });
+      libraryBtn.disabled = libraryRecordBtn.disabled = false;
+      if (done) window.location.reload();
+    };
+    libraryBtn.addEventListener('click', () => libraryAdd(false));
+    libraryRecordBtn.addEventListener('click', () => libraryAdd(true));
 
     document.querySelectorAll<HTMLInputElement>('.allow-download').forEach((box) => {
       box.addEventListener('change', async () => {
@@ -560,26 +593,31 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       const urlInput = form.querySelector<HTMLInputElement>('input[name="url"]')!;
       const fileSelect = form.querySelector<HTMLSelectElement>('select[name="file"]')!;
       const formError = form.querySelector<HTMLParagraphElement>('.error')!;
+      const textBox = form.querySelector<HTMLElement>('.source-text')!;
+      const textInput = form.querySelector<HTMLTextAreaElement>('textarea[name="text"]')!;
       form.querySelectorAll<HTMLInputElement>('input[name="source"]').forEach((radio) => {
         radio.addEventListener('change', () => {
-          const useFile = radio.value === 'file' && radio.checked;
-          urlBox.hidden = useFile;
-          fileBox.hidden = !useFile;
-          urlInput.disabled = useFile;
-          urlInput.required = !useFile;
-          fileSelect.disabled = !useFile;
-          fileSelect.required = useFile;
+          if (!radio.checked) return;
+          const src = radio.value;
+          urlBox.hidden = src !== 'url';
+          fileBox.hidden = src !== 'file';
+          textBox.hidden = src !== 'text';
+          urlInput.disabled = src !== 'url';
+          urlInput.required = src === 'url';
+          fileSelect.disabled = src !== 'file';
+          fileSelect.required = src === 'file';
+          textInput.disabled = src !== 'text';
+          textInput.required = src === 'text';
         });
       });
       fileSelect.addEventListener('change', async () => {
-        if (fileSelect.value !== '__upload__') return;
+        if (fileSelect.value !== '__upload__' && fileSelect.value !== '__record__') return;
+        const record = fileSelect.value === '__record__';
         fileSelect.value = '';
         const submitBtn = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
         submitBtn.disabled = true;
-        let name = '';
-        const id = await pickAndUpload(
+        const done = await pickAndUpload(
           (f, n) => {
-            name = n;
             formError.hidden = false;
             formError.style.color = '#555';
             formError.textContent = `${libraryLabel.dataset.uploadingText} ${n} — ${Math.round(f * 100)}%`;
@@ -588,10 +626,12 @@ const TYPE_LABEL: Record<Material['type'], string> = {
             formError.hidden = false;
             formError.style.color = '';
             formError.textContent = msg;
-          }
+          },
+          record
         );
         submitBtn.disabled = false;
-        if (!id) return;
+        if (!done) return;
+        const { id, name } = done;
         formError.hidden = true;
         formError.style.color = '';
         // Offer the new file in every form on the page, selected in this one.
@@ -619,7 +659,9 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           type: fd.get('type'),
           label: fd.get('label'),
         };
-        if (fd.get('source') === 'file') payload.file = fd.get('file');
+        const source = fd.get('source');
+        if (source === 'file') payload.file = fd.get('file');
+        else if (source === 'text') payload.text = fd.get('text');
         else payload.url = fd.get('url');
         if (kind === 'workshop') payload.workshop = id;
         else payload.cloud = id;

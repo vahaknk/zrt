@@ -185,7 +185,23 @@ const newestUnread = member.id && unread ? (await listNotifications(member.id, {
       </div>
     </footer>
     <script is:inline src="/schedule-local.js" defer></script>
-    <script>
+    <script
+      type="application/json"
+      id="recorder-labels"
+      set:html={JSON.stringify({
+        title: L('recorder_title', 'Ձայնագրութիւն'),
+        start: L('recorder_start', 'Սկսիլ'),
+        stop: L('recorder_stop', 'Կեցնել'),
+        use: L('recorder_use', 'Գործածել'),
+        again: L('recorder_again', 'Վերստին'),
+        cancel: L('recorder_cancel', 'Չեղարկել'),
+        denied: L('recorder_denied', 'Խօսափողը չենք կրնար գործածել։ Թոյլատրէ զայն զննարկիչիդ կարգաւորումներուն մէջ։'),
+        unsupported: L('recorder_unsupported', 'Այս զննարկիչը ձայնագրութիւն չ՚արտօներ։'),
+        limit: L('recorder_limit', 'Առաւելագոյնը 5 վայրկեան'),
+        fileName: L('recorder_file_name', 'Ձայնագրութիւն'),
+      }).replace(/</g, '\\u003c')}
+    />
+  <script>
       // Live notifications: every 30 s while the tab is visible (and when it
       // comes back), refresh the bell's count and pop up anything new.
       const bell = document.getElementById('bell');

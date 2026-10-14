@@ -1,19 +1,22 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import FileStage from '../../../components/FileStage.astro';
+import ReviewPanel from '../../../components/ReviewPanel.astro';
 import { requireMember, hasFacilitatorPage } from '../../../lib/platformAuth';
 import { getMaterial, canSeeMaterial, isTracked, recordOpen } from '../../../lib/materialViews';
 import { facilitatesGroup } from '../../../lib/submissions';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
-// A file material, shown inside the platform (player / viewer) so its use
-// can be measured; downloading only when the facilitator allowed it.
+// A file or written material, shown inside the platform (player / viewer /
+// text) so its use can be measured; downloading only when the facilitator
+// allowed it.
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
 }
 const material = await getMaterial(Number(Astro.params.id));
-if (!material || !material.file || material.file.status === 'uploading' || !canSeeMaterial(member, material)) {
+const hasContent = !!material?.text || (!!material?.file && material.file.status !== 'uploading');
+if (!material || !hasContent || !canSeeMaterial(member, material)) {
   return Astro.redirect('/platform/library');
 }
 const L = makeLabelGetter(await getPlatformLabels());
@@ -26,7 +29,11 @@ const manages = facilitatesGroup(member, material.workshop?.id ?? null, material
 const back = manages && hasFacilitatorPage(member)
   ? { href: '/platform/facilitator', label: L('nav_facilitator', 'Փեթակ') }
   : { href: `/platform/library/${material.workshop ? 'workshop' : 'cloud'}/${group?.id}`, label: group?.name ?? '' };
-const canDownload = file.allow_download || manages || member.role === 'team';
+const canDownload = !!file && (file.allow_download || manages || member.role === 'team');
+// Written texts are reviewed per material (files are reviewed on their own page).
+const textReview = material.text ? material.review_status ?? 'approved' : null;
+const showReviewPanel = !!textReview && !!member.moderator && material.author !== member.id;
+const showReviewStatus = !!textReview && material.author === member.id && textReview !== 'approved';
 ---
 
 <PlatformLayout title={`Zartsants Platform — ${material.label}`} member={member}>
@@ -36,11 +43,27 @@ const canDownload = file.allow_download || manages || member.role === 'team';
     .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; }
     .back:hover { text-decoration: underline; }
     h1 { font-size: 1.3rem; font-weight: 700; margin-bottom: 1.25rem; }
+    .text-material {
+      background: #fff;
+      border: 1px solid #e9e9e4;
+      border-radius: 14px;
+      padding: 1.5rem 1.75rem;
+      font-size: 1rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
   </style>
 
   <div class="container">
     <a class="back" href={back.href}>&larr; {back.label}</a>
     <h1>{material.label}</h1>
-    <FileStage file={file} title={material.label} canDownload={canDownload} trackMaterialId={tracked ? material.id : null} />
+    {showReviewPanel && <ReviewPanel mode="moderator" subject="text" status={textReview!} note={material.review_note} endpoint={`/api/platform/materials/${material.id}/review`} />}
+    {showReviewStatus && <ReviewPanel mode="owner" subject="text" status={textReview!} note={material.review_note} endpoint="" />}
+    {material.text ? (
+      <div class="text-material">{material.text}</div>
+    ) : (
+      file && <FileStage file={file} title={material.label} canDownload={canDownload} trackMaterialId={tracked ? material.id : null} />
+    )}
   </div>
 </PlatformLayout>

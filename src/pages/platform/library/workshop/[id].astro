@@ -4,8 +4,7 @@ import { requireMember, displayName, isWebUrl, memberTimezone } from '../../../.
 import SubmissionComposer from '../../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
-import { isApproved } from '../../../../lib/platformFiles';
-import { viewsFor, percentReached } from '../../../../lib/materialViews';
+import { viewsFor, percentReached, materialApproved } from '../../../../lib/materialViews';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
@@ -43,6 +42,8 @@ interface Material {
   type: 'video' | 'audio' | 'reading';
   label: string;
   url: string | null;
+  text: string | null;
+  review_status: string | null;
   file: { id: string; kind: string; purpose: string; review_status: string | null } | null;
   week_start: string;
 }
@@ -50,13 +51,13 @@ interface Material {
 let materials: Material[] = [];
 try {
   const res = await adminGet(
-    `/items/materials?filter[workshop][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.kind,file.purpose,file.review_status,week_start&limit=-1`
+    `/items/materials?filter[workshop][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,text,review_status,file.id,file.kind,file.purpose,file.review_status,week_start&limit=-1`
   );
   materials = res.data ?? [];
   // Files still waiting for (or refused by) the moderator: only the group's
   // facilitators and the team see those materials.
   if (!facilitatesGroup(member, id, null) && member.role !== 'team') {
-    materials = materials.filter((m) => !m.file || isApproved(m.file));
+    materials = materials.filter((m) => materialApproved(m));
   }
 } catch (e) {
   console.error('Failed to load workshop materials:', e);
@@ -292,7 +293,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                   <ul>
                     {typeItems.map((m) => (
                       <li>
-                        <a href={m.file ? `/platform/view/${m.id}` : isWebUrl(m.url) ? `/api/platform/materials/${m.id}/open` : undefined} target={m.file ? undefined : '_blank'} rel="noopener">{m.label}</a>
+                        <a href={m.file || m.text ? `/platform/view/${m.id}` : isWebUrl(m.url) ? `/api/platform/materials/${m.id}/open` : undefined} target={m.file || m.text ? undefined : '_blank'} rel="noopener">{m.label}</a>
                         {progressLabel(m) && <span class="progress">✓ {progressLabel(m)}</span>}
                       </li>
                     ))}

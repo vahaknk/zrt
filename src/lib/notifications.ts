@@ -5,7 +5,17 @@ import { displayName } from './platformAuth';
 // page and /platform/notifications. Created where things happen (a new
 // submission, reply, material or meeting invitation); never emailed.
 
-export type NotificationKind = 'submission' | 'reply' | 'material' | 'meeting' | 'file_review' | 'file_approved' | 'file_rejected';
+export type NotificationKind =
+  | 'submission'
+  | 'reply'
+  | 'material'
+  | 'meeting'
+  | 'file_review'
+  | 'file_approved'
+  | 'file_rejected'
+  | 'material_review'
+  | 'material_approved'
+  | 'material_rejected';
 
 export interface PlatformNotification {
   id: number;
@@ -14,7 +24,13 @@ export interface PlatformNotification {
   read_at: string | null;
   actor: { full_name: string; armenian_name: string | null } | null;
   submission: { id: number; workshop: { name: string } | null; cloud: { name: string } | null } | null;
-  material: { id: number; label: string; workshop: { name: string } | null; cloud: { name: string } | null } | null;
+  material: {
+    id: number;
+    label: string;
+    review_note: string | null;
+    workshop: { name: string } | null;
+    cloud: { name: string } | null;
+  } | null;
   meeting: { id: number; title: string } | null;
   file: { id: string; filename: string; review_note: string | null } | null;
 }
@@ -22,7 +38,7 @@ export interface PlatformNotification {
 const FIELDS =
   'id,kind,date_created,read_at,actor.full_name,actor.armenian_name,' +
   'submission.id,submission.workshop.name,submission.cloud.name,' +
-  'material.id,material.label,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
+  'material.id,material.label,material.review_note,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
   'file.id,file.filename,file.review_note';
 
 // Never throws: a failed notification must not fail the action behind it.
@@ -119,6 +135,7 @@ export async function markRead(ids: number[]): Promise<void> {
 export function notificationHref(n: PlatformNotification): string {
   if ((n.kind === 'submission' || n.kind === 'reply') && n.submission) return `/platform/submissions/${n.submission.id}`;
   if (n.kind === 'material' && n.material) return `/api/platform/materials/${n.material.id}/open`;
+  if (n.kind.startsWith('material_') && n.material) return `/platform/view/${n.material.id}`;
   if (n.kind === 'meeting' && n.meeting) return `/platform/facilitator#zardipum-${n.meeting.id}`;
   if (n.kind.startsWith('file_') && n.file) return `/platform/file/${n.file.id}`;
   return '/platform';
@@ -143,6 +160,14 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
       return fill(L('notif_file_review', '{name} նոր ծրար մը բեռնեց՝ ստուգելու․ «{file}»'), { name, file: n.file?.filename ?? '' });
     case 'file_approved':
       return fill(L('notif_file_approved', '«{file}» ծրարդ հաստատուեցաւ։'), { file: n.file?.filename ?? '' });
+    case 'material_review':
+      return fill(L('notif_material_review', '{name} նոր գրութիւն մը աւելցուց՝ ստուգելու․ «{label}»'), { name, label: n.material?.label ?? '' });
+    case 'material_approved':
+      return fill(L('notif_material_approved', '«{label}» գրութիւնդ հաստատուեցաւ։'), { label: n.material?.label ?? '' });
+    case 'material_rejected': {
+      const text = fill(L('notif_material_rejected', '«{label}» գրութիւնդ չհաստատուեցաւ։'), { label: n.material?.label ?? '' });
+      return n.material?.review_note ? `${text} ${n.material.review_note}` : text;
+    }
     case 'file_rejected': {
       const text = fill(L('notif_file_rejected', '«{file}» ծրարդ չհաստատուեցաւ։'), { file: n.file?.filename ?? '' });
       return n.file?.review_note ? `${text} ${n.file.review_note}` : text;

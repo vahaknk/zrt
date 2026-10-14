@@ -1,11 +1,14 @@
 // Zartsants video worker.
 //
-// Uploaded platform videos arrive as `platform_files` with status
-// "processing". This worker picks them up one at a time, compresses them to
-// a 720p H.264/AAC MP4 that plays in every browser (iPhone HEVC doesn't play
-// in Chrome/Firefox on Windows), makes a WebP poster for previews, replaces
-// the original in the bucket and marks the file "ready". Originals are not
-// kept. A video ffmpeg can't read at all becomes "failed"; one that fails
+// Uploaded platform videos and audio (incl. recordings made in the browser)
+// arrive as `platform_files` with status "processing". This worker picks
+// them up one at a time:
+// - video → a 720p H.264/AAC MP4 that plays in every browser (iPhone HEVC
+//   doesn't play in Chrome/Firefox on Windows) + a WebP poster for previews;
+// - audio → AAC in .m4a (browser recordings are WebM/Ogg Opus, which older
+//   Safari/iPhones can't play); MP3 and AAC files are already fine and kept.
+// It replaces the original in the bucket (originals are not kept) and marks
+// the file "ready". A file ffmpeg can't read becomes "failed"; one that fails
 // half-way stays as uploaded ("ready") with the error noted.
 //
 // Env: DIRECTUS_URL, DIRECTUS_TOKEN, PLATFORM_S3_ENDPOINT, PLATFORM_S3_REGION,
@@ -84,6 +87,17 @@ export async function compress(input, output, hasAudio) {
   ]);
 }
 
+export async function compressAudio(input, output) {
+  await run('ffmpeg', ['-hide_banner', '-y', '-i', input, '-map', '0:a:0', '-vn', '-c:a', 'aac', '-b:a', '128k', '-movflags', '+faststart', output]);
+}
+
+// Audio that every browser already plays as is.
+function audioIsFine(media, filename) {
+  const ext = filename.toLowerCase().split('.').pop();
+  const codec = media.audio?.codec_name;
+  return (codec === 'mp3' && ext === 'mp3') || (codec === 'aac' && ['m4a', 'mp4', 'aac'].includes(ext));
+}
+
 export async function poster(input, output, duration) {
   const at = duration > 2 ? 1 : Math.max(0, duration / 2);
   await run('ffmpeg', [
@@ -100,13 +114,13 @@ async function nextJob() {
   const filter = encodeURIComponent(
     JSON.stringify({
       _and: [
-        { kind: { _eq: 'video' } },
+        { kind: { _in: ['video', 'audio'] } },
         { status: { _eq: 'processing' } },
         { _or: [{ processing_started_at: { _null: true } }, { processing_started_at: { _lt: staleBefore } }] },
       ],
     })
   );
-  const res = await directus('GET', `/items/platform_files?filter=${filter}&sort=date_created&limit=1&fields=id,filename,storage_key,size`);
+  const res = await directus('GET', `/items/platform_files?filter=${filter}&sort=date_created&limit=1&fields=id,filename,kind,storage_key,size`);
   return res.data?.[0] ?? null;
 }
 
@@ -116,7 +130,8 @@ async function processJob(file) {
   const work = join(tmpdir(), `zrt-video-${file.id}`);
   await mkdir(work, { recursive: true });
   const input = join(work, 'input');
-  const output = join(work, 'output.mp4');
+  const isAudio = file.kind === 'audio';
+  const output = join(work, isAudio ? 'output.m4a' : 'output.mp4');
   const thumb = join(work, 'poster.webp');
   await directus('PATCH', `/items/platform_files/${file.id}`, { processing_started_at: new Date().toISOString(), processing_error: null });
   const started = Date.now();
@@ -127,42 +142,53 @@ async function processJob(file) {
     let media;
     try {
       media = await probe(input);
-      if (!media.video) throw new Error('no video stream');
+      if (isAudio ? !media.audio : !media.video) throw new Error(isAudio ? 'no audio stream' : 'no video stream');
     } catch (e) {
       log(file.id, 'unreadable:', e.message);
       await directus('PATCH', `/items/platform_files/${file.id}`, { status: 'failed', processing_error: String(e.message).slice(0, 500) });
       return;
     }
 
-    await compress(input, output, !!media.audio);
+    if (isAudio && audioIsFine(media, file.filename)) {
+      await directus('PATCH', `/items/platform_files/${file.id}`, { status: 'ready', processing_started_at: null });
+      log(file.id, 'audio already plays everywhere — kept as is');
+      return;
+    }
+
+    const ext = isAudio ? 'm4a' : 'mp4';
+    const mime = isAudio ? 'audio/mp4' : 'video/mp4';
+    if (isAudio) await compressAudio(input, output);
+    else await compress(input, output, !!media.audio);
     const { size } = await stat(output);
 
     const folder = file.storage_key.slice(0, file.storage_key.lastIndexOf('/'));
-    let key = `${folder}/${baseName(file.filename).slice(0, 110)}.mp4`;
-    if (key === file.storage_key) key = key.replace(/\.mp4$/, '-720p.mp4');
+    let key = `${folder}/${baseName(file.filename).slice(0, 110)}.${ext}`;
+    if (key === file.storage_key) key = key.replace(new RegExp(`\\.${ext}$`), `-web.${ext}`);
     await new Upload({
       client: s3,
-      params: { Bucket, Key: key, Body: createReadStream(output), ContentType: 'video/mp4' },
+      params: { Bucket, Key: key, Body: createReadStream(output), ContentType: mime },
       partSize: 16 * 1024 * 1024,
     }).done();
 
     let thumbKey = null;
-    try {
-      await poster(output, thumb, media.duration);
-      thumbKey = `${folder}/preview.webp`;
-      await s3.send(new PutObjectCommand({ Bucket, Key: thumbKey, Body: createReadStream(thumb), ContentType: 'image/webp' }));
-    } catch (e) {
-      log(file.id, 'poster failed:', e.message);
-      thumbKey = null;
+    if (!isAudio) {
+      try {
+        await poster(output, thumb, media.duration);
+        thumbKey = `${folder}/preview.webp`;
+        await s3.send(new PutObjectCommand({ Bucket, Key: thumbKey, Body: createReadStream(thumb), ContentType: 'image/webp' }));
+      } catch (e) {
+        log(file.id, 'poster failed:', e.message);
+        thumbKey = null;
+      }
     }
 
     await directus('PATCH', `/items/platform_files/${file.id}`, {
       status: 'ready',
       storage_key: key,
-      filename: `${baseName(file.filename)}.mp4`,
-      mime: 'video/mp4',
+      filename: `${baseName(file.filename)}.${ext}`,
+      mime,
       size,
-      thumb_key: thumbKey,
+      ...(isAudio ? {} : { thumb_key: thumbKey }),
       processing_started_at: null,
     });
     // The original goes only once the record points at the new file.

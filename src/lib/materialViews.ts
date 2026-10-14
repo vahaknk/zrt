@@ -15,6 +15,10 @@ export interface ViewMaterial {
   workshop: { id: number; name: string } | null;
   cloud: { id: number; name: string } | null;
   url: string | null;
+  text: string | null;
+  review_status: string | null;
+  review_note: string | null;
+  author: number | null;
   file: {
     id: string;
     filename: string;
@@ -46,7 +50,7 @@ export interface MaterialView {
 type Viewer = Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>;
 
 const MATERIAL_FIELDS =
-  'id,label,type,url,workshop.id,workshop.name,cloud.id,cloud.name,' +
+  'id,label,type,url,text,review_status,review_note,author,workshop.id,workshop.name,cloud.id,cloud.name,' +
   'file.id,file.filename,file.kind,file.size,file.mime,file.status,file.allow_download,file.owner,file.thumb_key,file.purpose,file.review_status';
 const VIEW_FIELDS = 'id,member,material,opens,first_opened_at,last_opened_at,played_seconds,max_position,duration,completed_at';
 
@@ -61,11 +65,19 @@ export async function getMaterial(id: number): Promise<ViewMaterial | null> {
 
 const groupOf = (m: ViewMaterial) => [m.workshop?.id ?? null, m.cloud?.id ?? null] as const;
 
-export function canSeeMaterial(member: Viewer, m: ViewMaterial): boolean {
+// Participants see a material once the moderator approved its text or file
+// (no status = from before moderation, counts as approved).
+export function materialApproved(m: {
+  review_status?: string | null;
+  file?: { purpose?: string; review_status?: string | null } | null;
+}): boolean {
+  return (!m.review_status || m.review_status === 'approved') && (!m.file || isApproved(m.file));
+}
+
+export function canSeeMaterial(member: Viewer & { moderator?: boolean | null }, m: ViewMaterial): boolean {
   const [w, c] = groupOf(m);
-  if (member.role === 'team' || facilitatesGroup(member, w, c)) return true;
-  // Participants only once its file was approved.
-  return enrolledInGroup(member, w, c) && (!m.file || isApproved(m.file));
+  if (member.role === 'team' || member.moderator || facilitatesGroup(member, w, c)) return true;
+  return enrolledInGroup(member, w, c) && materialApproved(m);
 }
 
 // Participants are tracked; facilitators/team looking at a material are not.

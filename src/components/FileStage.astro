@@ -19,6 +19,8 @@ const isPdf = file.mime === 'application/pdf' || file.filename.toLowerCase().end
 <div class="stage" data-no-save>
   {file.kind === 'video' && file.status === 'processing' ? (
     <p class="no-preview">{L('viewer_video_processing', 'Տեսերիզը կը պատրաստուի։ Քանի մը վայրկեանէն կրկին փորձէ։')}</p>
+  ) : file.kind === 'audio' && file.status === 'processing' ? (
+    <p class="no-preview">{L('viewer_audio_processing', 'Ձայներիզը կը պատրաստուի։ Քանի մը վայրկեանէն կրկին փորձէ։')}</p>
   ) : file.status === 'failed' ? (
     <p class="no-preview">{L('viewer_file_failed', 'Այս ծրարը չկրցանք կարդալ։ Կրկին բեռնէ։')}</p>
   ) : file.kind === 'video' ? (

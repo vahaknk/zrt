@@ -40,7 +40,10 @@ const errors = {
   <div class="composer-progress" hidden><span></span><progress max="1" value="0"></progress></div>
   <p class="composer-error" hidden></p>
   <div class="composer-actions">
-    <button type="button" class="composer-attach">{L('submission_attach', 'Ծրար կցել')}</button>
+    <div class="composer-add">
+      <button type="button" class="composer-attach">{L('submission_attach', 'Ծրար կցել')}</button>
+      <button type="button" class="composer-record">🎙 {L('submission_record', 'Ձայնագրել')}</button>
+    </div>
     <button type="submit" class="composer-send">{submitLabel}</button>
   </div>
 </form>
@@ -64,7 +67,8 @@ const errors = {
   .composer-progress progress { width: 100%; height: 6px; display: block; margin-top: 0.3rem; accent-color: #7a63f5; }
   .composer-error { color: #c00; font-size: 0.85rem; }
   .composer-actions { display: flex; justify-content: space-between; gap: 0.75rem; }
-  .composer-attach {
+  .composer-add { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .composer-attach, .composer-record {
     background: none;
     border: 1px solid #e0e0da;
     border-radius: 999px;
@@ -90,6 +94,7 @@ const errors = {
 
 <script>
   import { uploadFile, UploadError } from '../lib/client/upload';
+  import { recordAudio } from '../lib/client/recorder';
 
   document.querySelectorAll<HTMLFormElement>('form.composer').forEach((form) => {
     const errors: Record<string, string> = JSON.parse(form.dataset.errors ?? '{}');
@@ -121,6 +126,14 @@ const errors = {
         fileBox.hidden = false;
       };
       input.click();
+    });
+    form.querySelector('.composer-record')!.addEventListener('click', async () => {
+      const recording = await recordAudio();
+      if (!recording) return;
+      errorEl.hidden = true;
+      picked = recording;
+      fileName.textContent = `🎙 ${recording.name}`;
+      fileBox.hidden = false;
     });
     form.querySelector('.composer-file-remove')!.addEventListener('click', () => {
       picked = null;

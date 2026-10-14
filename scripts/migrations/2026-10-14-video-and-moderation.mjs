@@ -1,4 +1,4 @@
-// Directus schema for the video worker and upload moderation.
+// Directus schema for the media worker, upload moderation and text materials.
 // Run ONCE, before deploying the site/worker code that uses these fields
 // (the site requests `moderator` on every page — without it, login breaks):
 //   cd ~/astro-projects/zrt && node scripts/migrations/2026-10-14-video-and-moderation.mjs
@@ -70,9 +70,33 @@ await api('PATCH', '/fields/platform_notifications/kind', {
     { text: 'New submission', value: 'submission' }, { text: 'New reply', value: 'reply' },
     { text: 'New material', value: 'material' }, { text: 'Meeting invitation', value: 'meeting' },
     { text: 'File to review', value: 'file_review' }, { text: 'File approved', value: 'file_approved' }, { text: 'File rejected', value: 'file_rejected' },
+    { text: 'Text to review', value: 'material_review' }, { text: 'Text approved', value: 'material_approved' }, { text: 'Text rejected', value: 'material_rejected' },
   ] } },
 });
 console.log('~ platform_notifications.kind choices');
+
+// --- text materials (reviewed like files) + who created a material
+await field('materials', { field: 'text', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline', width: 'full', note: 'A written material (instead of a link or file)' } });
+await field('materials', {
+  field: 'author', type: 'integer', schema: { is_nullable: true },
+  meta: { interface: 'select-dropdown-m2o', readonly: true, width: 'half', display: 'related-values', display_options: { template: '{{full_name}}' }, note: 'Facilitator who added it on the platform' },
+});
+await relation('materials', 'author', 'platform_members', 'SET NULL');
+await field('materials', {
+  field: 'review_status', type: 'string', schema: { is_nullable: true },
+  meta: {
+    interface: 'select-dropdown', readonly: true, width: 'half', display: 'labels',
+    note: 'Text materials: participants see them only when approved (empty = counts as approved)',
+    options: { choices: [{ text: 'Waiting for review', value: 'pending' }, { text: 'Approved', value: 'approved' }, { text: 'Rejected', value: 'rejected' }] },
+  },
+});
+await field('materials', { field: 'review_note', type: 'text', schema: { is_nullable: true }, meta: { interface: 'input-multiline', readonly: true, width: 'full' } });
+await field('materials', { field: 'reviewed_at', type: 'timestamp', schema: { is_nullable: true }, meta: { readonly: true, width: 'half' } });
+await field('materials', {
+  field: 'reviewed_by', type: 'integer', schema: { is_nullable: true },
+  meta: { interface: 'select-dropdown-m2o', readonly: true, width: 'half', display: 'related-values', display_options: { template: '{{full_name}}' } },
+});
+await relation('materials', 'reviewed_by', 'platform_members', 'SET NULL');
 
 await api('PATCH', `/items/platform_members/${SARIN_MEMBER_ID}`, { moderator: true });
 console.log(`~ member ${SARIN_MEMBER_ID} (Sarin) is moderator`);

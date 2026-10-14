@@ -69,7 +69,8 @@ const Bucket = () => import.meta.env.PLATFORM_S3_BUCKET;
 // Documents, images, audio and video; nothing executable.
 const ALLOWED_EXTENSIONS: Record<string, FileKind> = {
   mp4: 'video', mov: 'video', m4v: 'video', webm: 'video', avi: 'video', mkv: 'video', '3gp': 'video',
-  mp3: 'audio', m4a: 'audio', wav: 'audio', aac: 'audio', ogg: 'audio', oga: 'audio', flac: 'audio', opus: 'audio',
+  // .weba / .ogg / .m4a: what the in-browser recorder produces.
+  weba: 'audio', mp3: 'audio', m4a: 'audio', wav: 'audio', aac: 'audio', ogg: 'audio', oga: 'audio', flac: 'audio', opus: 'audio',
   jpg: 'image', jpeg: 'image', png: 'image', gif: 'image', webp: 'image', heic: 'image', heif: 'image',
   pdf: 'document', doc: 'document', docx: 'document', odt: 'document', rtf: 'document', txt: 'document',
   ppt: 'document', pptx: 'document', odp: 'document', key: 'document', pages: 'document',

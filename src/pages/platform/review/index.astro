@@ -1,7 +1,7 @@
 ---
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import { requireMember, displayName, memberTimezone } from '../../../lib/platformAuth';
-import { reviewQueue, type ReviewItem } from '../../../lib/moderation';
+import { reviewQueue, textQueue, type ReviewItem, type ReviewText } from '../../../lib/moderation';
 import { formatSize } from '../../../lib/platformFiles';
 import { formatDateTime } from '../../../lib/submissions';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
@@ -17,7 +17,10 @@ if (!member.moderator) {
   return Astro.redirect('/platform');
 }
 const L = makeLabelGetter(await getPlatformLabels());
-const { pending, recent } = await reviewQueue();
+const [{ pending, recent }, texts] = await Promise.all([reviewQueue(), textQueue()]);
+const whoText = (t: ReviewText) => (t.author ? displayName(t.author) : '—');
+const excerpt = (s: string) => (s.length > 160 ? `${s.slice(0, 160)}…` : s);
+const groupName = (t: ReviewText) => t.workshop?.name ?? t.cloud?.name ?? '';
 const tz = memberTimezone(member);
 const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
 const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
@@ -39,14 +42,33 @@ const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
     .tag.approved { color: #2e9e4f; }
     .tag.rejected { color: #c0392b; }
     .empty { color: #888; font-size: 0.9rem; }
+    .texts { margin-bottom: 0.6rem; }
+    .excerpt { font-size: 0.82rem; color: #555; margin-top: 0.2rem; word-break: break-word; }
   </style>
 
   <div class="container">
     <h1>{L('review_title', 'Ստուգում')}</h1>
 
-    {pending.length === 0 ? (
+    {texts.pending.length > 0 && (
+      <ul class="texts">
+        {texts.pending.map((t) => (
+          <li>
+            <a href={`/platform/view/${t.id}`}>
+              <span class="thumb">✍️</span>
+              <div>
+                <div class="name">{t.label}</div>
+                <div class="excerpt">{excerpt(t.text)}</div>
+                <div class="meta">{whoText(t)} · {groupName(t)}</div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {pending.length === 0 && texts.pending.length === 0 ? (
       <p class="empty">{L('review_empty', 'Ստուգելիք ծրար չկայ։')}</p>
-    ) : (
+    ) : pending.length === 0 ? null : (
       <ul>
         {pending.map((f) => (
           <li>
@@ -62,10 +84,24 @@ const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
       </ul>
     )}
 
-    {recent.length > 0 && (
+    {(recent.length > 0 || texts.recent.length > 0) && (
       <>
         <h2>{L('review_recent', 'Վերջին որոշումներ')}</h2>
         <ul>
+          {texts.recent.map((t) => (
+            <li>
+              <a href={`/platform/view/${t.id}`}>
+                <span class="thumb">✍️</span>
+                <div>
+                  <div class="name">{t.label}</div>
+                  <div class="meta">
+                    {whoText(t)} · <span class={`tag ${t.review_status}`}>{t.review_status === 'approved' ? L('review_approved', 'Հաստատուած') : L('review_rejected', 'Մերժուած')}</span>
+                    {t.reviewed_at && <> · {when(t.reviewed_at)}</>}
+                  </div>
+                </div>
+              </a>
+            </li>
+          ))}
           {recent.map((f) => (
             <li>
               <a href={`/platform/file/${f.id}`}>

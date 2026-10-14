@@ -8,7 +8,7 @@ export const GET: APIRoute = async ({ request, params, redirect }) => {
   if (!member) return redirect('/platform/login');
   const material = await getMaterial(Number(params.id));
   if (!material || !canSeeMaterial(member, material)) return redirect('/platform/library');
-  if (material.file) return redirect(`/platform/view/${material.id}`);
+  if (material.file || material.text) return redirect(`/platform/view/${material.id}`);
   if (!isWebUrl(material.url)) return redirect('/platform/library');
   if (isTracked(member, material)) await recordOpen(member.id, material.id).catch(() => {});
   return redirect(material.url, 302);

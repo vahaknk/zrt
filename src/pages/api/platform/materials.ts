@@ -3,6 +3,7 @@ import { requireMember, canManageWorkshopOrCloud, isWebUrl } from '../../../lib/
 import { adminGet, adminPost, adminDelete } from '../../../lib/directusAdmin';
 import { getFile, isApproved } from '../../../lib/platformFiles';
 import { notify, groupStudentIds } from '../../../lib/notifications';
+import { needsReview, requestMaterialReview } from '../../../lib/moderation';
 
 const TYPES = ['video', 'audio', 'reading'] as const;
 
@@ -18,11 +19,13 @@ export const POST: APIRoute = async ({ request }) => {
   const label = String(body.label ?? '').trim();
   const url = String(body.url ?? '').trim();
   const fileId = String(body.file ?? '').trim();
+  const text = String(body.text ?? '').trim().slice(0, 20000);
 
   if ((!workshop && !cloud) || (workshop && cloud)) {
     return new Response(JSON.stringify({ error: 'Provide exactly one of workshop or cloud' }), { status: 400 });
   }
-  if (!weekStart || !TYPES.includes(type as any) || !label || (!url && !fileId) || (url && fileId)) {
+  // Exactly one source: a link, a file from the library, or a written text.
+  if (!weekStart || !TYPES.includes(type as any) || !label || [url, fileId, text].filter(Boolean).length !== 1) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
   }
   // Students open these links — anything but a web address (javascript:,
@@ -43,6 +46,10 @@ export const POST: APIRoute = async ({ request }) => {
     approved = isApproved(file);
   }
 
+  // Written texts wait for the moderator, like uploaded files.
+  const textReview = !!text && needsReview(member);
+  if (textReview) approved = false;
+
   try {
     const created = await adminPost('/items/materials', {
       workshop,
@@ -52,7 +59,13 @@ export const POST: APIRoute = async ({ request }) => {
       label,
       url: url || null,
       file: fileId || null,
+      text: text || null,
+      author: member.id,
+      ...(text ? { review_status: textReview ? 'pending' : 'approved' } : {}),
     });
+    if (textReview) {
+      await requestMaterialReview({ id: created.data.id, label, text }, member).catch((e) => console.error('requestMaterialReview failed:', e));
+    }
     // A file still awaiting review: participants are told once it's approved.
     if (approved) await notify(await groupStudentIds(workshop, cloud), 'material', { actor: member.id, material: created.data.id });
     return new Response(JSON.stringify({ success: true, id: created.data.id }), { status: 200 });
