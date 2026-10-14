@@ -6,6 +6,7 @@ import { requireMember, displayName, memberTimezone } from '../../../lib/platfor
 import { getSubmission, canSeeSubmission, formatDateTime } from '../../../lib/submissions';
 import { MONTH_LABELS } from '../../../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+import { markConversationRead } from '../../../lib/notifications';
 
 const member = await requireMember(Astro.request);
 if (!member) {
@@ -16,13 +17,12 @@ if (!sub || !canSeeSubmission(member, sub)) {
   return Astro.redirect('/platform');
 }
 const L = makeLabelGetter(await getPlatformLabels());
+await markConversationRead(member.id, sub.id);
 const tz = memberTimezone(member);
 const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
 const isAuthor = sub.author?.id === member.id;
 const group = sub.workshop ?? sub.cloud;
-const back = isAuthor
-  ? { href: `/platform/library/${sub.workshop ? 'workshop' : 'cloud'}/${group?.id}#submissions`, label: group?.name ?? '' }
-  : { href: '/platform/facilitator', label: L('nav_facilitator', 'Փեթակ') };
+const back = { href: '/platform/inbox', label: L('nav_inbox', 'Նամակատուփս') };
 const authorName = sub.author ? displayName(sub.author) : '—';
 ---
 

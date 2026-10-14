@@ -1,0 +1,53 @@
+---
+import PlatformLayout from '../../layouts/PlatformLayout.astro';
+import SubmissionList from '../../components/SubmissionList.astro';
+import { requireMember, memberTimezone } from '../../lib/platformAuth';
+import { inboxSubmissions } from '../../lib/submissions';
+import { unreadConversationIds } from '../../lib/notifications';
+import { getPlatformLabels, makeLabelGetter } from '../../lib/platformLabels';
+
+// «Նամակատուփս»: all of a member's conversations in one place — their own
+// submissions (participants), their groups' (facilitators), or all (team).
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login?next=/platform/inbox');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const [conversations, unread] = await Promise.all([inboxSubmissions(member), unreadConversationIds(member.id)]);
+// Participants start a new one from their group's page.
+const ownGroups = [
+  ...(member.workshop ? [{ href: `/platform/library/workshop/${member.workshop.id}#submissions`, name: member.workshop.name }] : []),
+  ...member.clouds.map((c) => ({ href: `/platform/library/cloud/${c.clouds_id.id}#submissions`, name: c.clouds_id.name })),
+];
+const runsGroups = member.facilitates_workshops.length + member.facilitates_clouds.length > 0 || member.role === 'team';
+---
+
+<PlatformLayout title={`Zartsants Platform — ${L('nav_inbox', 'Նամակատուփս')}`} member={member}>
+  <style>
+    .container { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1rem; }
+    .new { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 1.5rem; font-size: 0.85rem; color: #797970; }
+    .new a { background: #1a1a1a; color: #fff; border-radius: 999px; padding: 0.45rem 1rem; font-weight: 700; font-size: 0.8rem; text-decoration: none; }
+  </style>
+
+  <div class="container">
+    <h1>{L('nav_inbox', 'Նամակատուփս')}</h1>
+
+    {ownGroups.length > 0 && (
+      <div class="new">
+        <span>{L('inbox_new_label', 'Նոր աշխատանք ղրկել՝')}</span>
+        {ownGroups.map((g) => <a href={g.href}>{g.name}</a>)}
+      </div>
+    )}
+
+    <SubmissionList
+      submissions={conversations}
+      showAuthor={runsGroups}
+      showGroup={true}
+      unreadIds={unread}
+      timezone={memberTimezone(member)}
+      emptyText={L('inbox_empty', 'Տակաւին նամակ չկայ։')}
+    />
+  </div>
+</PlatformLayout>

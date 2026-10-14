@@ -174,3 +174,29 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
     }
   }
 }
+
+// Conversations (submission ids) with unread submission/reply notifications.
+export async function unreadConversationIds(memberId: number): Promise<Set<number>> {
+  try {
+    const res = await adminGet(
+      `/items/platform_notifications?filter[recipient][_eq]=${memberId}&filter[read_at][_null]=true` +
+        `&filter[kind][_in]=submission,reply&fields=submission&limit=-1`
+    );
+    return new Set(((res.data ?? []) as Array<{ submission: number | null }>).map((n) => n.submission ?? 0).filter(Boolean));
+  } catch {
+    return new Set();
+  }
+}
+
+// Opening a conversation reads its notifications.
+export async function markConversationRead(memberId: number, submissionId: number): Promise<void> {
+  try {
+    const res = await adminGet(
+      `/items/platform_notifications?filter[recipient][_eq]=${memberId}&filter[read_at][_null]=true` +
+        `&filter[submission][_eq]=${submissionId}&fields=id&limit=-1`
+    );
+    await markRead(((res.data ?? []) as Array<{ id: number }>).map((n) => n.id));
+  } catch (e) {
+    console.error('markConversationRead failed:', e);
+  }
+}

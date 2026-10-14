@@ -143,3 +143,23 @@ export function formatDateTime(iso: string, tz: string | null, months: string[])
   }
   return `${Number(p.day)} ${months[Number(p.month) - 1]} ${p.year}, ${p.hour}:${p.minute}`;
 }
+
+// Every conversation a member is part of, most recently active first: their
+// own submissions, those of the groups they facilitate, or — team — all.
+export async function inboxSubmissions(member: Viewer, limit = 200): Promise<Submission[]> {
+  const or: object[] = [{ author: { _eq: member.id } }];
+  const ws = member.facilitates_workshops.map((w) => w.workshops_id.id);
+  const cs = member.facilitates_clouds.map((c) => c.clouds_id.id);
+  if (ws.length) or.push({ workshop: { _in: ws } });
+  if (cs.length) or.push({ cloud: { _in: cs } });
+  const filter = member.role === 'team' ? '' : `&filter=${encodeURIComponent(JSON.stringify({ _or: or }))}`;
+  try {
+    const res = await adminGet(
+      `/items/submissions?sort=-last_activity,-date_created${filter}&fields=${SUBMISSION_FIELDS}&deep[replies][_sort]=date_created&limit=${limit}`
+    );
+    return res.data ?? [];
+  } catch (e) {
+    console.error('Failed to load inbox:', e);
+    return [];
+  }
+}
