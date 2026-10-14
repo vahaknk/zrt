@@ -1,7 +1,7 @@
 ---
 import { displayName, hasFacilitatorPage, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
-import { unreadCount, listNotifications, unreadConversationIds } from '../lib/notifications';
+import { unreadCount, listNotifications } from '../lib/notifications';
 import { pendingReviewCount } from '../lib/moderation';
 
 export interface Props {
@@ -28,7 +28,6 @@ const L = makeLabelGetter(await getPlatformLabels());
 const timezone = memberTimezone(member);
 const unread = member.id ? await unreadCount(member.id) : 0;
 const toReview = member.moderator ? await pendingReviewCount() : 0;
-const unreadConversations = member.id ? (await unreadConversationIds(member.id)).size : 0;
 // Newest unread id at page load: the live check only pops up what's newer.
 const newestUnread = member.id && unread ? (await listNotifications(member.id, { unreadOnly: true, limit: 1 }))[0]?.id ?? 0 : 0;
 ---
@@ -155,7 +154,7 @@ const newestUnread = member.id && unread ? (await listNotifications(member.id, {
         <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարանս')}</a>
         {member.id && (
           <a href="/platform/inbox" class={isActive('/platform/inbox') || isActive('/platform/submissions') ? 'active' : undefined}>
-            {L('nav_inbox', 'Նամակատուփս')}{unreadConversations > 0 && <span class="nav-count">{unreadConversations}</span>}
+            {L('nav_inbox', 'Նամակատուփս')}
           </a>
         )}
         {hasFacilitatorPage(member) && (
