@@ -89,6 +89,8 @@ export interface Member {
   full_name: string;
   armenian_name: string | null;
   role: 'student' | 'facilitator' | 'team' | null;
+  // Reviews facilitators' library uploads before participants can see them.
+  moderator: boolean | null;
   workshop: PlatformWorkshop | null;
   clouds: Array<{ clouds_id: PlatformCloud }>;
   facilitates_workshops: Array<{ workshops_id: PlatformWorkshop }>;
@@ -210,7 +212,7 @@ export async function requireMember(request: Request): Promise<Member | null> {
   try {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
-        `&fields=id,email,full_name,armenian_name,role,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
+        `&fields=id,email,full_name,armenian_name,role,moderator,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
         `workshop.image,workshop.schedule,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +

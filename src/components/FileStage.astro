@@ -5,7 +5,7 @@ import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 // download button), images without "save", PDFs in the browser viewer.
 // With `trackMaterialId`, playback is reported for the usage numbers.
 interface Props {
-  file: { id: string; filename: string; kind: string; mime: string };
+  file: { id: string; filename: string; kind: string; mime: string; status: string; thumb_key?: string | null };
   title: string;
   canDownload: boolean;
   trackMaterialId?: number | null;
@@ -17,8 +17,12 @@ const isPdf = file.mime === 'application/pdf' || file.filename.toLowerCase().end
 ---
 
 <div class="stage" data-no-save>
-  {file.kind === 'video' ? (
-    <video id="player" src={src} controls playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablepictureinpicture></video>
+  {file.kind === 'video' && file.status === 'processing' ? (
+    <p class="no-preview">{L('viewer_video_processing', 'Տեսերիզը կը պատրաստուի։ Քանի մը վայրկեանէն կրկին փորձէ։')}</p>
+  ) : file.status === 'failed' ? (
+    <p class="no-preview">{L('viewer_file_failed', 'Այս ծրարը չկրցանք կարդալ։ Կրկին բեռնէ։')}</p>
+  ) : file.kind === 'video' ? (
+    <video id="player" src={src} poster={file.thumb_key ? `${src}?thumb=1` : undefined} controls playsinline preload="metadata" controlslist="nodownload noremoteplayback" disablepictureinpicture></video>
   ) : file.kind === 'audio' ? (
     <audio id="player" src={src} controls preload="metadata" controlslist="nodownload"></audio>
   ) : file.kind === 'image' ? (
@@ -30,7 +34,7 @@ const isPdf = file.mime === 'application/pdf' || file.filename.toLowerCase().end
   )}
 </div>
 
-{canDownload && (
+{canDownload && file.status === 'ready' && (
   <div class="stage-actions">
     <a class="stage-download" href={`${src}?download=1`}>{L('viewer_download', 'Ներբեռնել')}</a>
   </div>

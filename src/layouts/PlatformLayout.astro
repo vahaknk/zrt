@@ -2,6 +2,7 @@
 import { displayName, hasFacilitatorPage, memberTimezone, timezoneLabel } from '../lib/platformAuth';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 import { unreadCount, listNotifications } from '../lib/notifications';
+import { pendingReviewCount } from '../lib/moderation';
 
 export interface Props {
   title: string;
@@ -10,6 +11,7 @@ export interface Props {
     full_name: string;
     armenian_name?: string | null;
     role?: 'student' | 'facilitator' | 'team' | null;
+    moderator?: boolean | null;
     facilitates_workshops?: Array<{ workshops_id: { id: number; name: string } }>;
     facilitates_clouds?: Array<{ clouds_id: { id: number; name: string } }>;
     timezone?: string | null;
@@ -25,6 +27,7 @@ const L = makeLabelGetter(await getPlatformLabels());
 // the member's registered timezone; absent means "use the browser's".
 const timezone = memberTimezone(member);
 const unread = member.id ? await unreadCount(member.id) : 0;
+const toReview = member.moderator ? await pendingReviewCount() : 0;
 // Newest unread id at page load: the live check only pops up what's newer.
 const newestUnread = member.id && unread ? (await listNotifications(member.id, { unreadOnly: true, limit: 1 }))[0]?.id ?? 0 : 0;
 ---
@@ -77,6 +80,7 @@ const newestUnread = member.id && unread ? (await listNotifications(member.id, {
       .who .name { white-space: nowrap; }
       .who .logout { color: #555; text-decoration: none; white-space: nowrap; }
       .who .logout:hover { text-decoration: underline; }
+      .nav-count { display: inline-block; margin-left: 0.35rem; min-width: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: #c0392b; color: #fff; font-size: 0.68rem; line-height: 18px; text-align: center; }
       .bell { position: relative; display: inline-flex; color: #797970; padding: 0.2rem; }
       .bell svg { width: 22px; height: 22px; }
       .bell:hover, .bell.has-unread { color: #1a1a1a; }
@@ -150,6 +154,11 @@ const newestUnread = member.id && unread ? (await listNotifications(member.id, {
         <a href="/platform/library" class={isActive('/platform/library') ? 'active' : undefined}>{L('nav_library', 'Գրադարանս')}</a>
         {hasFacilitatorPage(member) && (
           <a href="/platform/facilitator" class={isActive('/platform/facilitator') ? 'active' : undefined}>{L('nav_facilitator', 'Փեթակ')}</a>
+        )}
+        {member.moderator && (
+          <a href="/platform/review" class={isActive('/platform/review') ? 'active' : undefined}>
+            {L('nav_review', 'Ստուգում')}{toReview > 0 && <span class="nav-count">{toReview}</span>}
+          </a>
         )}
       </nav>
       <div class="who">

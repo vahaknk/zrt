@@ -24,7 +24,8 @@ const L = makeLabelGetter(await getPlatformLabels());
 const tz = memberTimezone(member);
 const meetings = (await memberMeetings(member.id)).map((m) => ({ ...m, when: formatMeetingTime(m, tz) }));
 const myFiles = await libraryFiles(member.id);
-const readyFiles = myFiles.filter((f) => f.status === 'ready');
+// Videos still being compressed can already be attached; they play once ready.
+const readyFiles = myFiles.filter((f) => f.status === 'ready' || f.status === 'processing');
 const KIND_LABEL: Record<string, string> = {
   video: L('file_kind_video', 'Տեսերիզ'),
   audio: L('file_kind_audio', 'Ձայներիզ'),
@@ -49,7 +50,7 @@ interface Material {
   type: 'video' | 'audio' | 'reading';
   label: string;
   url: string | null;
-  file: { id: string; filename: string; kind: string } | null;
+  file: { id: string; filename: string; kind: string; purpose: string; review_status: string | null } | null;
   week_start: string;
 }
 
@@ -75,7 +76,7 @@ for (const { kind, target } of targets) {
   let materials: Material[] = [];
   try {
     const materialsRes = await adminGet(
-      `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.filename,file.kind,week_start&limit=-1`
+      `/items/materials?filter[${kind}][_eq]=${target.id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.filename,file.kind,file.purpose,file.review_status,week_start&limit=-1`
     );
     materials = materialsRes.data ?? [];
   } catch (e) {
@@ -226,6 +227,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .file-list a { color: #4a3fcf; text-decoration: none; font-size: 0.9rem; word-break: break-word; }
     .file-list a:hover { text-decoration: underline; }
     .file-meta { font-size: 0.75rem; color: #9a9a94; margin-top: 0.15rem; }
+    .file-status { color: #b5651d; font-size: 0.75rem; }
+    .file-status.failed { color: #c00; }
     .file-link { display: inline-flex; align-items: center; gap: 0.6rem; }
     .file-link img { width: 44px; height: 44px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: #e9e5dc; }
     .file-list .remove { color: #b8b8b0; background: none; border: none; cursor: pointer; font-size: 0.85rem; font-family: inherit; padding: 0; flex-shrink: 0; }
@@ -336,7 +339,13 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                   {f.thumb_key && <img src={`/api/platform/files/${f.id}?thumb=1`} alt="" loading="lazy" draggable="false" />}
                   <span>{f.filename}</span>
                 </a>
-                <div class="file-meta">{KIND_LABEL[f.kind] ?? f.kind} · {formatSize(f.size)} · {fileDate(f.date_created)}</div>
+                <div class="file-meta">
+                  {KIND_LABEL[f.kind] ?? f.kind} · {formatSize(f.size)} · {fileDate(f.date_created)}
+                  {f.status === 'processing' && <> · <span class="file-status">{L('files_processing', 'կը պատրաստուի…')}</span></>}
+                  {f.status === 'failed' && <> · <span class="file-status failed">{L('files_failed_status', 'չկրցանք կարդալ')}</span></>}
+                  {f.review_status === 'pending' && <> · <span class="file-status">{L('files_review_pending', 'կը սպասէ հաստատման')}</span></>}
+                  {f.review_status === 'rejected' && <> · <span class="file-status failed">{L('files_review_rejected', 'չհաստատուեցաւ')}</span></>}
+                </div>
                 <label class="file-dl"><input type="checkbox" class="allow-download" data-id={f.id} checked={f.allow_download} /> {L('files_allow_download', 'Մասնակիցները կրնան ներբեռնել')}</label>
               </div>
               <button class="remove file-remove" data-id={f.id} data-confirm-text={L('files_delete_confirm', 'Ջնջե՞լ այս ծրարը։')} type="button">{L('facilitator_remove_button', 'Remove')}</button>
@@ -379,7 +388,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
             <label>{L('material_choose_file', 'Ընտրէ ծրար մը')}</label>
             <select name="file" disabled>
               <option value="">{L('material_choose_file', 'Ընտրէ ծրար մը')}</option>
-              {readyFiles.map((f) => <option value={f.id}>{f.filename}</option>)}
+              {readyFiles.map((f) => <option value={f.id}>{f.filename}{f.status === 'processing' ? ` (${L('files_processing', 'կը պատրաստուի…')})` : ''}</option>)}
               <option value="__upload__">+ {L('material_upload_new', 'Նոր ծրար բեռնել')}</option>
             </select>
           </div>
@@ -406,6 +415,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                             <li>
                               <div class="mat">
                                 <a href={m.file ? `/platform/view/${m.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a>
+                                {m.file?.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
+                                {m.file?.review_status === 'rejected' && <span class="file-status failed">{L('material_review_rejected', 'Ծրարը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
                                 {(() => {
                                   const st = materialStats(a, m);
                                   if (st.total === 0) return null;

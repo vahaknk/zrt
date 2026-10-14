@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { requireMember, canManageWorkshopOrCloud, isWebUrl } from '../../../lib/platformAuth';
 import { adminGet, adminPost, adminDelete } from '../../../lib/directusAdmin';
-import { getFile } from '../../../lib/platformFiles';
+import { getFile, isApproved } from '../../../lib/platformFiles';
 import { notify, groupStudentIds } from '../../../lib/notifications';
 
 const TYPES = ['video', 'audio', 'reading'] as const;
@@ -34,11 +34,13 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403 });
   }
   // Only a finished file from the facilitator's own library.
+  let approved = true;
   if (fileId) {
     const file = await getFile(fileId);
     if (!file || file.owner !== member.id || file.purpose !== 'library' || file.status === 'uploading') {
       return new Response(JSON.stringify({ error: 'File not found' }), { status: 400 });
     }
+    approved = isApproved(file);
   }
 
   try {
@@ -51,7 +53,8 @@ export const POST: APIRoute = async ({ request }) => {
       url: url || null,
       file: fileId || null,
     });
-    await notify(await groupStudentIds(workshop, cloud), 'material', { actor: member.id, material: created.data.id });
+    // A file still awaiting review: participants are told once it's approved.
+    if (approved) await notify(await groupStudentIds(workshop, cloud), 'material', { actor: member.id, material: created.data.id });
     return new Response(JSON.stringify({ success: true, id: created.data.id }), { status: 200 });
   } catch (e: any) {
     return new Response(JSON.stringify({ error: e?.message ?? 'Failed to create material' }), { status: 500 });

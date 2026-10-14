@@ -4,6 +4,7 @@ import { timingSafeEqual } from 'crypto';
 import { memberTimezone, timezoneLabel } from './platformAuth';
 import { MONTH_LABELS } from './minorFormContent';
 import { notify } from './notifications';
+import { sendEmail } from './email';
 
 // Զարդիպում — facilitator meetings. Admins create them in Directus; a Flow
 // calls /api/zardipum/hook on every save and /api/zardipum/reminders every
@@ -13,7 +14,6 @@ import { notify } from './notifications';
 // still owed.
 
 const SITE = 'https://zartsants.com';
-const FROM = 'Զարցանց Zartsants <contact@zartsants.com>';
 const PARIS = 'Europe/Paris';
 const REMINDER_MINUTES = 60;
 
@@ -218,30 +218,6 @@ ${box}
 ${platform}
 <p>Սիրով՝<br/>Զարցանցի յանձնախումբ</p>`;
   return { subject, html };
-}
-
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-// Resend allows ~2 requests/second per account, shared by every meeting
-// being processed at once — so space sends out and retry when refused.
-let lastSend = 0;
-async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  for (let attempt = 0; ; attempt++) {
-    const wait = lastSend + 600 - Date.now();
-    lastSend = Math.max(Date.now(), lastSend + 600);
-    if (wait > 0) await sleep(wait);
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${import.meta.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: FROM, to, subject, html }),
-    });
-    if (res.ok) return;
-    if (res.status === 429 && attempt < 4) {
-      await sleep(1000 * (attempt + 1));
-      continue;
-    }
-    throw new Error(`Resend → ${res.status}: ${await res.text()}`);
-  }
 }
 
 // Sends `kind` to each participant; returns the junction ids that succeeded.

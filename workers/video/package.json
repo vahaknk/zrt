@@ -1,0 +1,11 @@
+{
+  "name": "zrt-video-worker",
+  "private": true,
+  "type": "module",
+  "description": "Compresses platform videos to 720p H.264 MP4 (Railway service, see README).",
+  "scripts": { "start": "node worker.mjs" },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1150.0",
+    "@aws-sdk/lib-storage": "^3.1150.0"
+  }
+}

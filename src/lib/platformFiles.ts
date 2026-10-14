@@ -44,6 +44,9 @@ export interface PlatformFile {
   allow_download: boolean;
   storage_key: string;
   thumb_key: string | null;
+  // Library files only: participants see them once a moderator approved.
+  review_status: 'pending' | 'approved' | 'rejected' | null;
+  review_note: string | null;
   upload_id: string | null;
   date_created: string;
 }
@@ -188,7 +191,14 @@ export async function downloadUrl(file: PlatformFile, attachment: boolean): Prom
 
 // ---------------------------------------------------------------- Directus
 
-const FILE_FIELDS = 'id,filename,kind,size,mime,status,purpose,owner,allow_download,storage_key,thumb_key,upload_id,date_created';
+const FILE_FIELDS =
+  'id,filename,kind,size,mime,status,purpose,owner,allow_download,storage_key,thumb_key,review_status,review_note,upload_id,date_created';
+
+// Library files need a moderator's approval before participants see them;
+// files from before moderation (no status) count as approved.
+export function isApproved(file: { purpose?: string; review_status?: string | null }): boolean {
+  return file.purpose !== 'library' || !file.review_status || file.review_status === 'approved';
+}
 
 export async function getFile(id: string): Promise<PlatformFile | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
@@ -217,11 +227,21 @@ export async function libraryFiles(ownerId: number): Promise<PlatformFile[]> {
 // material it's attached to — enrolled in, or facilitating, that
 // workshop/cloud.
 export async function canViewFile(
-  member: Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>,
+  member: Pick<Member, 'id' | 'role' | 'moderator' | 'workshop' | 'clouds' | 'facilitates_workshops' | 'facilitates_clouds'>,
   file: PlatformFile
 ): Promise<boolean> {
   if (file.owner === member.id) return true;
   if (file.purpose !== 'library') return canViewSubmissionFile(member, file.id);
+  if (member.moderator || member.role === 'team') return true;
+  // Until approved, only the people running the group see it, not participants.
+  if (!isApproved(file)) {
+    const res = await adminGet(`/items/materials?filter[file][_eq]=${file.id}&fields=workshop,cloud&limit=-1`);
+    return ((res.data ?? []) as Array<{ workshop: number | null; cloud: number | null }>).some(
+      (m) =>
+        (m.workshop !== null && member.facilitates_workshops.some((w) => w.workshops_id.id === m.workshop)) ||
+        (m.cloud !== null && member.facilitates_clouds.some((c) => c.clouds_id.id === m.cloud))
+    );
+  }
   const workshops = new Set<number>([
     ...(member.workshop ? [member.workshop.id] : []),
     ...member.facilitates_workshops.map((w) => w.workshops_id.id),

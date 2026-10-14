@@ -3,7 +3,8 @@ import PlatformLayout from '../../../../layouts/PlatformLayout.astro';
 import { requireMember, displayName, isWebUrl, memberTimezone } from '../../../../lib/platformAuth';
 import SubmissionComposer from '../../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../../components/SubmissionList.astro';
-import { enrolledInGroup, ownSubmissions } from '../../../../lib/submissions';
+import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
+import { isApproved } from '../../../../lib/platformFiles';
 import { viewsFor, percentReached } from '../../../../lib/materialViews';
 import { adminGet } from '../../../../lib/directusAdmin';
 import { formatScheduleLabel, parseDays, scheduleEntryInstant } from '../../../../lib/calendar';
@@ -42,16 +43,21 @@ interface Material {
   type: 'video' | 'audio' | 'reading';
   label: string;
   url: string | null;
-  file: { id: string; kind: string } | null;
+  file: { id: string; kind: string; purpose: string; review_status: string | null } | null;
   week_start: string;
 }
 
 let materials: Material[] = [];
 try {
   const res = await adminGet(
-    `/items/materials?filter[cloud][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.kind,week_start&limit=-1`
+    `/items/materials?filter[cloud][_eq]=${id}&sort=-week_start,sort,label&fields=id,type,label,url,file.id,file.kind,file.purpose,file.review_status,week_start&limit=-1`
   );
   materials = res.data ?? [];
+  // Files still waiting for (or refused by) the moderator: only the group's
+  // facilitators and the team see those materials.
+  if (!facilitatesGroup(member, null, id) && member.role !== 'team') {
+    materials = materials.filter((m) => !m.file || isApproved(m.file));
+  }
 } catch (e) {
   console.error('Failed to load cloud materials:', e);
 }

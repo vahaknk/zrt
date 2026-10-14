@@ -1,0 +1,87 @@
+---
+import PlatformLayout from '../../../layouts/PlatformLayout.astro';
+import { requireMember, displayName, memberTimezone } from '../../../lib/platformAuth';
+import { reviewQueue, type ReviewItem } from '../../../lib/moderation';
+import { formatSize } from '../../../lib/platformFiles';
+import { formatDateTime } from '../../../lib/submissions';
+import { MONTH_LABELS } from '../../../lib/minorFormContent';
+import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
+
+// The moderator's queue: facilitators' uploads waiting for approval, and the
+// latest decisions.
+const member = await requireMember(Astro.request);
+if (!member) {
+  return Astro.redirect('/platform/login?next=/platform/review');
+}
+if (!member.moderator) {
+  return Astro.redirect('/platform');
+}
+const L = makeLabelGetter(await getPlatformLabels());
+const { pending, recent } = await reviewQueue();
+const tz = memberTimezone(member);
+const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
+const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
+---
+
+<PlatformLayout title={`Zartsants Platform — ${L('review_title', 'Ստուգում')}`} member={member}>
+  <style>
+    .container { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem 3rem; }
+    @media (max-width: 640px) { .container { padding: 1.5rem 1rem 2.5rem; } }
+    h1 { font-size: 1.35rem; font-weight: 700; margin-bottom: 1.5rem; }
+    h2 { font-size: 1rem; font-weight: 700; margin: 2rem 0 0.75rem; }
+    ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    li a { display: flex; gap: 0.9rem; align-items: center; background: #fff; border: 1px solid #e9e9e4; border-radius: 12px; padding: 0.75rem 1rem; text-decoration: none; color: inherit; }
+    li a:hover { border-color: #cfc6ff; }
+    .thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: #efeae0; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
+    .name { font-size: 0.92rem; word-break: break-word; }
+    .meta { font-size: 0.78rem; color: #9a9a94; margin-top: 0.15rem; }
+    .tag { font-size: 0.75rem; font-weight: 700; }
+    .tag.approved { color: #2e9e4f; }
+    .tag.rejected { color: #c0392b; }
+    .empty { color: #888; font-size: 0.9rem; }
+  </style>
+
+  <div class="container">
+    <h1>{L('review_title', 'Ստուգում')}</h1>
+
+    {pending.length === 0 ? (
+      <p class="empty">{L('review_empty', 'Ստուգելիք ծրար չկայ։')}</p>
+    ) : (
+      <ul>
+        {pending.map((f) => (
+          <li>
+            <a href={`/platform/file/${f.id}`}>
+              {f.thumb_key ? <img class="thumb" src={`/api/platform/files/${f.id}?thumb=1`} alt="" loading="lazy" /> : <span class="thumb">{f.kind === 'video' ? '🎬' : f.kind === 'audio' ? '🎧' : '📄'}</span>}
+              <div>
+                <div class="name">{f.filename}</div>
+                <div class="meta">{who(f)} · {formatSize(f.size)} · {when(f.date_created)}</div>
+              </div>
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+
+    {recent.length > 0 && (
+      <>
+        <h2>{L('review_recent', 'Վերջին որոշումներ')}</h2>
+        <ul>
+          {recent.map((f) => (
+            <li>
+              <a href={`/platform/file/${f.id}`}>
+                {f.thumb_key ? <img class="thumb" src={`/api/platform/files/${f.id}?thumb=1`} alt="" loading="lazy" /> : <span class="thumb">{f.kind === 'video' ? '🎬' : f.kind === 'audio' ? '🎧' : '📄'}</span>}
+                <div>
+                  <div class="name">{f.filename}</div>
+                  <div class="meta">
+                    {who(f)} · <span class={`tag ${f.review_status}`}>{f.review_status === 'approved' ? L('review_approved', 'Հաստատուած') : L('review_rejected', 'Մերժուած')}</span>
+                    {f.reviewed_at && <> · {when(f.reviewed_at)}</>}
+                  </div>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </>
+    )}
+  </div>
+</PlatformLayout>

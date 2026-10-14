@@ -3,7 +3,7 @@ import { formatSize } from '../lib/platformFiles';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 
 interface Props {
-  file: { id: string; filename: string; kind: string; size: number; thumb_key?: string | null };
+  file: { id: string; filename: string; kind: string; size: number; status?: string; thumb_key?: string | null };
 }
 const { file } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
@@ -19,7 +19,10 @@ const KIND_LABEL: Record<string, string> = {
 <a class={`pfile ${file.thumb_key ? 'has-thumb' : ''}`} href={`/platform/file/${file.id}`}>
   {file.thumb_key && <img class="pfile-thumb" src={`/api/platform/files/${file.id}?thumb=1`} alt="" loading="lazy" draggable="false" />}
   <span class="pfile-name">{file.filename}</span>
-  <span class="pfile-meta">{KIND_LABEL[file.kind] ?? file.kind} · {formatSize(file.size)}</span>
+  <span class="pfile-meta">
+    {KIND_LABEL[file.kind] ?? file.kind} · {formatSize(file.size)}
+    {file.status === 'processing' && ` · ${L('files_processing', 'կը պատրաստուի…')}`}
+  </span>
 </a>
 
 <style>

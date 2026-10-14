@@ -5,7 +5,7 @@ import { displayName } from './platformAuth';
 // page and /platform/notifications. Created where things happen (a new
 // submission, reply, material or meeting invitation); never emailed.
 
-export type NotificationKind = 'submission' | 'reply' | 'material' | 'meeting';
+export type NotificationKind = 'submission' | 'reply' | 'material' | 'meeting' | 'file_review' | 'file_approved' | 'file_rejected';
 
 export interface PlatformNotification {
   id: number;
@@ -16,25 +16,35 @@ export interface PlatformNotification {
   submission: { id: number; workshop: { name: string } | null; cloud: { name: string } | null } | null;
   material: { id: number; label: string; workshop: { name: string } | null; cloud: { name: string } | null } | null;
   meeting: { id: number; title: string } | null;
+  file: { id: string; filename: string; review_note: string | null } | null;
 }
 
 const FIELDS =
   'id,kind,date_created,read_at,actor.full_name,actor.armenian_name,' +
   'submission.id,submission.workshop.name,submission.cloud.name,' +
-  'material.id,material.label,material.workshop.name,material.cloud.name,meeting.id,meeting.title';
+  'material.id,material.label,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
+  'file.id,file.filename,file.review_note';
 
 // Never throws: a failed notification must not fail the action behind it.
 export async function notify(
   recipients: number[],
   kind: NotificationKind,
-  refs: { actor?: number | null; submission?: number; material?: number; meeting?: number }
+  refs: { actor?: number | null; submission?: number; material?: number; meeting?: number; file?: string }
 ): Promise<void> {
   const ids = [...new Set(recipients)].filter((id) => id && id !== refs.actor);
   if (!ids.length) return;
   try {
     await adminPost(
       '/items/platform_notifications',
-      ids.map((recipient) => ({ recipient, kind, actor: refs.actor ?? null, submission: refs.submission, material: refs.material, meeting: refs.meeting }))
+      ids.map((recipient) => ({
+        recipient,
+        kind,
+        actor: refs.actor ?? null,
+        submission: refs.submission,
+        material: refs.material,
+        meeting: refs.meeting,
+        file: refs.file,
+      }))
     );
   } catch (e) {
     console.error('notify failed:', e);
@@ -110,6 +120,7 @@ export function notificationHref(n: PlatformNotification): string {
   if ((n.kind === 'submission' || n.kind === 'reply') && n.submission) return `/platform/submissions/${n.submission.id}`;
   if (n.kind === 'material' && n.material) return `/api/platform/materials/${n.material.id}/open`;
   if (n.kind === 'meeting' && n.meeting) return `/platform/facilitator#zardipum-${n.meeting.id}`;
+  if (n.kind.startsWith('file_') && n.file) return `/platform/file/${n.file.id}`;
   return '/platform';
 }
 
@@ -128,5 +139,13 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
       return fill(L('notif_material', 'Նոր նիւթ՝ «{label}» · {group}'), { label: n.material?.label ?? '', group: group(n.material) });
     case 'meeting':
       return fill(L('notif_meeting', 'Նոր Զարդիպում՝ {title}'), { title: n.meeting?.title ?? '' });
+    case 'file_review':
+      return fill(L('notif_file_review', '{name} նոր ծրար մը բեռնեց՝ ստուգելու․ «{file}»'), { name, file: n.file?.filename ?? '' });
+    case 'file_approved':
+      return fill(L('notif_file_approved', '«{file}» ծրարդ հաստատուեցաւ։'), { file: n.file?.filename ?? '' });
+    case 'file_rejected': {
+      const text = fill(L('notif_file_rejected', '«{file}» ծրարդ չհաստատուեցաւ։'), { file: n.file?.filename ?? '' });
+      return n.file?.review_note ? `${text} ${n.file.review_note}` : text;
+    }
   }
 }

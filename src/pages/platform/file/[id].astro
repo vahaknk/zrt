@@ -17,6 +17,11 @@ if (!file || file.status === 'uploading' || !(await canViewFile(member, file))) 
 }
 const L = makeLabelGetter(await getPlatformLabels());
 const canDownload = file.purpose !== 'library' || file.allow_download || file.owner === member.id || hasFacilitatorPage(member);
+// Moderation: the moderator decides here; the uploader sees the outcome.
+const isLibrary = file.purpose === 'library';
+const review = isLibrary ? file.review_status ?? 'approved' : null;
+const showPanel = isLibrary && !!member.moderator && file.owner !== member.id;
+const showStatus = isLibrary && file.owner === member.id && review !== 'approved';
 ---
 
 <PlatformLayout title={`Zartsants Platform — ${file.filename}`} member={member}>
@@ -26,11 +31,63 @@ const canDownload = file.purpose !== 'library' || file.allow_download || file.ow
     .back { display: inline-block; color: #666; text-decoration: none; font-size: 0.85rem; margin-bottom: 1rem; background: none; border: none; padding: 0; cursor: pointer; font-family: inherit; }
     .back:hover { text-decoration: underline; }
     h1 { font-size: 1.15rem; font-weight: 700; margin-bottom: 1.25rem; word-break: break-word; }
+    .review { background: #fff; border: 1px solid #e9e9e4; border-left: 4px solid #e8a33d; border-radius: 12px; padding: 1rem 1.2rem; margin-bottom: 1.25rem; }
+    .review.approved { border-left-color: #2e9e4f; }
+    .review.rejected { border-left-color: #c0392b; }
+    .review p { font-size: 0.9rem; margin-bottom: 0.6rem; }
+    .review p:last-child { margin-bottom: 0; }
+    .review textarea { box-sizing: border-box; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e0e0da; border-radius: 8px; font-size: 0.9rem; font-family: inherit; margin-bottom: 0.6rem; }
+    .review .buttons { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+    .review button { border: none; border-radius: 999px; padding: 0.5rem 1.2rem; font-weight: 700; font-size: 0.82rem; cursor: pointer; font-family: inherit; }
+    .review .approve { background: #2e9e4f; color: #fff; }
+    .review .reject { background: #f3e1df; color: #8f2a20; }
+    .review button:disabled { opacity: 0.6; cursor: default; }
   </style>
 
   <div class="container">
     <button class="back" type="button" onclick="history.length > 1 ? history.back() : (location.href = '/platform')">&larr; {L('viewer_back', 'Ետ')}</button>
     <h1>{file.filename}</h1>
+
+    {showPanel && (
+      <form class={`review ${review}`} id="review-form" data-id={file.id}>
+        <p>
+          {review === 'pending' && L('review_pending_moderator', 'Այս ծրարը կը սպասէ քու հաստատումիդ։')}
+          {review === 'approved' && L('review_is_approved', 'Հաստատուած է։')}
+          {review === 'rejected' && <>{L('review_is_rejected', 'Մերժուած է։')} {file.review_note}</>}
+        </p>
+        <textarea name="note" rows="2" placeholder={L('review_note_placeholder', 'Պատճառը (մերժելու պարագային)')}></textarea>
+        <div class="buttons">
+          <button type="button" class="approve" data-decision="approve">{L('review_approve', 'Հաստատել')}</button>
+          <button type="button" class="reject" data-decision="reject">{L('review_reject', 'Մերժել')}</button>
+        </div>
+      </form>
+    )}
+    {showStatus && (
+      <div class={`review ${review}`}>
+        <p>
+          {review === 'pending'
+            ? L('review_pending_owner', 'Այս ծրարը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։')
+            : <>{L('review_rejected_owner', 'Այս ծրարը չհաստատուեցաւ։')} {file.review_note}</>}
+        </p>
+      </div>
+    )}
     <FileStage file={file} title={file.filename} canDownload={canDownload} />
   </div>
+
+  <script>
+    const form = document.getElementById('review-form') as HTMLFormElement | null;
+    form?.querySelectorAll<HTMLButtonElement>('button[data-decision]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const note = (form.querySelector('textarea') as HTMLTextAreaElement).value.trim();
+        form.querySelectorAll('button').forEach((b) => (b.disabled = true));
+        const res = await fetch(`/api/platform/files/${form.dataset.id}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ decision: btn.dataset.decision, note }),
+        }).catch(() => null);
+        if (res?.ok) window.location.href = '/platform/review';
+        else form.querySelectorAll('button').forEach((b) => (b.disabled = false));
+      });
+    });
+  </script>
 </PlatformLayout>

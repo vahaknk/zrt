@@ -1,6 +1,7 @@
 import { adminGet, adminPatch, adminPost } from './directusAdmin';
 import type { Member } from './platformAuth';
 import { enrolledInGroup, facilitatesGroup } from './submissions';
+import { isApproved } from './platformFiles';
 
 // How participants use materials: one material_views row per member and
 // material, with how often they opened it and — for video/audio — how much
@@ -23,6 +24,9 @@ export interface ViewMaterial {
     status: string;
     allow_download: boolean;
     owner: number | null;
+    thumb_key: string | null;
+    purpose: string;
+    review_status: string | null;
   } | null;
 }
 
@@ -43,7 +47,7 @@ type Viewer = Pick<Member, 'id' | 'role' | 'workshop' | 'clouds' | 'facilitates_
 
 const MATERIAL_FIELDS =
   'id,label,type,url,workshop.id,workshop.name,cloud.id,cloud.name,' +
-  'file.id,file.filename,file.kind,file.size,file.mime,file.status,file.allow_download,file.owner';
+  'file.id,file.filename,file.kind,file.size,file.mime,file.status,file.allow_download,file.owner,file.thumb_key,file.purpose,file.review_status';
 const VIEW_FIELDS = 'id,member,material,opens,first_opened_at,last_opened_at,played_seconds,max_position,duration,completed_at';
 
 export async function getMaterial(id: number): Promise<ViewMaterial | null> {
@@ -59,7 +63,9 @@ const groupOf = (m: ViewMaterial) => [m.workshop?.id ?? null, m.cloud?.id ?? nul
 
 export function canSeeMaterial(member: Viewer, m: ViewMaterial): boolean {
   const [w, c] = groupOf(m);
-  return member.role === 'team' || enrolledInGroup(member, w, c) || facilitatesGroup(member, w, c);
+  if (member.role === 'team' || facilitatesGroup(member, w, c)) return true;
+  // Participants only once its file was approved.
+  return enrolledInGroup(member, w, c) && (!m.file || isApproved(m.file));
 }
 
 // Participants are tracked; facilitators/team looking at a material are not.
