@@ -26,7 +26,8 @@ const tz = memberTimezone(member);
 const meetings = (await memberMeetings(member.id, 1, member.role === 'team')).map((m) => ({ ...m, when: formatMeetingTime(m, tz) }));
 const myFiles = await libraryFiles(member.id);
 // «Ուղեկիցներ»: every facilitator/team member, to write to one personally.
-const colleagues = (await staffMembers()).filter((c) => c.id !== member.id);
+// Everyone, including the signed-in member (shown without a link).
+const colleagues = await staffMembers();
 const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
 // Videos still being compressed can already be attached; they play once ready.
 const readyFiles = myFiles.filter((f) => f.status === 'ready' || f.status === 'processing');
@@ -265,6 +266,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .colleague-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
     .colleague { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-decoration: none; color: #1a1a1a; padding: 0.75rem 0.5rem; border-radius: 14px; }
     .colleague:hover { background: #fff; }
+    .colleague.me { cursor: default; }
+    .colleague.me:hover { background: none; }
     .colleague img, .colleague .initial { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; }
     .colleague .initial { background: #ddd8f5; color: #4a3fcf; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.8rem; }
     .colleague-name { font-size: 0.85rem; text-align: center; line-height: 1.3; }
@@ -501,16 +504,24 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       <h2>{L('colleagues_title', 'Ուղեկիցներ')}</h2>
       <p class="colleagues-intro">{L('colleagues_intro', 'Ուղեկիցի մը նկարին վրայ սեղմէ՝ անոր անձնական նամակ գրելու համար։')}</p>
       <div class="colleague-grid">
-        {colleagues.map((c) => (
-          <a class="colleague" href={`/platform/direct/${c.id}`}>
-            {c.image ? (
-              <img src={asset(DIRECTUS_URL, c.image)!} alt="" loading="lazy" />
-            ) : (
-              <span class="initial">{displayName(c).trim().charAt(0)}</span>
-            )}
-            <span class="colleague-name">{displayName(c)}</span>
-          </a>
-        ))}
+        {colleagues.map((c) => {
+          const face = c.image ? (
+            <img src={asset(DIRECTUS_URL, c.image)!} alt="" loading="lazy" />
+          ) : (
+            <span class="initial">{displayName(c).trim().charAt(0)}</span>
+          );
+          return c.id === member.id ? (
+            <div class="colleague me">
+              {face}
+              <span class="colleague-name">{displayName(c)}</span>
+            </div>
+          ) : (
+            <a class="colleague" href={`/platform/direct/${c.id}`}>
+              {face}
+              <span class="colleague-name">{displayName(c)}</span>
+            </a>
+          );
+        })}
       </div>
     </section>
   </div>

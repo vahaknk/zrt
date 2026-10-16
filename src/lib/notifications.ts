@@ -84,6 +84,9 @@ export async function notify(
 
 // The members facilitating a workshop/cloud.
 export async function groupFacilitatorIds(workshop: number | null, cloud: number | null): Promise<number[]> {
+  // No group (a personal conversation): nobody. Never query with a null id —
+  // Directus treats "_eq=null" as "has no such link", which matches almost everyone.
+  if (!workshop && !cloud) return [];
   const filter = workshop
     ? `filter[facilitates_workshops][workshops_id][_eq]=${workshop}`
     : `filter[facilitates_clouds][clouds_id][_eq]=${cloud}`;
@@ -97,6 +100,7 @@ export async function groupFacilitatorIds(workshop: number | null, cloud: number
 
 // The participants enrolled in a workshop/cloud.
 export async function groupStudentIds(workshop: number | null, cloud: number | null): Promise<number[]> {
+  if (!workshop && !cloud) return [];
   const filter = workshop ? `filter[workshop][_eq]=${workshop}` : `filter[clouds][clouds_id][_eq]=${cloud}`;
   try {
     const res = await adminGet(`/items/platform_members?${filter}&filter[role][_eq]=student&fields=id&limit=-1`);
@@ -173,7 +177,10 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
         ? fill(L('notif_message', '{name} քեզի նամակ մը ղրկեց՝ {group}'), { name, group: group(n.submission) })
         : fill(L('notif_message_direct', '{name} քեզի նամակ մը ղրկեց'), { name });
     case 'reply':
-      return fill(L('notif_reply', '{name} պատասխանեց՝ {group}'), { name, group: group(n.submission) });
+      // Personal (staff-to-staff) conversations have no group.
+      return group(n.submission)
+        ? fill(L('notif_reply', '{name} պատասխանեց՝ {group}'), { name, group: group(n.submission) })
+        : fill(L('notif_reply_direct', '{name} պատասխանեց'), { name });
     case 'material':
       return fill(L('notif_material', 'Նոր նիւթ՝ «{label}» · {group}'), { label: n.material?.label ?? '', group: group(n.material) });
     case 'meeting':
