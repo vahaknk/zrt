@@ -225,7 +225,14 @@ export async function requireMember(request: Request): Promise<Member | null> {
         `facilitates_clouds.clouds_id.bundle.id,facilitates_clouds.clouds_id.bundle.name,facilitates_clouds.clouds_id.bundle.zoom_link,` +
         `facilitates_clouds.clouds_id.day_of_week,facilitates_clouds.clouds_id.start_time,facilitates_clouds.clouds_id.end_time&limit=1`
     );
-    return res.data?.[0] ?? null;
+    const member: Member | null = res.data?.[0] ?? null;
+    if (!member) return null;
+    // A deleted workshop/cloud leaves its junction row behind with a null link;
+    // drop those so pages can rely on clouds_id / workshops_id being set.
+    member.clouds = (member.clouds ?? []).filter((c) => c.clouds_id);
+    member.facilitates_workshops = (member.facilitates_workshops ?? []).filter((w) => w.workshops_id);
+    member.facilitates_clouds = (member.facilitates_clouds ?? []).filter((c) => c.clouds_id);
+    return member;
   } catch {
     return null;
   }
