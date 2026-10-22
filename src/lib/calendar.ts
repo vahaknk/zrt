@@ -105,12 +105,14 @@ function weekdayOf(date: Date): Weekday {
 export interface WorkshopInfo {
   id: number;
   name: string;
+  image?: string | null;
   schedule: WorkshopScheduleEntry[] | null;
 }
 
 export interface CloudInfo {
   id: number;
   name: string;
+  image?: string | null;
   day_of_week: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -118,6 +120,8 @@ export interface CloudInfo {
 
 export interface SessionBlock {
   label: string;
+  // Directus file id of the workshop/cloud image (meetings have none).
+  image?: string | null;
   date: Date;
   startMin: number;
   endMin: number;
@@ -183,7 +187,7 @@ export function buildSessionBlocks(
       const wd = entry.day?.trim().toLowerCase() as Weekday | undefined;
       if (wd && startMin !== null && endMin !== null && (WEEKDAY_ORDER as readonly string[]).includes(wd)) {
         const date = dateFor(wd);
-        if (date) blocks.push({ label: workshop.name, date, startMin, endMin, kind: 'workshop', sourceId: workshop.id });
+        if (date) blocks.push({ label: workshop.name, image: workshop.image, date, startMin, endMin, kind: 'workshop', sourceId: workshop.id });
       }
     }
   }
@@ -195,7 +199,7 @@ export function buildSessionBlocks(
     const wd = cloud.day_of_week?.trim().toLowerCase() as Weekday | undefined;
     if (wd && startMin !== null && endMin !== null && (WEEKDAY_ORDER as readonly string[]).includes(wd)) {
       const date = dateFor(wd);
-      if (date) blocks.push({ label: cloud.name, date, startMin, endMin, kind: 'cloud', sourceId: cloud.id });
+      if (date) blocks.push({ label: cloud.name, image: cloud.image, date, startMin, endMin, kind: 'cloud', sourceId: cloud.id });
     }
   }
 

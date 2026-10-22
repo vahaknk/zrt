@@ -58,8 +58,22 @@ const blocks: SessionBlock[] = [...buildSessionBlocks(workshops, clouds, weekDat
 );
 const blockHref = (b: SessionBlock) =>
   b.kind === 'meeting' ? `/platform/facilitator#zardipum-${b.sourceId}` : `/platform/library/${b.kind}/${b.sourceId}`;
+// Small round thumbnail of the workshop/cloud image (Directus resizes it);
+// the library's lamp/cloud pictures stand in for groups without one, and
+// every cancelled session (meetings too) shows the «տէրս երես» picture.
+const DIRECTUS_URL = import.meta.env.DIRECTUS_URL;
+const blockImage = (b: SessionBlock & { cancelled?: boolean }): string | null =>
+  b.cancelled
+    ? '/ters_yeres-small.png'
+    : b.kind === 'meeting'
+    ? null
+    : b.image
+      ? `${DIRECTUS_URL}/assets/${b.image}?width=128&height=128&fit=cover`
+      : b.kind === 'workshop'
+        ? '/lamp.png'
+        : '/cloud.png';
 const bounds = gridBounds(blocks);
-const PX_PER_MIN = 1.2;
+const PX_PER_MIN = 2;
 const gridHeight = (bounds.endMin - bounds.startMin) * PX_PER_MIN;
 
 const hourMarks: number[] = [];
@@ -140,7 +154,7 @@ const agendaDays = weekDates
             ))}
             {enrichedBlocks.map((b) => (
               <a
-                class={`block ${b.kind} ${b.cancelled ? 'cancelled' : ''}`}
+                class={`block ${b.kind} ${b.cancelled ? 'cancelled' : ''} ${b.endMin - b.startMin < 30 ? 'short' : ''}`}
                 href={blockHref(b)}
                 style={{
                   top: `${b.top}px`,
@@ -152,7 +166,10 @@ const agendaDays = weekDates
                 data-end={b.endIso}
                 data-day={b.dayIndex}
               >
-                <span>{b.label}</span>
+                <span class="block-title">
+                  {blockImage(b) && <img class={`thumb ${b.cancelled ? 'cancelled-pic' : ''}`} src={blockImage(b)!} alt="" loading="lazy" />}
+                  <span>{b.label}</span>
+                </span>
                 {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
               </a>
             ))}
@@ -172,6 +189,7 @@ const agendaDays = weekDates
               data-end={b.endIso}
             >
               <span class="agenda-time">{fmtHour(b.startMin)}–{fmtHour(b.endMin)}</span>
+              {blockImage(b) && <img class={`thumb ${b.cancelled ? 'cancelled-pic' : ''}`} src={blockImage(b)!} alt="" loading="lazy" />}
               <span class="agenda-label">
                 {b.label}
                 {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
@@ -208,7 +226,7 @@ const agendaDays = weekDates
   .agenda-date { font-size: 0.8rem; font-weight: 700; color: #797970; margin-bottom: 0.45rem; }
   .agenda-item {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: 0.85rem;
     background: #fff;
     border: 1px solid #e9e9e4;
@@ -223,7 +241,6 @@ const agendaDays = weekDates
   .agenda-item.cloud { border-left-color: #2e9e4f; }
   .agenda-item.meeting { border-left-color: #e8a33d; }
   .agenda-item.cancelled { opacity: 0.55; }
-  .agenda-item.cancelled .agenda-label { text-decoration: line-through; }
   .agenda-time { font-size: 0.85rem; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
   .agenda-label { font-size: 0.9rem; font-weight: 600; min-width: 0; }
   .agenda-label .note { display: block; font-size: 0.78rem; font-weight: 400; font-style: italic; color: #797970; text-decoration: none; }
@@ -269,7 +286,13 @@ const agendaDays = weekDates
   }
   .block {
     position: absolute;
-    display: block;
+    display: flex;
+    flex-direction: column;
+    /* "safe": a block too short for its content starts at the top (image
+       visible) instead of being cut on both ends. */
+    justify-content: safe center;
+    align-items: center;
+    text-align: center;
     border-radius: 6px;
     padding: 0.25rem 0.4rem;
     font-size: 0.72rem;
@@ -284,8 +307,17 @@ const agendaDays = weekDates
   .block.workshop { background: #6b5ce6; }
   .block.cloud { background: #2e9e4f; }
   .block.meeting { background: #b5651d; }
-  .block.cancelled { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5); text-decoration: line-through; }
+  .block.cancelled { background: rgba(0,0,0,0.15); color: rgba(0,0,0,0.5); }
   .block .note { text-decoration: none; display: block; font-style: italic; }
+  /* Image above the name, so the name keeps the full column width. */
+  .block-title { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .thumb { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #fff; border: 1.5px solid rgba(255,255,255,0.85); }
+  /* Sessions under half an hour are too short for both: image beside the name. */
+  .block.short .block-title { flex-direction: row; align-items: center; gap: 0.3rem; }
+  .block.short .thumb { width: 26px; height: 26px; }
+  .agenda-item .thumb { width: 52px; height: 52px; align-self: center; border-color: #e9e9e4; }
+  /* The «տէրս երես» picture of a cancelled session: whole, not in a circle. */
+  .thumb.cancelled-pic { width: auto; border: none; border-radius: 0; background: none; object-fit: contain; }
 </style>
 
 <style is:global>
@@ -318,7 +350,7 @@ const agendaDays = weekDates
   // outside typical daytime hours in Paris, a viewer many hours ahead or
   // behind could see a session's local time cross midnight into the next/
   // previous day while it stays drawn under its original day column.)
-  const PX_PER_MIN = 1.2;
+  const PX_PER_MIN = 2;
 
   let tz: string | undefined = document.body.dataset.tz || undefined;
   let formatter: Intl.DateTimeFormat;
