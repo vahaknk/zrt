@@ -2,6 +2,28 @@
 // calls here, so this can be exercised directly (e.g. via `npx tsx`) before
 // wiring it into the page.
 import { zonedInstant } from './timezone';
+import { TIMEZONE_GROUPS } from './minorFormContent';
+
+// Each workshop/cloud's days and times are set in its own `timezone`
+// (Directus), Paris unless an admin changed it — so a group run from Toronto
+// keeps its Toronto time through DST changes, and everyone else's view moves.
+export const DEFAULT_GROUP_TZ = 'Europe/Paris';
+export function groupTimezone(group: { timezone?: string | null } | null | undefined): string {
+  const tz = group?.timezone?.trim();
+  if (!tz) return DEFAULT_GROUP_TZ;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz });
+    return tz;
+  } catch {
+    return DEFAULT_GROUP_TZ;
+  }
+}
+
+// "(Փարիզի ժամով)", or the zone's name as the questionnaire lists it.
+function zoneSuffix(tz: string): string {
+  if (tz === DEFAULT_GROUP_TZ) return '(Փարիզի ժամով)';
+  return `(${TIMEZONE_GROUPS.find((g) => g.tz === tz)?.label.hyw ?? tz.split('/').pop()!.replace(/_/g, ' ')})`;
+}
 
 export const WEEKDAY_ORDER = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const;
 export type Weekday = (typeof WEEKDAY_ORDER)[number];
@@ -24,14 +46,19 @@ const WEEKDAY_LABEL: Record<Weekday, string> = {
   sunday: 'Կիրակի',
 };
 
-// Days/time as stored in Directus are Paris time — surfaced as-is with a
-// label rather than converted, matching how the booking page shows Paris time.
+// Days/time as stored in Directus, in the group's own timezone — surfaced
+// as-is with a label (schedule-local.js then rewrites it in the viewer's).
 // Used for clouds, which still have exactly one day + one time each.
-export function formatScheduleLabel(csv: string | null, startTime: string | null, endTime: string | null): string | null {
+export function formatScheduleLabel(
+  csv: string | null,
+  startTime: string | null,
+  endTime: string | null,
+  tz: string = DEFAULT_GROUP_TZ
+): string | null {
   const days = parseDays(csv);
   if (days.length === 0 || !startTime || !endTime) return null;
   const dayLabel = days.map((d) => WEEKDAY_LABEL[d]).join(' եւ ');
-  return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} (Փարիզի ժամով)`;
+  return `${dayLabel} · ${startTime.slice(0, 5)}–${endTime.slice(0, 5)} ${zoneSuffix(tz)}`;
 }
 
 export interface WorkshopScheduleEntry {
@@ -43,7 +70,7 @@ export interface WorkshopScheduleEntry {
 // Workshops can meet on several days with a different time each — group days
 // that happen to share the same time into one clause so the common case
 // (every day at the same time) still reads as compactly as before.
-export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | null): string | null {
+export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | null, tz: string = DEFAULT_GROUP_TZ): string | null {
   if (!schedule || schedule.length === 0) return null;
 
   const groups = new Map<string, Weekday[]>();
@@ -64,14 +91,19 @@ export function formatWorkshopScheduleLabel(schedule: WorkshopScheduleEntry[] | 
     return `${dayLabel} · ${start.slice(0, 5)}–${end.slice(0, 5)}`;
   });
 
-  return `${clauses.join(', ')} (Փարիզի ժամով)`;
+  return `${clauses.join(', ')} ${zoneSuffix(tz)}`;
 }
 
-// Real UTC instant for a recurring weekly Paris day/time, anchored to the
-// nearest occurrence of that weekday from `anchor` — used to let the browser
-// convert a schedule blurb (not tied to a specific calendar date) to local
-// time. DST-correct since the actual date determines the Paris UTC offset.
-export function scheduleEntryInstant(weekday: string, time: string | null, anchor: Date = new Date()): Date | null {
+// Real UTC instant for a recurring weekly day/time in the group's timezone,
+// anchored to the nearest occurrence of that weekday from `anchor` — used to
+// let the browser convert a schedule blurb (not tied to a specific calendar
+// date) to local time. DST-correct since the actual date determines the offset.
+export function scheduleEntryInstant(
+  weekday: string,
+  time: string | null,
+  anchor: Date = new Date(),
+  tz: string = DEFAULT_GROUP_TZ
+): Date | null {
   const wd = weekday.trim().toLowerCase() as Weekday;
   if (!(WEEKDAY_ORDER as readonly string[]).includes(wd)) return null;
   const min = timeToMinutes(time);
@@ -80,7 +112,7 @@ export function scheduleEntryInstant(weekday: string, time: string | null, ancho
   const targetIdx = WEEKDAY_ORDER.indexOf(wd);
   const diff = (targetIdx - anchorIdx + 7) % 7;
   const date = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() + diff);
-  return zonedInstant('Europe/Paris', date, min);
+  return zonedInstant(tz, date, min);
 }
 
 export function timeToMinutes(time: string | null): number | null {
@@ -106,6 +138,7 @@ export interface WorkshopInfo {
   id: number;
   name: string;
   image?: string | null;
+  timezone?: string | null;
   schedule: WorkshopScheduleEntry[] | null;
 }
 
@@ -113,6 +146,7 @@ export interface CloudInfo {
   id: number;
   name: string;
   image?: string | null;
+  timezone?: string | null;
   day_of_week: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -122,6 +156,8 @@ export interface SessionBlock {
   label: string;
   // Directus file id of the workshop/cloud image (meetings have none).
   image?: string | null;
+  // Zone the block's date/startMin/endMin are in (meetings: Paris).
+  timezone?: string;
   date: Date;
   startMin: number;
   endMin: number;
@@ -187,7 +223,7 @@ export function buildSessionBlocks(
       const wd = entry.day?.trim().toLowerCase() as Weekday | undefined;
       if (wd && startMin !== null && endMin !== null && (WEEKDAY_ORDER as readonly string[]).includes(wd)) {
         const date = dateFor(wd);
-        if (date) blocks.push({ label: workshop.name, image: workshop.image, date, startMin, endMin, kind: 'workshop', sourceId: workshop.id });
+        if (date) blocks.push({ label: workshop.name, image: workshop.image, timezone: groupTimezone(workshop), date, startMin, endMin, kind: 'workshop', sourceId: workshop.id });
       }
     }
   }
@@ -199,7 +235,7 @@ export function buildSessionBlocks(
     const wd = cloud.day_of_week?.trim().toLowerCase() as Weekday | undefined;
     if (wd && startMin !== null && endMin !== null && (WEEKDAY_ORDER as readonly string[]).includes(wd)) {
       const date = dateFor(wd);
-      if (date) blocks.push({ label: cloud.name, image: cloud.image, date, startMin, endMin, kind: 'cloud', sourceId: cloud.id });
+      if (date) blocks.push({ label: cloud.name, image: cloud.image, timezone: groupTimezone(cloud), date, startMin, endMin, kind: 'cloud', sourceId: cloud.id });
     }
   }
 
@@ -220,10 +256,12 @@ export function gridBounds(blocks: SessionBlock[]): { startMin: number; endMin: 
   };
 }
 
-// Real UTC instant for a block's Paris start/end, for client-side local-time conversion.
+// Real UTC instant for a block's start/end in its group's timezone, for
+// client-side local-time conversion.
 export function blockInstants(block: SessionBlock): { start: Date; end: Date } {
+  const tz = block.timezone ?? DEFAULT_GROUP_TZ;
   return {
-    start: zonedInstant('Europe/Paris', block.date, block.startMin),
-    end: zonedInstant('Europe/Paris', block.date, block.endMin),
+    start: zonedInstant(tz, block.date, block.startMin),
+    end: zonedInstant(tz, block.date, block.endMin),
   };
 }

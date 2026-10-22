@@ -6,7 +6,7 @@ import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
 import { viewsFor, percentReached, materialApproved } from '../../../../lib/materialViews';
 import { adminGet } from '../../../../lib/directusAdmin';
-import { formatScheduleLabel, parseDays, scheduleEntryInstant } from '../../../../lib/calendar';
+import { formatScheduleLabel, groupTimezone, parseDays, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
 import { asset } from '../../../../lib/asset';
 import { getPlatformLabels, makeLabelGetter } from '../../../../lib/platformLabels';
@@ -28,11 +28,12 @@ if (!cloud) {
   return Astro.redirect('/platform/library');
 }
 
-const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time);
+const cloudTz = groupTimezone(cloud);
+const schedule = formatScheduleLabel(cloud.day_of_week, cloud.start_time, cloud.end_time, cloudTz);
 const scheduleInstants = parseDays(cloud.day_of_week)
   .map((day) => {
-    const start = scheduleEntryInstant(day, cloud.start_time);
-    const end = scheduleEntryInstant(day, cloud.end_time);
+    const start = scheduleEntryInstant(day, cloud.start_time, undefined, cloudTz);
+    const end = scheduleEntryInstant(day, cloud.end_time, undefined, cloudTz);
     return start && end ? { start: start.toISOString(), end: end.toISOString() } : null;
   })
   .filter((e): e is { start: string; end: string } => e !== null);

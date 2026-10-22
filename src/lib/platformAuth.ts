@@ -68,6 +68,7 @@ export interface PlatformWorkshop {
   schedule_note: string | null;
   zoom_link: string;
   image: string | null;
+  timezone: string | null;
   schedule: Array<{ day: string; start_time: string; end_time: string }> | null;
 }
 
@@ -81,6 +82,7 @@ export interface PlatformCloud {
   start_time: string | null;
   end_time: string | null;
   image: string | null;
+  timezone: string | null;
 }
 
 export interface Member {
@@ -213,17 +215,17 @@ export async function requireMember(request: Request): Promise<Member | null> {
     const res = await adminGet(
       `/items/platform_members?filter=${encodeURIComponent(JSON.stringify(filter))}` +
         `&fields=id,email,full_name,armenian_name,role,moderator,timezone,registration_request.timezone,workshop.id,workshop.name,workshop.age_group,workshop.schedule_note,workshop.zoom_link,` +
-        `workshop.image,workshop.schedule,` +
+        `workshop.image,workshop.schedule,workshop.timezone,` +
         `clouds.clouds_id.id,clouds.clouds_id.name,clouds.clouds_id.age_groups,clouds.clouds_id.schedule_note,clouds.clouds_id.image,` +
         `clouds.clouds_id.bundle.id,clouds.clouds_id.bundle.name,clouds.clouds_id.bundle.zoom_link,` +
-        `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,` +
+        `clouds.clouds_id.day_of_week,clouds.clouds_id.start_time,clouds.clouds_id.end_time,clouds.clouds_id.timezone,` +
         `facilitates_workshops.workshops_id.id,facilitates_workshops.workshops_id.name,facilitates_workshops.workshops_id.age_group,` +
         `facilitates_workshops.workshops_id.schedule_note,facilitates_workshops.workshops_id.zoom_link,` +
-        `facilitates_workshops.workshops_id.image,facilitates_workshops.workshops_id.schedule,` +
+        `facilitates_workshops.workshops_id.image,facilitates_workshops.workshops_id.schedule,facilitates_workshops.workshops_id.timezone,` +
         `facilitates_clouds.clouds_id.id,facilitates_clouds.clouds_id.name,facilitates_clouds.clouds_id.age_groups,` +
         `facilitates_clouds.clouds_id.schedule_note,facilitates_clouds.clouds_id.image,` +
         `facilitates_clouds.clouds_id.bundle.id,facilitates_clouds.clouds_id.bundle.name,facilitates_clouds.clouds_id.bundle.zoom_link,` +
-        `facilitates_clouds.clouds_id.day_of_week,facilitates_clouds.clouds_id.start_time,facilitates_clouds.clouds_id.end_time&limit=1`
+        `facilitates_clouds.clouds_id.day_of_week,facilitates_clouds.clouds_id.start_time,facilitates_clouds.clouds_id.end_time,facilitates_clouds.clouds_id.timezone&limit=1`
     );
     const member: Member | null = res.data?.[0] ?? null;
     if (!member) return null;
@@ -246,9 +248,9 @@ export async function memberGroups(
   if (member.role !== 'team') return { workshops: calendarWorkshops(member), clouds: calendarClouds(member) };
   try {
     const [w, c] = await Promise.all([
-      adminGet(`/items/workshops?sort=name&fields=id,name,age_group,schedule_note,zoom_link,image,schedule&limit=-1`),
+      adminGet(`/items/workshops?sort=name&fields=id,name,age_group,schedule_note,zoom_link,image,schedule,timezone&limit=-1`),
       adminGet(
-        `/items/clouds?sort=name&fields=id,name,age_groups,schedule_note,image,bundle.id,bundle.name,bundle.zoom_link,day_of_week,start_time,end_time&limit=-1`
+        `/items/clouds?sort=name&fields=id,name,age_groups,schedule_note,image,bundle.id,bundle.name,bundle.zoom_link,day_of_week,start_time,end_time,timezone&limit=-1`
       ),
     ]);
     return { workshops: w.data ?? [], clouds: c.data ?? [] };

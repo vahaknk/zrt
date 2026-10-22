@@ -6,7 +6,7 @@ import SubmissionList from '../../../../components/SubmissionList.astro';
 import { enrolledInGroup, facilitatesGroup, ownSubmissions } from '../../../../lib/submissions';
 import { viewsFor, percentReached, materialApproved } from '../../../../lib/materialViews';
 import { adminGet } from '../../../../lib/directusAdmin';
-import { formatWorkshopScheduleLabel, scheduleEntryInstant } from '../../../../lib/calendar';
+import { formatWorkshopScheduleLabel, groupTimezone, scheduleEntryInstant } from '../../../../lib/calendar';
 import { MONTH_LABELS } from '../../../../lib/minorFormContent';
 import { asset } from '../../../../lib/asset';
 import { getPlatformLabels, makeLabelGetter } from '../../../../lib/platformLabels';
@@ -29,11 +29,12 @@ if (!workshop) {
   return Astro.redirect('/platform/library');
 }
 
-const schedule = formatWorkshopScheduleLabel(workshop.schedule);
+const workshopTz = groupTimezone(workshop);
+const schedule = formatWorkshopScheduleLabel(workshop.schedule, workshopTz);
 const scheduleInstants = (workshop.schedule ?? [])
   .map((e) => {
-    const start = scheduleEntryInstant(e.day, e.start_time);
-    const end = scheduleEntryInstant(e.day, e.end_time);
+    const start = scheduleEntryInstant(e.day, e.start_time, undefined, workshopTz);
+    const end = scheduleEntryInstant(e.day, e.end_time, undefined, workshopTz);
     return start && end ? { start: start.toISOString(), end: end.toISOString() } : null;
   })
   .filter((e): e is { start: string; end: string } => e !== null);
