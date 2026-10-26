@@ -52,7 +52,7 @@ const uploadErrors = {
 
 interface Material {
   id: number;
-  type: 'video' | 'audio' | 'reading';
+  type: 'video' | 'audio' | 'reading' | 'reminder';
   label: string;
   url: string | null;
   file: { id: string; filename: string; kind: string; purpose: string; review_status: string | null } | null;
@@ -127,6 +127,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
   video: L('material_type_video', 'Video'),
   audio: L('material_type_audio', 'Audio'),
   reading: L('material_type_reading', 'Reading'),
+  reminder: L('material_type_reminder', 'Յիշեցում'),
 };
 ---
 
@@ -246,6 +247,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
     .source-toggle { display: flex; gap: 1rem; font-size: 0.85rem; }
     .source-toggle label { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; color: #1a1a1a; margin: 0; cursor: pointer; }
     .source-toggle input { width: auto; }
+    .source-toggle label[hidden] { display: none; }
 
     .mat { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
     .stats { font-size: 0.75rem; color: #797970; }
@@ -395,6 +397,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
               <option value="video">{L('material_type_video', 'Video')}</option>
               <option value="audio">{L('material_type_audio', 'Audio')}</option>
               <option value="reading">{L('material_type_reading', 'Reading')}</option>
+              <option value="reminder">{L('material_type_reminder', 'Յիշեցում')}</option>
             </select>
           </div>
           <div class="full">
@@ -402,8 +405,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
             <input type="text" name="label" placeholder={L('facilitator_label_placeholder', 'e.g. Week 1 recording')} required />
           </div>
           <div class="full source-toggle">
-            <label><input type="radio" name="source" value="url" checked /> {L('material_source_link', 'Յղում')}</label>
-            <label><input type="radio" name="source" value="file" /> {L('material_source_file', 'Ծրար')}</label>
+            <label class="source-opt-url"><input type="radio" name="source" value="url" checked /> {L('material_source_link', 'Յղում')}</label>
+            <label class="source-opt-file"><input type="radio" name="source" value="file" /> {L('material_source_file', 'Ծրար')}</label>
             <label><input type="radio" name="source" value="text" /> {L('material_source_text', 'Գրութիւն')}</label>
           </div>
           <div class="full source-url">
@@ -435,7 +438,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
               <div class="week">
                 <div class="week-label">{formatWeek(weekStart)}</div>
                 <div class="sections">
-                  {(['video', 'audio', 'reading'] as const).map((type) => {
+                  {(['video', 'audio', 'reading', 'reminder'] as const).map((type) => {
                     const typeItems = items.filter((m) => m.type === type);
                     if (typeItems.length === 0) return null;
                     return (
@@ -651,6 +654,22 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           textInput.disabled = src !== 'text';
           textInput.required = src === 'text';
         });
+      });
+      // «Յիշեցում»: text only — the link/file options are hidden and the text box is forced.
+      const typeSelect = form.querySelector<HTMLSelectElement>('select[name="type"]')!;
+      const sourceRadio = (v: string) => form.querySelector<HTMLInputElement>(`input[name="source"][value="${v}"]`)!;
+      const urlOpt = form.querySelector<HTMLElement>('.source-opt-url')!;
+      const fileOpt = form.querySelector<HTMLElement>('.source-opt-file')!;
+      typeSelect.addEventListener('change', () => {
+        const textOnly = typeSelect.value === 'reminder';
+        urlOpt.hidden = textOnly;
+        fileOpt.hidden = textOnly;
+        sourceRadio('url').disabled = textOnly;
+        sourceRadio('file').disabled = textOnly;
+        const target = textOnly ? 'text' : (sourceRadio('text').checked ? 'text' : (form.querySelector<HTMLInputElement>('input[name="source"]:checked')?.value ?? 'url'));
+        const radio = sourceRadio(target);
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change'));
       });
       fileSelect.addEventListener('change', async () => {
         if (fileSelect.value !== '__upload__' && fileSelect.value !== '__record__') return;

@@ -41,7 +41,7 @@ const scheduleInstants = (workshop.schedule ?? [])
 
 interface Material {
   id: number;
-  type: 'video' | 'audio' | 'reading';
+  type: 'video' | 'audio' | 'reading' | 'reminder';
   label: string;
   url: string | null;
   text: string | null;
@@ -112,6 +112,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
   video: L('material_type_video', 'Video'),
   audio: L('material_type_audio', 'Audio'),
   reading: L('material_type_reading', 'Reading'),
+  reminder: L('material_type_reminder', 'Յիշեցում'),
 };
 ---
 
@@ -306,7 +307,7 @@ const TYPE_LABEL: Record<Material['type'], string> = {
         <div class="week">
           <div class="week-label">{formatWeek(weekStart)}</div>
           <div class="sections">
-            {(['video', 'audio', 'reading'] as const).map((type) => {
+            {(['video', 'audio', 'reading', 'reminder'] as const).map((type) => {
               const typeItems = items.filter((m) => m.type === type);
               if (typeItems.length === 0) return null;
               return (

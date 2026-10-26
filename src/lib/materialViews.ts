@@ -11,7 +11,7 @@ import { isApproved } from './platformFiles';
 export interface ViewMaterial {
   id: number;
   label: string;
-  type: 'video' | 'audio' | 'reading';
+  type: 'video' | 'audio' | 'reading' | 'reminder';
   workshop: { id: number; name: string } | null;
   cloud: { id: number; name: string } | null;
   url: string | null;

@@ -5,7 +5,7 @@ import { getFile, isApproved } from '../../../lib/platformFiles';
 import { notify, groupStudentIds } from '../../../lib/notifications';
 import { needsReview, requestMaterialReview } from '../../../lib/moderation';
 
-const TYPES = ['video', 'audio', 'reading'] as const;
+const TYPES = ['video', 'audio', 'reading', 'reminder'] as const;
 
 export const POST: APIRoute = async ({ request }) => {
   const member = await requireMember(request);
@@ -27,6 +27,10 @@ export const POST: APIRoute = async ({ request }) => {
   // Exactly one source: a link, a file from the library, or a written text.
   if (!weekStart || !TYPES.includes(type as any) || !label || [url, fileId, text].filter(Boolean).length !== 1) {
     return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+  }
+  // «Յիշեցում» (reminder) materials are written text only.
+  if (type === 'reminder' && !text) {
+    return new Response(JSON.stringify({ error: 'A reminder must be a written text' }), { status: 400 });
   }
   // Students open these links — anything but a web address (javascript:,
   // data:, …) could run code in their browser.
