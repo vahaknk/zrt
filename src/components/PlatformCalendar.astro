@@ -155,7 +155,7 @@ const agendaDays = weekDates
             {enrichedBlocks.map((b) => (
               <a
                 class={`block ${b.kind} ${b.cancelled ? 'cancelled' : ''} ${b.endMin - b.startMin < 30 ? 'short' : ''}`}
-                href={blockHref(b)}
+                href={b.cancelled ? undefined : blockHref(b)}
                 style={{
                   top: `${b.top}px`,
                   height: `${b.height}px`,
@@ -184,7 +184,7 @@ const agendaDays = weekDates
           {day.blocks.map((b) => (
             <a
               class={`agenda-item ${b.kind} ${b.cancelled ? 'cancelled' : ''}`}
-              href={blockHref(b)}
+              href={b.cancelled ? undefined : blockHref(b)}
               data-start={b.startIso}
               data-end={b.endIso}
             >
@@ -304,6 +304,9 @@ const agendaDays = weekDates
     transition: filter 0.15s;
   }
   .block:hover { filter: brightness(1.1); }
+  /* Cancelled sessions carry no link: no hand cursor, no hover. */
+  .block.cancelled { cursor: default; }
+  .block.cancelled:hover { filter: none; }
   .block.workshop { background: #6b5ce6; }
   .block.cloud { background: #2e9e4f; }
   .block.meeting { background: #b5651d; }
