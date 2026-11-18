@@ -2,26 +2,27 @@
 import PlatformLayout from '../../../layouts/PlatformLayout.astro';
 import FileStage from '../../../components/FileStage.astro';
 import ReviewPanel from '../../../components/ReviewPanel.astro';
-import { requireMember, hasFacilitatorPage } from '../../../lib/platformAuth';
+import { requireMember, hasFacilitatorPage, isWebUrl } from '../../../lib/platformAuth';
 import { getMaterial, canSeeMaterial, isTracked, recordOpen } from '../../../lib/materialViews';
 import { facilitatesGroup } from '../../../lib/submissions';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
 // A file or written material, shown inside the platform (player / viewer /
 // text) so its use can be measured; downloading only when the facilitator
-// allowed it.
+// allowed it. Links have a page too, for the moderator to review and edit.
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname)}`);
 }
 const material = await getMaterial(Number(Astro.params.id));
-const hasContent = !!material?.text || (!!material?.file && material.file.status !== 'uploading');
+const isLink = !!material && !material.text && !material.file && isWebUrl(material.url);
+const hasContent = !!material?.text || isLink || (!!material?.file && material.file.status !== 'uploading');
 if (!material || !hasContent || !canSeeMaterial(member, material)) {
   return Astro.redirect('/platform/library');
 }
 const L = makeLabelGetter(await getPlatformLabels());
 const tracked = isTracked(member, material);
-if (tracked) await recordOpen(member.id, material.id).catch((e) => console.error('recordOpen failed:', e));
+if (tracked && !isLink) await recordOpen(member.id, material.id).catch((e) => console.error('recordOpen failed:', e));
 
 const file = material.file;
 const group = material.workshop ?? material.cloud;
@@ -30,10 +31,13 @@ const back = manages && hasFacilitatorPage(member)
   ? { href: '/platform/facilitator', label: L('nav_facilitator', 'Փեթակ') }
   : { href: `/platform/library/${material.workshop ? 'workshop' : 'cloud'}/${group?.id}`, label: group?.name ?? '' };
 const canDownload = !!file && (file.allow_download || manages || member.role === 'team');
-// Written texts are reviewed per material (files are reviewed on their own page).
-const textReview = material.text ? material.review_status ?? 'approved' : null;
+// Written texts and links are reviewed per material (files are reviewed on their own page).
+const textReview = material.file ? null : material.review_status ?? 'approved';
+const subject = material.text ? 'text' : 'link';
 const showReviewPanel = !!textReview && !!member.moderator && material.author !== member.id;
 const showReviewStatus = !!textReview && material.author === member.id && textReview !== 'approved';
+// Participants' opens are counted on the way out (moderators would loop back here).
+const linkHref = tracked ? `/api/platform/materials/${material.id}/open` : material.url;
 ---
 
 <PlatformLayout title={`Zartsants Platform — ${material.label}`} member={member}>
@@ -53,17 +57,71 @@ const showReviewStatus = !!textReview && material.author === member.id && textRe
       white-space: pre-wrap;
       word-break: break-word;
     }
+    .link-material { background: #fff; border: 1px solid #e9e9e4; border-radius: 14px; padding: 1.25rem 1.5rem; }
+    .link-material .address { font-size: 0.85rem; color: #666; word-break: break-all; margin-bottom: 0.9rem; }
+    .button { display: inline-block; padding: 0.55rem 1.3rem; background: #1a1a1a; color: #fff; border: none; border-radius: 999px; font-weight: 700; font-size: 0.85rem; text-decoration: none; cursor: pointer; font-family: inherit; }
+    .edit { margin-top: 1.5rem; background: #fff; border: 1px solid #e9e9e4; border-radius: 14px; padding: 0.9rem 1.2rem; }
+    .edit summary { cursor: pointer; font-weight: 700; font-size: 0.9rem; }
+    .edit form { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.9rem; }
+    .edit label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; color: #555; }
+    .edit input, .edit textarea { box-sizing: border-box; width: 100%; padding: 0.55rem 0.7rem; border: 1px solid #e0e0da; border-radius: 8px; font-size: 0.95rem; font-family: inherit; }
+    .edit textarea { line-height: 1.6; }
+    .edit .error { color: #8f2a20; font-size: 0.85rem; }
+    .edit .button { align-self: flex-start; }
+    .edit .button:disabled { opacity: 0.6; cursor: default; }
   </style>
 
   <div class="container">
     <a class="back" href={back.href}>&larr; {back.label}</a>
     <h1>{material.label}</h1>
-    {showReviewPanel && <ReviewPanel mode="moderator" subject="text" status={textReview!} note={material.review_note} endpoint={`/api/platform/materials/${material.id}/review`} />}
-    {showReviewStatus && <ReviewPanel mode="owner" subject="text" status={textReview!} note={material.review_note} endpoint="" />}
+    {showReviewPanel && <ReviewPanel mode="moderator" subject={subject} status={textReview!} note={material.review_note} endpoint={`/api/platform/materials/${material.id}/review`} />}
+    {showReviewStatus && <ReviewPanel mode="owner" subject={subject} status={textReview!} note={material.review_note} endpoint="" />}
     {material.text ? (
       <div class="text-material">{material.text}</div>
+    ) : isLink ? (
+      <div class="link-material">
+        <div class="address">{material.url}</div>
+        <a class="button" href={linkHref} target="_blank" rel="noopener">{L('material_open_link', 'Բանալ յղումը')}</a>
+      </div>
     ) : (
       file && <FileStage file={file} title={material.label} canDownload={canDownload} trackMaterialId={tracked ? material.id : null} />
     )}
+
+    {member.moderator && (
+      <details class="edit">
+        <summary>{L('material_edit', 'Խմբագրել')}</summary>
+        <form id="material-edit" data-endpoint={`/api/platform/materials/${material.id}`}>
+          <label>{L('material_edit_label', 'Վերնագիր')}<input name="label" value={material.label} required /></label>
+          {material.text && (
+            <label>{L('material_edit_text', 'Գրութիւն')}<textarea name="text" rows="12" required>{material.text}</textarea></label>
+          )}
+          {isLink && (
+            <label>{L('material_edit_url', 'Յղում')}<input name="url" type="url" value={material.url} required /></label>
+          )}
+          <p class="error" hidden></p>
+          <button class="button" type="submit">{L('material_edit_save', 'Պահել')}</button>
+        </form>
+      </details>
+    )}
   </div>
+
+  <script>
+    const form = document.getElementById('material-edit') as HTMLFormElement | null;
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const button = form.querySelector('button')!;
+      const error = form.querySelector('.error') as HTMLElement;
+      button.disabled = true;
+      error.hidden = true;
+      const res = await fetch(form.dataset.endpoint!, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(Object.fromEntries(new FormData(form))),
+      }).catch(() => null);
+      if (res?.ok) return window.location.reload();
+      error.textContent = (await res?.json().catch(() => null))?.error ?? 'Error';
+      error.hidden = false;
+      button.disabled = false;
+    });
+  </script>
 </PlatformLayout>

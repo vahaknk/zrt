@@ -50,9 +50,10 @@ export const POST: APIRoute = async ({ request }) => {
     approved = isApproved(file);
   }
 
-  // Written texts wait for the moderator, like uploaded files.
-  const textReview = !!text && needsReview(member);
-  if (textReview) approved = false;
+  // Written texts and links wait for the moderator, like uploaded files.
+  const reviewed = !!(text || url);
+  const materialReview = reviewed && needsReview(member);
+  if (materialReview) approved = false;
 
   try {
     const created = await adminPost('/items/materials', {
@@ -65,10 +66,12 @@ export const POST: APIRoute = async ({ request }) => {
       file: fileId || null,
       text: text || null,
       author: member.id,
-      ...(text ? { review_status: textReview ? 'pending' : 'approved' } : {}),
+      ...(reviewed ? { review_status: materialReview ? 'pending' : 'approved' } : {}),
     });
-    if (textReview) {
-      await requestMaterialReview({ id: created.data.id, label, text }, member).catch((e) => console.error('requestMaterialReview failed:', e));
+    if (materialReview) {
+      await requestMaterialReview({ id: created.data.id, label, text: text || null, url: url || null }, member).catch((e) =>
+        console.error('requestMaterialReview failed:', e)
+      );
     }
     // A file still awaiting review: participants are told once it's approved.
     if (approved) await notify(await groupStudentIds(workshop, cloud), 'material', { actor: member.id, material: created.data.id });

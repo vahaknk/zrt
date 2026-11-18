@@ -19,7 +19,10 @@ if (!member.moderator) {
 const L = makeLabelGetter(await getPlatformLabels());
 const [{ pending, recent }, texts] = await Promise.all([reviewQueue(), textQueue()]);
 const whoText = (t: ReviewText) => (t.author ? displayName(t.author) : '—');
-const excerpt = (s: string) => (s.length > 160 ? `${s.slice(0, 160)}…` : s);
+const excerpt = (t: ReviewText) => {
+  const s = t.text ?? t.url ?? '';
+  return s.length > 160 ? `${s.slice(0, 160)}…` : s;
+};
 const groupName = (t: ReviewText) => t.workshop?.name ?? t.cloud?.name ?? '';
 const tz = memberTimezone(member);
 const when = (iso: string) => formatDateTime(iso, tz, MONTH_LABELS.hyw);
@@ -54,10 +57,10 @@ const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
         {texts.pending.map((t) => (
           <li>
             <a href={`/platform/view/${t.id}`}>
-              <span class="thumb">✍️</span>
+              <span class="thumb">{t.text ? '✍️' : '🔗'}</span>
               <div>
                 <div class="name">{t.label}</div>
-                <div class="excerpt">{excerpt(t.text)}</div>
+                <div class="excerpt">{excerpt(t)}</div>
                 <div class="meta">{whoText(t)} · {groupName(t)}</div>
               </div>
             </a>
@@ -91,7 +94,7 @@ const who = (f: ReviewItem) => (f.owner ? displayName(f.owner) : '—');
           {texts.recent.map((t) => (
             <li>
               <a href={`/platform/view/${t.id}`}>
-                <span class="thumb">✍️</span>
+                <span class="thumb">{t.text ? '✍️' : '🔗'}</span>
                 <div>
                   <div class="name">{t.label}</div>
                   <div class="meta">

@@ -8,20 +8,25 @@ interface Props {
   status: string; // pending | approved | rejected
   note: string | null;
   endpoint: string; // POST { decision, note }
-  subject?: 'file' | 'text';
+  subject?: 'file' | 'text' | 'link';
 }
 const { mode, status, note, endpoint, subject = 'file' } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
-const isText = subject === 'text';
-const pendingModerator = isText
-  ? L('review_pending_moderator_text', 'Այս գրութիւնը կը սպասէ քու հաստատումիդ։')
-  : L('review_pending_moderator', 'Այս ծրարը կը սպասէ քու հաստատումիդ։');
-const pendingOwner = isText
-  ? L('review_pending_owner_text', 'Այս գրութիւնը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։')
-  : L('review_pending_owner', 'Այս ծրարը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։');
-const rejectedOwner = isText
-  ? L('review_rejected_owner_text', 'Այս գրութիւնը չհաստատուեցաւ։')
-  : L('review_rejected_owner', 'Այս ծրարը չհաստատուեցաւ։');
+const pendingModerator = {
+  file: L('review_pending_moderator', 'Այս ծրարը կը սպասէ քու հաստատումիդ։'),
+  text: L('review_pending_moderator_text', 'Այս գրութիւնը կը սպասէ քու հաստատումիդ։'),
+  link: L('review_pending_moderator_link', 'Այս յղումը կը սպասէ քու հաստատումիդ։'),
+}[subject];
+const pendingOwner = {
+  file: L('review_pending_owner', 'Այս ծրարը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։'),
+  text: L('review_pending_owner_text', 'Այս գրութիւնը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։'),
+  link: L('review_pending_owner_link', 'Այս յղումը կը սպասէ հաստատման։ Մասնակիցները զայն պիտի տեսնեն հաստատուելէն ետք։'),
+}[subject];
+const rejectedOwner = {
+  file: L('review_rejected_owner', 'Այս ծրարը չհաստատուեցաւ։'),
+  text: L('review_rejected_owner_text', 'Այս գրութիւնը չհաստատուեցաւ։'),
+  link: L('review_rejected_owner_link', 'Այս յղումը չհաստատուեցաւ։'),
+}[subject];
 ---
 
 {mode === 'moderator' ? (

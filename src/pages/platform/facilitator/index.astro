@@ -448,9 +448,10 @@ const TYPE_LABEL: Record<Material['type'], string> = {
                           {typeItems.map((m) => (
                             <li>
                               <div class="mat">
-                                <a href={m.file || m.text ? `/platform/view/${m.id}` : isWebUrl(m.url) ? m.url : undefined} target="_blank" rel="noopener">{m.label}</a>
-                                {m.text && m.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
+                                <a href={m.file || m.text ? `/platform/view/${m.id}` : isWebUrl(m.url) ? (member.moderator ? `/platform/view/${m.id}` : m.url) : undefined} target="_blank" rel="noopener">{m.label}</a>
+                                {!m.file && m.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
                                 {m.text && m.review_status === 'rejected' && <span class="file-status failed">{L('material_text_rejected', 'Գրութիւնը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
+                                {!m.file && !m.text && m.review_status === 'rejected' && <span class="file-status failed">{L('material_link_rejected', 'Յղումը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
                                 {m.file?.review_status === 'pending' && <span class="file-status">{L('material_review_pending', 'Մասնակիցները պիտի տեսնեն հաստատուելէն ետք')}</span>}
                                 {m.file?.review_status === 'rejected' && <span class="file-status failed">{L('material_review_rejected', 'Ծրարը չհաստատուեցաւ — մասնակիցները չեն տեսներ')}</span>}
                                 {(() => {
