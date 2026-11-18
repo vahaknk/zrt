@@ -119,7 +119,7 @@ async function emailRecipients(created: Array<{ id: number; recipient: number }>
 
   const res = await adminGet(
     `/items/platform_members?filter[id][_in]=${todo.map((n) => n.recipient).join(',')}` +
-      `&filter[status][_eq]=active&fields=id,email,full_name,armenian_name,registration_request.mailing_language&limit=-1`
+      `&filter[status][_eq]=active&fields=id,email,full_name,armenian_name,role,registration_request.mailing_language&limit=-1`
   );
   const members = new Map(((res.data ?? []) as EmailMember[]).map((m) => [m.id, m]));
   for (const n of todo) {
@@ -136,26 +136,33 @@ interface EmailMember {
   email: string | null;
   full_name: string;
   armenian_name: string | null;
+  role: string;
   registration_request: { mailing_language: string | null } | null;
 }
 
-function notificationSubject(m: Pick<EmailMember, 'registration_request'>): string {
-  const lang = m.registration_request?.mailing_language;
+// Facilitators and team read Armenian only; participants get Armenian plus
+// the mailing language chosen at registration (fr/en), or all three when
+// none is on record yet.
+function emailLanguage(m: Pick<EmailMember, 'role' | 'registration_request'>): string | null {
+  if (m.role === 'facilitator' || m.role === 'team') return 'hyw';
+  return m.registration_request?.mailing_language ?? null;
+}
+
+function notificationSubject(m: Pick<EmailMember, 'role' | 'registration_request'>): string {
+  const lang = emailLanguage(m);
   if (lang === 'hyw') return 'Նոր ծանուցում';
   if (lang === 'fr') return 'Նոր ծանուցում · Nouvelle notification';
   if (lang === 'en') return 'Նոր ծանուցում · New notification';
   return 'Նոր ծանուցում · Nouvelle notification · New notification';
 }
 
-// Always Armenian, plus the mailing language chosen at registration (fr/en).
-// No choice on record (facilitators, team, older accounts): all three.
 function notificationEmail(id: number, m: Omit<EmailMember, 'id' | 'email'>): string {
   const href = `${SITE}/platform/notifications/${id}`;
   const hy = esc(firstName(m.armenian_name) || firstName(m.full_name));
   const latin = esc(firstName(m.full_name));
   const button = (label: string) =>
     `<p style="margin: 24px 0;"><a href="${href}" style="display: inline-block; padding: 12px 24px; background: #1a1a1a; color: #ffffff; border-radius: 999px; font-weight: 700; text-decoration: none;">${label}</a></p>`;
-  const lang = m.registration_request?.mailing_language;
+  const lang = emailLanguage(m);
   const parts = [
     `<p><strong>Զարցանցի հարթակին վրայ նոր ծանուցում մը ունի՜ք։</strong></p>
 <p>Բարեւ ${hy},</p>
