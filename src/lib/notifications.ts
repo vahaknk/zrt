@@ -1,9 +1,11 @@
 import { adminGet, adminPatch, adminPost } from './directusAdmin';
 import { displayName } from './platformAuth';
+import { sendEmail } from './email';
 
 // In-platform notifications: the header bell, the «Նոր» box on the home
 // page and /platform/notifications. Created where things happen (a new
-// submission, reply, material or meeting invitation); never emailed.
+// submission, reply, material or meeting invitation); each recipient also
+// gets a short email pointing to it (see emailRecipients).
 
 export type NotificationKind =
   | 'submission'
@@ -30,6 +32,7 @@ export interface PlatformNotification {
   material: {
     id: number;
     label: string;
+    url: string | null;
     review_note: string | null;
     workshop: { name: string } | null;
     cloud: { name: string } | null;
@@ -43,7 +46,7 @@ export interface PlatformNotification {
 const FIELDS =
   'id,kind,date_created,read_at,actor.full_name,actor.armenian_name,' +
   'submission.id,submission.workshop.name,submission.cloud.name,' +
-  'material.id,material.label,material.review_note,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
+  'material.id,material.label,material.url,material.review_note,material.workshop.name,material.cloud.name,meeting.id,meeting.title,' +
   'file.id,file.filename,file.review_note,parev_video.id,parev_video.title,news.id,news.title';
 
 // Never throws: a failed notification must not fail the action behind it.
@@ -63,7 +66,7 @@ export async function notify(
   const ids = [...new Set(recipients)].filter((id) => id && id !== refs.actor);
   if (!ids.length) return;
   try {
-    await adminPost(
+    const created = await adminPost(
       '/items/platform_notifications',
       ids.map((recipient) => ({
         recipient,
@@ -77,9 +80,101 @@ export async function notify(
         news: refs.news,
       }))
     );
+    // Not awaited: a big audience (Բարեւ, Լրատու) takes a while at Resend's pace.
+    if (!NOT_EMAILED.has(kind)) {
+      emailRecipients((created.data ?? []) as Array<{ id: number; recipient: number }>).catch((e) =>
+        console.error('notification emails failed:', e)
+      );
+    }
   } catch (e) {
     console.error('notify failed:', e);
   }
+}
+
+// ---------------------------------------------------------------- email
+
+const SITE = 'https://zartsants.com';
+
+// These already send their own, more detailed email (moderation, Զարդիպում).
+const NOT_EMAILED = new Set<NotificationKind>(['file_review', 'material_review', 'meeting']);
+
+// At most one email a day while notifications pile up unread: anyone with
+// another unread notification from the last 24 hours isn't emailed again.
+const QUIET_HOURS = 24;
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+const firstName = (s: string | null | undefined) => s?.trim().split(/\s+/)[0] ?? '';
+
+async function emailRecipients(created: Array<{ id: number; recipient: number }>): Promise<void> {
+  if (!created.length) return;
+  const since = new Date(Date.now() - QUIET_HOURS * 3600_000).toISOString();
+  const recent = await adminGet(
+    `/items/platform_notifications?filter[recipient][_in]=${created.map((n) => n.recipient).join(',')}` +
+      `&filter[id][_nin]=${created.map((n) => n.id).join(',')}&filter[read_at][_null]=true` +
+      `&filter[date_created][_gte]=${since}&fields=recipient&limit=-1`
+  );
+  const skip = new Set(((recent.data ?? []) as Array<{ recipient: number }>).map((n) => n.recipient));
+  const todo = created.filter((n) => !skip.has(n.recipient));
+  if (!todo.length) return;
+
+  const res = await adminGet(
+    `/items/platform_members?filter[id][_in]=${todo.map((n) => n.recipient).join(',')}` +
+      `&filter[status][_eq]=active&fields=id,email,full_name,armenian_name,registration_request.mailing_language&limit=-1`
+  );
+  const members = new Map(((res.data ?? []) as EmailMember[]).map((m) => [m.id, m]));
+  for (const n of todo) {
+    const m = members.get(n.recipient);
+    if (!m?.email) continue;
+    await sendEmail(m.email, notificationSubject(m), notificationEmail(n.id, m)).catch((e) =>
+      console.error(`notification email → ${m.email} failed:`, e)
+    );
+  }
+}
+
+interface EmailMember {
+  id: number;
+  email: string | null;
+  full_name: string;
+  armenian_name: string | null;
+  registration_request: { mailing_language: string | null } | null;
+}
+
+function notificationSubject(m: Pick<EmailMember, 'registration_request'>): string {
+  const lang = m.registration_request?.mailing_language;
+  if (lang === 'hyw') return 'Նոր ծանուցում';
+  if (lang === 'fr') return 'Նոր ծանուցում · Nouvelle notification';
+  if (lang === 'en') return 'Նոր ծանուցում · New notification';
+  return 'Նոր ծանուցում · Nouvelle notification · New notification';
+}
+
+// Always Armenian, plus the mailing language chosen at registration (fr/en).
+// No choice on record (facilitators, team, older accounts): all three.
+function notificationEmail(id: number, m: Omit<EmailMember, 'id' | 'email'>): string {
+  const href = `${SITE}/platform/notifications/${id}`;
+  const hy = esc(firstName(m.armenian_name) || firstName(m.full_name));
+  const latin = esc(firstName(m.full_name));
+  const button = (label: string) =>
+    `<p style="margin: 24px 0;"><a href="${href}" style="display: inline-block; padding: 12px 24px; background: #1a1a1a; color: #ffffff; border-radius: 999px; font-weight: 700; text-decoration: none;">${label}</a></p>`;
+  const lang = m.registration_request?.mailing_language;
+  const parts = [
+    `<p><strong>Զարցանցի հարթակին վրայ նոր ծանուցում մը ունի՜ք։</strong></p>
+<p>Բարեւ ${hy},</p>
+<p>Նոր ծանուցում մը ձեզի կը սպասէ Զարցանցի հարթակին վրայ։ Մուտք գործեցէք ձեր հաշիւը՝ տեսնելու համար, թէ ի՛նչ նորութիւններ կան։</p>
+${button('Տեսնել ծանուցումը')}`,
+  ];
+  if (lang !== 'hyw' && lang !== 'en') {
+    parts.push(`<p><strong>Voici une notification de votre compte Zartsants!</strong></p>
+<p>Bonjour ${latin},</p>
+<p>Une nouvelle information vous attend sur la plateforme Zartsants. Connectez-vous à votre compte pour la découvrir!</p>
+${button('Voir la notification')}`);
+  }
+  if (lang !== 'hyw' && lang !== 'fr') {
+    parts.push(`<p><strong>New notification on your Zartsants account!</strong></p>
+<p>Hello ${latin},</p>
+<p>You have a new notification waiting for you on the Zartsants Platform. Log in to your account to see what’s new!</p>
+${button('View Notification')}`);
+  }
+  return parts.join('\n<hr style="margin: 32px 0; border: none; border-top: 1px solid #e5e0d8;"/>\n');
 }
 
 // The members facilitating a workshop/cloud.
@@ -194,11 +289,17 @@ export function notificationText(n: PlatformNotification, L: (key: string, fallb
     case 'file_approved':
       return fill(L('notif_file_approved', '«{file}» ծրարդ հաստատուեցաւ։'), { file: n.file?.filename ?? '' });
     case 'material_review':
-      return fill(L('notif_material_review', '{name} նոր գրութիւն մը աւելցուց՝ ստուգելու․ «{label}»'), { name, label: n.material?.label ?? '' });
+      return n.material?.url
+        ? fill(L('notif_link_review', '{name} նոր յղում մը աւելցուց՝ ստուգելու․ «{label}»'), { name, label: n.material.label })
+        : fill(L('notif_material_review', '{name} նոր գրութիւն մը աւելցուց՝ ստուգելու․ «{label}»'), { name, label: n.material?.label ?? '' });
     case 'material_approved':
-      return fill(L('notif_material_approved', '«{label}» գրութիւնդ հաստատուեցաւ։'), { label: n.material?.label ?? '' });
+      return n.material?.url
+        ? fill(L('notif_link_approved', '«{label}» յղումդ հաստատուեցաւ։'), { label: n.material.label })
+        : fill(L('notif_material_approved', '«{label}» գրութիւնդ հաստատուեցաւ։'), { label: n.material?.label ?? '' });
     case 'material_rejected': {
-      const text = fill(L('notif_material_rejected', '«{label}» գրութիւնդ չհաստատուեցաւ։'), { label: n.material?.label ?? '' });
+      const text = n.material?.url
+        ? fill(L('notif_link_rejected', '«{label}» յղումդ չհաստատուեցաւ։'), { label: n.material.label })
+        : fill(L('notif_material_rejected', '«{label}» գրութիւնդ չհաստատուեցաւ։'), { label: n.material?.label ?? '' });
       return n.material?.review_note ? `${text} ${n.material.review_note}` : text;
     }
     case 'file_rejected': {

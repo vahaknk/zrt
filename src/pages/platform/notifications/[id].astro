@@ -5,7 +5,7 @@ import { getOwnNotification, markRead, notificationHref } from '../../../lib/not
 // Opening a notification marks it read and goes to what it's about.
 const member = await requireMember(Astro.request);
 if (!member) {
-  return Astro.redirect('/platform/login?next=/platform/notifications');
+  return Astro.redirect(`/platform/login?next=${Astro.url.pathname}`);
 }
 const n = await getOwnNotification(Number(Astro.params.id), member.id);
 if (!n) {
