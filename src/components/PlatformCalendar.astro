@@ -13,6 +13,7 @@ import {
 import { CALENDAR_WEEKDAYS, MONTH_LABELS } from '../lib/minorFormContent';
 import { getPlatformLabels, makeLabelGetter } from '../lib/platformLabels';
 import { memberMeetingsBetween } from '../lib/zardipum';
+import { displayName } from '../lib/platformAuth';
 
 interface Props {
   workshops: (WorkshopInfo | null)[];
@@ -24,9 +25,12 @@ interface Props {
   // Shows the զարդիպումներ this member is invited to (all of them with allMeetings).
   memberId?: number;
   allMeetings?: boolean;
+  // Facilitators/team: a session cancelled for some participants only stays
+  // on, with who won't come.
+  showAbsences?: boolean;
 }
 
-const { workshops, clouds, basePath = '/platform/calendar', timezone = null, memberId, allMeetings = false } = Astro.props;
+const { workshops, clouds, basePath = '/platform/calendar', timezone = null, memberId, allMeetings = false, showAbsences = false } = Astro.props;
 const L = makeLabelGetter(await getPlatformLabels());
 
 const requestedWeek = Astro.url.searchParams.get('week');
@@ -42,15 +46,21 @@ function ymd(d: Date): string {
 const prevWeek = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() - 7);
 const nextWeek = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7);
 
-let overrides: { date: string; note: string | null; workshop: number | null; cloud: number | null }[] = [];
+// An override with `members` cancels the session for those participants
+// only; without, for the whole group.
+type OverrideMember = { platform_members_id: { id: number; full_name: string; armenian_name: string | null } | null };
+let overrides: { date: string; note: string | null; workshop: number | null; cloud: number | null; members?: OverrideMember[] }[] = [];
+const overridesQuery = `/items/schedule_overrides?filter[active][_eq]=true&filter[date][_between]=${ymd(weekStart)},${ymd(weekEnd)}&limit=-1&fields=date,note,workshop,cloud`;
 try {
   const res = await adminGet(
-    `/items/schedule_overrides?filter[active][_eq]=true&filter[date][_between]=${ymd(weekStart)},${ymd(weekEnd)}&fields=date,note,workshop,cloud&limit=-1`
-  );
+    `${overridesQuery},members.platform_members_id.id,members.platform_members_id.full_name,members.platform_members_id.armenian_name`
+  ).catch(() => adminGet(overridesQuery)); // before the `members` field exists
   overrides = res.data ?? [];
 } catch (e) {
   console.error('Failed to load schedule overrides:', e);
 }
+const overrideMembers = (o: (typeof overrides)[number]) =>
+  (o.members ?? []).map((m) => m.platform_members_id).filter((m): m is NonNullable<OverrideMember['platform_members_id']> => !!m);
 
 const meetings = memberId ? await memberMeetingsBetween(memberId, ymd(weekStart), ymd(weekEnd), allMeetings) : [];
 const blocks: SessionBlock[] = [...buildSessionBlocks(workshops, clouds, weekDates), ...buildMeetingBlocks(meetings, weekDates)].sort(
@@ -89,9 +99,13 @@ const MONTH_SHORT = MONTH_LABELS.hyw;
 
 const enrichedBlocks = blocks.map((b) => {
   const dateStr = ymd(b.date);
-  const override = overrides.find(
-    (o) => o.date === dateStr && (b.kind === 'workshop' ? o.workshop === b.sourceId : o.cloud === b.sourceId)
+  const matching = overrides.filter(
+    (o) => b.kind !== 'meeting' && o.date === dateStr && (b.kind === 'workshop' ? o.workshop === b.sourceId : o.cloud === b.sourceId)
   );
+  const override =
+    matching.find((o) => overrideMembers(o).length === 0) ??
+    matching.find((o) => overrideMembers(o).some((m) => m.id === memberId));
+  const absent = !override && showAbsences ? [...new Set(matching.flatMap((o) => overrideMembers(o).map(displayName)))] : [];
   const dayIndex = Math.round((b.date.getTime() - weekStart.getTime()) / (24 * 60 * 60 * 1000));
   const { start, end } = blockInstants(b);
   return {
@@ -99,6 +113,7 @@ const enrichedBlocks = blocks.map((b) => {
     dayIndex,
     cancelled: b.kind === 'meeting' ? !!b.cancelled : !!override,
     overrideNote: b.kind === 'meeting' ? (b.cancelled ? L('meeting_cancelled', 'Ջնջուած է։') : null) : override?.note ?? null,
+    absentNote: absent.length ? `${L('calendar_absent', 'Չեն մասնակցիր՝')} ${absent.join(', ')}` : null,
     top: (b.startMin - bounds.startMin) * PX_PER_MIN,
     height: Math.max(20, (b.endMin - b.startMin) * PX_PER_MIN),
     startIso: start.toISOString(),
@@ -171,6 +186,7 @@ const agendaDays = weekDates
                   <span>{b.label}</span>
                 </span>
                 {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
+                {b.absentNote && <span class="note">{b.absentNote}</span>}
               </a>
             ))}
           </div>
@@ -193,6 +209,7 @@ const agendaDays = weekDates
               <span class="agenda-label">
                 {b.label}
                 {b.cancelled && <span class="note">{b.overrideNote ?? L('calendar_cancelled', 'Cancelled')}</span>}
+                {b.absentNote && <span class="note">{b.absentNote}</span>}
               </span>
             </a>
           ))}

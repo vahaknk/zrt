@@ -22,6 +22,6 @@ const L = makeLabelGetter(await getPlatformLabels());
 
   <div class="container">
     <h1>{L('calendar_title', 'Calendar')}</h1>
-    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} allMeetings={member.role === 'team'} basePath="/platform/calendar" />
+    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} allMeetings={member.role === 'team'} showAbsences={member.role !== 'student'} basePath="/platform/calendar" />
   </div>
 </PlatformLayout>

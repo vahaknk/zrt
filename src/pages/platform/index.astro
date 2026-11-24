@@ -116,6 +116,6 @@ const latest = await listNotifications(member.id, { unreadOnly: true, limit: 5 }
       </a>
     </div>
 
-    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} allMeetings={member.role === 'team'} basePath="/platform" />
+    <PlatformCalendar workshops={workshops} clouds={clouds} timezone={memberTimezone(member)} memberId={member.id} allMeetings={member.role === 'team'} showAbsences={member.role !== 'student'} basePath="/platform" />
   </div>
 </PlatformLayout>
