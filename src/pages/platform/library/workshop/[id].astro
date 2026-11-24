@@ -65,11 +65,11 @@ try {
   console.error('Failed to load workshop materials:', e);
 }
 
-let facilitators: { full_name: string; armenian_name: string | null; image: string | null }[] = [];
+let facilitators: { id: number; full_name: string; armenian_name: string | null; image: string | null }[] = [];
 let participants: { id: number; full_name: string; armenian_name: string | null; role: string | null }[] = [];
 try {
   const [facilitatorsRes, participantsRes] = await Promise.all([
-    adminGet(`/items/platform_members?filter[facilitates_workshops][workshops_id][_eq]=${id}&sort=full_name&fields=full_name,armenian_name,image&limit=-1`),
+    adminGet(`/items/platform_members?filter[facilitates_workshops][workshops_id][_eq]=${id}&sort=full_name&fields=id,full_name,armenian_name,image&limit=-1`),
     adminGet(`/items/platform_members?filter[workshop][_eq]=${id}&sort=full_name&fields=id,full_name,armenian_name,role&limit=-1`),
   ]);
   facilitators = facilitatorsRes.data ?? [];
@@ -207,6 +207,8 @@ const TYPE_LABEL: Record<Material['type'], string> = {
       text-decoration: none;
     }
     .roster .names .name-link:hover { background: #e3dcff; }
+    /* A facilitator's chip as a link (participants write to them): chip size, link colours. */
+    .roster .names a.facilitator-chip { padding: 0.35rem 1.1rem 0.35rem 0.35rem; font-size: 0.95rem; }
     .roster .names span {
       background: #f7f4ee;
       border-radius: 999px;
@@ -269,16 +271,24 @@ const TYPE_LABEL: Record<Material['type'], string> = {
           <p class="empty-state" style="padding:0.5rem 0;background:none;border:none;">{L('detail_facilitators_empty', 'Not assigned yet.')}</p>
         ) : (
           <div class="names">
-            {facilitators.map((f) => (
-              <span class="facilitator-chip">
-                {f.image ? (
-                  <img src={asset(DIRECTUS_URL, f.image)!} alt="" />
-                ) : (
-                  <span class="avatar-fallback">{displayName(f).trim().charAt(0).toUpperCase()}</span>
-                )}
-                {displayName(f)}
-              </span>
-            ))}
+            {facilitators.map((f) => {
+              const chip = (
+                <>
+                  {f.image ? (
+                    <img src={asset(DIRECTUS_URL, f.image)!} alt="" />
+                  ) : (
+                    <span class="avatar-fallback">{displayName(f).trim().charAt(0).toUpperCase()}</span>
+                  )}
+                  {canSubmit ? <>✉ {displayName(f)}</> : displayName(f)}
+                </>
+              );
+              // Participants write to one of their facilitators by name.
+              return canSubmit ? (
+                <a class="facilitator-chip name-link" href={`/platform/message/${f.id}?workshop=${id}`} title={L('message_write_to', 'Նամակ գրել')}>{chip}</a>
+              ) : (
+                <span class="facilitator-chip">{chip}</span>
+              );
+            })}
           </div>
         )}
       </div>

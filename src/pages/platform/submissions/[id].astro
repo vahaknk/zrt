@@ -28,14 +28,16 @@ const startedByFacilitator = !!sub.participant && !!sub.author && sub.author.id 
 const group = sub.workshop ?? sub.cloud;
 const back = { href: '/platform/inbox', label: L('nav_inbox', 'Նամակատուփս') };
 const authorName = sub.author ? displayName(sub.author) : '—';
-// The participant sees their own work as «Իմ աշխատանքս», or who wrote to
-// them; facilitators see who the conversation is with.
+// The participant sees their own work as «Իմ աշխատանքս», or who they wrote
+// to / who wrote to them; facilitators see who the conversation is with.
 const title = personal
   ? `${L('submission_from', 'Նամակ՝')} ${isAuthor ? (sub.participant ? displayName(sub.participant) : '—') : authorName}`
   : isParticipant
   ? startedByFacilitator
     ? `${L('submission_from', 'Նամակ՝')} ${authorName}`
-    : L('submission_my_title', 'Իմ աշխատանքս')
+    : sub.recipient
+      ? `${L('submission_from', 'Նամակ՝')} ${displayName(sub.recipient)}`
+      : L('submission_my_title', 'Իմ աշխատանքս')
   : participant
     ? displayName(participant)
     : '—';

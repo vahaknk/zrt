@@ -4,33 +4,40 @@ import SubmissionComposer from '../../../components/SubmissionComposer.astro';
 import SubmissionList from '../../../components/SubmissionList.astro';
 import { requireMember, displayName, memberTimezone } from '../../../lib/platformAuth';
 import { adminGet } from '../../../lib/directusAdmin';
-import { facilitatesGroup, conversationsWith } from '../../../lib/submissions';
-import { groupStudentIds } from '../../../lib/notifications';
+import { facilitatesGroup, enrolledInGroup, conversationsWith } from '../../../lib/submissions';
+import { groupStudentIds, groupFacilitatorIds } from '../../../lib/notifications';
 import { getPlatformLabels, makeLabelGetter } from '../../../lib/platformLabels';
 
-// A facilitator writes to one participant of their group:
-// /platform/message/<participant id>?workshop=<id> (or ?cloud=<id>).
+// A facilitator writes to one participant of their group, or a participant
+// to one facilitator of theirs: /platform/message/<member id>?workshop=<id> (or ?cloud=<id>).
 const member = await requireMember(Astro.request);
 if (!member) {
   return Astro.redirect(`/platform/login?next=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
 }
-const participantId = Number(Astro.params.id);
+const otherId = Number(Astro.params.id);
 const workshop = Number(Astro.url.searchParams.get('workshop')) || null;
 const cloud = workshop ? null : Number(Astro.url.searchParams.get('cloud')) || null;
 const kind = workshop ? 'workshop' : 'cloud';
 const groupId = (workshop ?? cloud)!;
-if (!groupId || (member.role !== 'team' && !facilitatesGroup(member, workshop, cloud))) {
+const asStaff = member.role === 'team' || facilitatesGroup(member, workshop, cloud);
+if (!groupId || (!asStaff && !enrolledInGroup(member, workshop, cloud))) {
   return Astro.redirect('/platform');
 }
-if (!(await groupStudentIds(workshop, cloud)).includes(participantId)) {
+// Staff write to the group's participants; participants to its facilitators.
+const allowed = asStaff ? await groupStudentIds(workshop, cloud) : await groupFacilitatorIds(workshop, cloud);
+if (!allowed.includes(otherId)) {
   return Astro.redirect(`/platform/library/${kind}/${groupId}`);
 }
 const L = makeLabelGetter(await getPlatformLabels());
-const [person, group, earlier] = await Promise.all([
-  adminGet(`/items/platform_members/${participantId}?fields=full_name,armenian_name`).then((r) => r.data),
+const [person, group, mine] = await Promise.all([
+  adminGet(`/items/platform_members/${otherId}?fields=full_name,armenian_name`).then((r) => r.data),
   adminGet(`/items/${kind === 'workshop' ? 'workshops' : 'clouds'}/${groupId}?fields=name`).then((r) => r.data),
-  conversationsWith(participantId, kind, groupId),
+  conversationsWith(asStaff ? otherId : member.id, kind, groupId),
 ]);
+// A participant's earlier messages: the ones with this facilitator.
+const earlier = asStaff
+  ? mine
+  : mine.filter((s) => s.recipient?.id === otherId || (s.author?.id === otherId && s.participant?.id === member.id));
 const name = displayName(person);
 ---
 
@@ -52,9 +59,9 @@ const name = displayName(person);
 
     <SubmissionComposer
       endpoint="/api/platform/messages"
-      purpose="reply"
+      purpose={asStaff ? 'reply' : 'submission'}
       textField="note"
-      extra={{ participant: participantId, [kind]: groupId }}
+      extra={asStaff ? { participant: otherId, [kind]: groupId } : { to: otherId, [kind]: groupId }}
       placeholder={L('message_placeholder', 'Նամակդ…')}
       submitLabel={L('submission_send', 'Ղրկել')}
     />

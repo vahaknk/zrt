@@ -34,6 +34,8 @@ export interface Submission {
   // The participant the conversation is with — the author, unless a
   // facilitator started it with them.
   participant: { id: number; full_name: string; armenian_name: string | null } | null;
+  // The facilitator a participant wrote to, from the ✉ next to their name.
+  recipient: { id: number; full_name: string; armenian_name: string | null } | null;
   file: SubmissionFile | null;
   replies: SubmissionReply[];
 }
@@ -44,6 +46,7 @@ const FILE = 'id,filename,kind,size,status,thumb_key';
 const SUBMISSION_FIELDS =
   `id,note,date_created,last_activity,workshop.id,workshop.name,cloud.id,cloud.name,` +
   `author.id,author.full_name,author.armenian_name,participant.id,participant.full_name,participant.armenian_name,` +
+  `recipient.id,recipient.full_name,recipient.armenian_name,` +
   `file.${FILE.replace(/,/g, ',file.')},` +
   `replies.id,replies.text,replies.date_created,replies.author.id,replies.author.full_name,replies.author.armenian_name,` +
   `replies.file.${FILE.replace(/,/g, ',replies.file.')}`;

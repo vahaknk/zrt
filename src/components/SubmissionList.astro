@@ -47,6 +47,7 @@ const excerpt = (s: string | null) => (s && s.length > 140 ? `${s.slice(0, 140)}
             </div>
             {showGroup && <div class="sl-group">{personal ? L('conversation_personal', 'Անձնական') : s.workshop?.name ?? s.cloud?.name}</div>}
             {startedByFacilitator && <div class="sl-from">✉ {L('submission_from', 'Նամակ՝')} {displayName(s.author!)}</div>}
+            {s.recipient && <div class="sl-from">✉ {L('submission_to', 'Ուղղուած՝')} {displayName(s.recipient)}</div>}
             {s.note && <div class="sl-note">{excerpt(s.note)}</div>}
             {s.file && (
               <div class="sl-file">
